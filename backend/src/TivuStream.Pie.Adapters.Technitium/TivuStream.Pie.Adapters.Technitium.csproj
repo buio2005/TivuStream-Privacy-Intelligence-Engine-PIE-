@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Technitium Adapter.
+
+    The only component allowed to communicate with Technitium DNS Server.
+    It uses the public HTTP API of that product and converts the responses
+    into the Unified Data Model.
+
+    Credentials for the Data Source stay confined to this project.
+  -->
+
+  <PropertyGroup>
+    <Description>Adapter for Technitium DNS Server.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TivuStream.Pie.Adapters\TivuStream.Pie.Adapters.csproj" />
+  </ItemGroup>
+
+</Project>

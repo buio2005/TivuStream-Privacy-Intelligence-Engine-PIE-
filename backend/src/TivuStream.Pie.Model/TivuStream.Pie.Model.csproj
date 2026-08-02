@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Unified Data Model.
+
+    Holds the entities shared by every component of the system.
+    This project must never reference any other project in the solution.
+  -->
+
+  <PropertyGroup>
+    <Description>Unified Data Model of the Privacy Intelligence Engine.</Description>
+  </PropertyGroup>
+
+</Project>

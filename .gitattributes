@@ -1,0 +1,113 @@
+# TivuStream Privacy Intelligence Engine (PIE)
+# Git Attributes
+#
+# Il repository conserva tutti i file di testo con terminazioni di riga LF.
+# Questa scelta garantisce diff leggibili su Linux, Windows e Docker,
+# requisito necessario al modello di sviluppo Documentation First.
+#
+# Le eccezioni riguardano esclusivamente i formati che richiedono CRLF.
+
+# ---------------------------------------------------------------------------
+# Regola generale
+# ---------------------------------------------------------------------------
+
+* text=auto eol=lf
+
+# ---------------------------------------------------------------------------
+# Documentazione e configurazione
+# ---------------------------------------------------------------------------
+
+*.md            text
+*.txt           text
+*.json          text
+*.jsonc         text
+*.yml           text
+*.yaml          text
+*.xml           text
+*.config        text
+*.toml          text
+.editorconfig   text
+.gitattributes  text
+.gitignore      text
+Dockerfile      text
+*.dockerignore  text
+
+# ---------------------------------------------------------------------------
+# Backend - ASP.NET Core
+# ---------------------------------------------------------------------------
+
+*.cs            text diff=csharp
+*.csx           text diff=csharp
+*.csproj        text
+*.props         text
+*.targets       text
+*.ruleset       text
+*.resx          text
+*.sql           text
+
+# Visual Studio richiede CRLF nei file di soluzione.
+*.sln           text eol=crlf
+
+# ---------------------------------------------------------------------------
+# Frontend - Vue 3, TypeScript, Vite
+# ---------------------------------------------------------------------------
+
+*.ts            text
+*.tsx           text
+*.js            text
+*.mjs           text
+*.cjs           text
+*.vue           text
+*.css           text
+*.scss          text
+*.html          text
+*.svg           text
+
+# ---------------------------------------------------------------------------
+# Script
+# ---------------------------------------------------------------------------
+
+*.sh            text eol=lf
+*.ps1           text eol=crlf
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# ---------------------------------------------------------------------------
+# File binari
+# ---------------------------------------------------------------------------
+
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.webp          binary
+*.pdf           binary
+*.zip           binary
+*.gz            binary
+*.7z            binary
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+*.eot           binary
+*.dll           binary
+*.exe           binary
+*.pdb           binary
+*.snk           binary
+*.pfx           binary
+
+# ---------------------------------------------------------------------------
+# Database SQLite
+# ---------------------------------------------------------------------------
+
+*.db            binary
+*.db-shm        binary
+*.db-wal        binary
+*.sqlite        binary
+*.sqlite3       binary
+
+# ---------------------------------------------------------------------------
+# File generati esclusi dalle statistiche del repository
+# ---------------------------------------------------------------------------
+
+package-lock.json   text -diff linguist-generated

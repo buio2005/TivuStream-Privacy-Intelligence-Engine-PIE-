@@ -1,0 +1,20 @@
+// Copiare questo file come appsettings.Local.json nella stessa cartella
+// e sostituire i valori.
+//
+// appsettings.Local.json e' escluso da Git: il token non deve mai essere
+// versionato.
+//
+// Il token si genera in Technitium da Administration, creando un utente
+// dedicato con permesso di sola lettura sulla sezione Dashboard e poi un
+// API Token per quell'utente.
+{
+  "Technitium": {
+    "DataSourceId": "11111111-2222-3333-4444-555555555555",
+    "BaseAddress": "http://localhost:5380",
+    "ApiToken": "incollare qui il token"
+  },
+  "Acquisition": {
+    "IntervalMinutes": 1,
+    "WindowMinutes": 60
+  }
+}

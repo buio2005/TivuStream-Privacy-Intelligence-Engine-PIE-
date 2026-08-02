@@ -1,0 +1,30 @@
+<Project>
+
+  <!--
+    TivuStream Privacy Intelligence Engine (PIE)
+    Central Package Management.
+
+    Package versions are declared here once and referenced without a version
+    by the individual projects.
+
+    The documentation requires every dependency to be recorded with name,
+    version, licence and purpose. Keeping all versions in a single file makes
+    that record easy to review and prevents the same package from being
+    referenced at different versions across projects.
+
+    No package is referenced yet.
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinning>true</CentralPackageTransitivePinning>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Example, once a dependency has been approved:
+      <PackageVersion Include="Package.Name" Version="1.0.0" />
+    -->
+  </ItemGroup>
+
+</Project>

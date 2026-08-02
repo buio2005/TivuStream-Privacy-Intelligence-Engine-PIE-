@@ -4,7 +4,7 @@
 
 **Document:** Architecture Specification
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 
 **Status:** Approved
 
@@ -109,7 +109,7 @@ Il Privacy Intelligence Engine è composto dai seguenti moduli.
 
 * Threat Engine
 * Device Engine
-* Network Privacy & Security Score Engine (NPSS)
+* NPSS Engine
 * Recommendation Engine
 * Alert Engine
 
@@ -119,14 +119,32 @@ Ogni modulo possiede una responsabilità specifica.
 
 # Data Flow
 
-Il flusso delle informazioni segue sempre lo stesso percorso.
+Il sistema utilizza due flussi distinti.
+
+I due flussi non si sovrappongono e possiedono responsabilità differenti.
+
+---
+
+## Acquisition Flow
+
+Rappresenta l'acquisizione periodica dei dati.
+
+Viene innescato dallo Scheduler e orchestrato dall'Adapter Manager.
 
 ```text
-Data Source
+Scheduler
+
+↓
+
+Adapter Manager
 
 ↓
 
 Adapter
+
+↓
+
+Data Source
 
 ↓
 
@@ -138,12 +156,34 @@ Privacy Intelligence Engine
 
 ↓
 
+Risultati
+```
+
+Il Core riceve esclusivamente dati già espressi nel Unified Data Model.
+
+Il Core non partecipa all'orchestrazione dell'acquisizione.
+
+---
+
+## Query Flow
+
+Rappresenta una richiesta proveniente dal Frontend.
+
+```text
+Frontend
+
+↓
+
 REST API
 
 ↓
 
-Frontend
+Risultati prodotti dal Core
 ```
+
+Il Query Flow non attiva alcuna comunicazione verso gli Adapter o le Data Sources.
+
+Le richieste del Frontend restituiscono esclusivamente risultati già elaborati.
 
 ---
 
@@ -233,6 +273,9 @@ Le seguenti regole costituiscono vincoli architetturali.
 
 * Il Frontend comunica esclusivamente con le REST API.
 * Il Core non comunica direttamente con le Data Sources.
+* Il Core non orchestra l'acquisizione dei dati.
+* L'acquisizione è orchestrata dall'Adapter Manager e innescata dallo Scheduler.
+* Il Query Flow non raggiunge mai le Data Sources.
 * Ogni Data Source implementa un Adapter dedicato.
 * Tutte le elaborazioni vengono eseguite dal Core.
 * Il Unified Data Model rappresenta l'unico formato dati interno.

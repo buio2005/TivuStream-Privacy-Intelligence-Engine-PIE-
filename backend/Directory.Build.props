@@ -1,0 +1,61 @@
+<Project>
+
+  <!--
+    TivuStream Privacy Intelligence Engine (PIE)
+    Shared build configuration.
+
+    These settings apply to every project under the backend folder.
+    They exist to keep build behaviour consistent across the solution
+    and to satisfy the quality criteria defined in the project documentation.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      The documentation requires the build to remain free of warnings.
+      Promoting warnings to errors keeps that requirement verifiable
+      instead of relying on discipline.
+    -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      The XML documentation file is required for IDE0005, which reports
+      unnecessary using directives during the build. Without it the analyser
+      cannot run and reports a configuration error instead.
+
+      CS1591 is disabled on purpose. Generating the documentation file must
+      not turn into an obligation to comment every public member: the project
+      documentation asks for comments only where they add value.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      Dependency auditing supports the security requirements of the project.
+    -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Product>TivuStream Privacy Intelligence Engine</Product>
+    <!--
+      Copyright and licence metadata are intentionally omitted.
+      The License Specification defers that decision to the first public Beta.
+    -->
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Adapter layer.
+
+    Hosts the Adapter Manager and the contracts every Adapter implements.
+
+    Adapters convert data produced by a Data Source into the Unified Data
+    Model. They perform no analysis.
+
+    This project references the Unified Data Model but never the Core.
+  -->
+
+  <PropertyGroup>
+    <Description>Adapter contracts and Adapter Manager.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TivuStream.Pie.Model\TivuStream.Pie.Model.csproj" />
+  </ItemGroup>
+
+</Project>

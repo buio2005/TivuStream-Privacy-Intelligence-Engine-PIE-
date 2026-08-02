@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy Specification
 
-**Version:** 1.0.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
@@ -49,6 +49,8 @@ Utilizza esclusivamente le API pubbliche del Privacy Intelligence Engine.
 
 # Architecture
 
+Network Privacy opera esclusivamente all'interno del Query Flow.
+
 ```text id="g1nvw8"
 Frontend
 
@@ -58,16 +60,10 @@ REST API
 
 ↓
 
-Privacy Intelligence Engine
-
-↓
-
-Adapter
-
-↓
-
-Data Source
+Risultati prodotti dal Privacy Intelligence Engine
 ```
+
+L'applicazione non partecipa in alcun modo all'Acquisition Flow.
 
 ---
 
@@ -214,6 +210,72 @@ Esempi.
 * intervallo temporale;
 * dispositivo;
 * dominio.
+
+---
+
+# Honesty of Presentation
+
+L'applicazione non presenta mai come misurato un dato che non lo è.
+
+Questo requisito ha la stessa rilevanza dei requisiti funzionali.
+
+---
+
+## Absent Versus Unmeasurable
+
+L'interfaccia distingue sempre tre condizioni.
+
+| Condizione            | Significato per l'utente                                    |
+| --------------------- | ------------------------------------------------------------ |
+| Nessun risultato      | È stato osservato, non è emerso nulla                         |
+| Parzialmente osservato| È stato osservato in parte, il resto non è accessibile        |
+| Non misurabile        | Non è stato osservato, la configurazione non lo consente      |
+
+Un valore pari a zero, una sezione vuota o un grafico piatto appartengono alla prima condizione e comunicano all'utente che la sua rete è in ordine.
+
+Utilizzarli per rappresentare le altre due condizioni costituisce un'informazione falsa.
+
+Le sezioni non misurabili o parzialmente osservate vengono presentate in modo visivamente distinto, accompagnate dall'indicazione di cosa è stato valutato, cosa no e per quale motivo.
+
+Una condizione parziale non viene mai presentata come completa: l'interfaccia rende evidente che il risultato mostrato si riferisce a una porzione del fenomeno.
+
+---
+
+## Score Coverage
+
+Quando la copertura del Network Privacy & Security Score è inferiore a 100, l'interfaccia la mostra sempre accanto al punteggio.
+
+Tutte le aree sono elencate, comprese quelle parzialmente misurate e quelle non misurabili, con l'indicazione degli indicatori valutati e del motivo dell'esclusione degli altri.
+
+L'andamento storico segnala le variazioni di copertura, poiché punteggi con copertura differente non sono confrontabili.
+
+---
+
+## Guided Configuration
+
+Le Recommendation prodotte in seguito a una capacità mancante sono presentate come **azioni proposte**, non come avvisi di errore.
+
+Ogni proposta espone in modo simmetrico:
+
+* quale analisi verrebbe abilitata;
+* quale intervento è richiesto;
+* quali conseguenze comporta, comprese quelle sfavorevoli.
+
+L'ultimo punto è vincolante.
+
+Quando l'attivazione di una funzionalità comporta un aumento del consumo di risorse, la registrazione di dati aggiuntivi o un impatto sulle prestazioni, tali aspetti vengono dichiarati **prima** che l'utente scelga.
+
+L'applicazione non presenta configurazioni elencandone soltanto i benefici.
+
+L'utente deve poter rifiutare una proposta e continuare a utilizzare il sistema senza limitazioni oltre a quelle dichiarate.
+
+---
+
+## Approximate Values
+
+I valori che dipendono da elenchi tronchi restituiti dalla Data Source sono presentati come approssimati.
+
+L'interfaccia non arrotonda un valore incerto presentandolo come esatto.
 
 ---
 

@@ -4,7 +4,7 @@
 
 **Document:** Core Engine Specification
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 
 **Status:** Approved
 
@@ -32,6 +32,20 @@ Il Core interpreta i dati.
 
 ---
 
+# Core Activation
+
+Il Core è un componente passivo.
+
+Non avvia autonomamente alcuna elaborazione e non conosce l'origine dei dati che riceve.
+
+L'esecuzione della pipeline viene richiesta dall'Adapter Manager al termine dell'Acquisition Flow, fornendo al Core un insieme di dati già espresso nel Unified Data Model.
+
+Il Core restituisce i risultati dell'elaborazione senza conoscere il destinatario.
+
+Questa separazione garantisce che il funzionamento del Core rimanga identico indipendentemente dalla Data Source utilizzata.
+
+---
+
 # Responsibilities
 
 Il Core è responsabile di:
@@ -51,15 +65,11 @@ Il Core è responsabile di:
 
 Ogni dato elaborato segue la medesima pipeline.
 
+La pipeline del Core inizia dal Unified Data Model.
+
+I livelli precedenti appartengono all'Acquisition Flow e sono descritti nella Architecture Specification.
+
 ```text
-Data Source
-
-↓
-
-Adapter
-
-↓
-
 Unified Data Model
 
 ↓
@@ -285,6 +295,7 @@ Il Core non:
 
 * comunica direttamente con il Frontend;
 * comunica direttamente con le Data Sources;
+* orchestra l'acquisizione dei dati;
 * contiene logica di interfaccia;
 * gestisce configurazioni specifiche dei backend.
 

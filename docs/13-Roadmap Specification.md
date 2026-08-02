@@ -4,7 +4,7 @@
 
 **Document:** Project Roadmap Specification
 
-**Version:** 1.0.0
+**Version:** 1.0.4
 
 **Status:** Approved
 
@@ -33,7 +33,7 @@ La roadmap ha i seguenti obiettivi.
 
 # Current Status
 
-**Documentation Release:** 1.0.0
+**Documentation Release:** 1.0.4
 
 **Project Status:** Documentation Completed
 
@@ -94,11 +94,11 @@ Obiettivi.
 
 Obiettivi.
 
-* Threat Intelligence;
-* Device Intelligence;
+* Threat Engine;
+* Device Engine;
 * Alert Engine;
 * Recommendation Engine;
-* Network Privacy & Security Score Engine.
+* NPSS Engine.
 
 **Status:** Planned
 
@@ -219,7 +219,13 @@ Esempio.
 
 La documentazione segue una versione indipendente dal codice.
 
-Documentation Release 1.0.0 rappresenta la baseline ufficiale del progetto.
+Documentation Release 1.0.0 rappresenta la baseline originale del progetto.
+
+La Documentation Release corrente è indicata nella sezione Current Status.
+
+Ogni Specification possiede inoltre una propria versione, aggiornata soltanto quando il documento viene modificato.
+
+Lo storico completo è registrato in `CHANGELOG.md`.
 
 ---
 

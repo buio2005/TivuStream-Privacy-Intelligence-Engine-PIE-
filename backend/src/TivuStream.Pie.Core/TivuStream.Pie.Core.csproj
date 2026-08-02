@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Core of the Privacy Intelligence Engine.
+
+    Hosts the Engines that analyse, classify, correlate and evaluate data.
+
+    The Core is a passive component: it receives data already expressed in the
+    Unified Data Model and returns results.
+
+    It must never reference the Adapters or the API host. That restriction is
+    an architectural constraint and is enforced here by the absence of those
+    project references.
+  -->
+
+  <PropertyGroup>
+    <Description>Core of the Privacy Intelligence Engine.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TivuStream.Pie.Model\TivuStream.Pie.Model.csproj" />
+  </ItemGroup>
+
+</Project>

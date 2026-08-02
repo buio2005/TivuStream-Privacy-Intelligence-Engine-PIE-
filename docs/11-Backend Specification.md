@@ -4,7 +4,7 @@
 
 **Document:** Backend Specification
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 
 **Status:** Approved
 
@@ -51,37 +51,55 @@ Il Frontend non fa parte del Backend.
 
 # High Level Architecture
 
+Il Backend ospita due percorsi indipendenti.
+
+Il Query Flow serve le richieste del Frontend.
+
+L'Acquisition Flow acquisisce i dati dalle Data Sources.
+
 ```text id="1ntz3h"
-                Frontend
+        Query Flow                    Acquisition Flow
 
-                    │
+         Frontend                        Scheduler
 
-                    ▼
+             │                               │
 
-              REST API Layer
+             ▼                               ▼
 
-                    │
+       REST API Layer                  Adapter Manager
 
-      ┌─────────────┼─────────────┐
+             │                               │
 
-      ▼             ▼             ▼
+             ▼                               ▼
 
- Authentication   Core Engine   Configuration
+      Authentication                      Adapter
 
-                    │
+             │                               │
 
-      ┌─────────────┼─────────────┐
+             ▼                               ▼
 
-      ▼             ▼             ▼
+        Authorization                   Data Sources
 
- Adapter      Logging Service   Scheduler
+             │                               │
 
-                    │
+             ▼                               ▼
 
-                    ▼
+  Risultati elaborati            Unified Data Model
 
-              Data Sources
+                                             │
+
+                                             ▼
+
+                                        Core Engine
+
+                                             │
+
+                                             ▼
+
+                                     Risultati elaborati
 ```
+
+I servizi trasversali Configuration Manager, Logging Service e Report Service sono utilizzati da entrambi i percorsi.
 
 ---
 
@@ -128,6 +146,84 @@ Gestisce:
 Gestisce il ciclo di vita degli Adapter.
 
 Ogni Adapter comunica con una specifica Data Source.
+
+L'Adapter Manager orchestra inoltre l'Acquisition Flow.
+
+Le sue responsabilità comprendono:
+
+* registrazione degli Adapter;
+* esecuzione del ciclo di acquisizione;
+* raccolta dei dati normalizzati;
+* consegna del Unified Data Model al Core Engine.
+
+L'Adapter Manager non esegue alcuna analisi.
+
+---
+
+# Adapter Contract
+
+Il contratto che ogni Adapter deve rispettare è composto da un'interfaccia di base e da un insieme di interfacce segregate per capacità.
+
+---
+
+## Base Interface
+
+L'interfaccia di base porta l'identità dell'Adapter e la descrizione della Data Source.
+
+La descrizione comprende versione, stato operativo e capacità effettivamente disponibili.
+
+---
+
+## Capability Interfaces
+
+Ogni capacità corrisponde a un'interfaccia dedicata.
+
+| Interfaccia             | Capability       |
+| ----------------------- | ---------------- |
+| Statistics Source       | `Statistics`     |
+| Device Source           | `Device`         |
+| Domain Source           | `Domain`         |
+| Domain Activity Source  | `DomainActivity` |
+
+Un Adapter implementa esclusivamente le interfacce corrispondenti ai dati che è in grado di fornire.
+
+Questa segregazione risponde al principio di Interface Segregation ed elimina la necessità di implementare metodi non supportati.
+
+---
+
+## Potential and Effective Capabilities
+
+Le interfacce implementate esprimono ciò che un Adapter **può** fornire.
+
+Le capability dichiarate nella descrizione esprimono ciò che la Data Source fornisce **effettivamente** nella sua configurazione corrente.
+
+Le due informazioni non coincidono necessariamente: una Data Source può offrire un tipo di dato soltanto dopo l'attivazione di un componente facoltativo.
+
+Vale la seguente regola.
+
+> Un Adapter non può dichiarare una capability della quale non implementa l'interfaccia.
+
+L'Adapter Manager verifica questa condizione al momento della registrazione.
+
+---
+
+## Acquisition Window
+
+Ogni acquisizione riceve un intervallo temporale esplicito.
+
+L'intervallo non viene mai assunto dall'Adapter, poiché finestre differenti non contengono necessariamente le stesse informazioni.
+
+L'intervallo consente inoltre l'acquisizione incrementale, richiedendo soltanto quanto successivo al ciclo precedente.
+
+---
+
+## Error Handling
+
+Gli Adapter convertono gli errori della propria Data Source in un'eccezione dedicata.
+
+Il resto del sistema non gestisce mai errori espressi nel vocabolario di uno specifico backend.
+
+I dettagli diagnostici prodotti dalla Data Source non oltrepassano l'Adapter.
 
 ---
 
@@ -199,15 +295,85 @@ Formati previsti.
 
 ---
 
+# Solution Structure
+
+Il Backend è organizzato in progetti distinti.
+
+La separazione in progetti rende i vincoli architetturali verificabili in fase di compilazione anziché affidarli alla sola disciplina.
+
+```text
+backend/
+├── TivuStream.Pie.sln
+├── Directory.Build.props
+├── src/
+│   ├── TivuStream.Pie.Model/
+│   ├── TivuStream.Pie.Core/
+│   ├── TivuStream.Pie.Adapters/
+│   ├── TivuStream.Pie.Adapters.Technitium/
+│   └── TivuStream.Pie.Api/
+└── tests/
+```
+
+---
+
+## Project Responsibilities
+
+| Progetto                             | Responsabilità                                      |
+| ------------------------------------ | --------------------------------------------------- |
+| `TivuStream.Pie.Model`               | Unified Data Model                                   |
+| `TivuStream.Pie.Core`                | Core e relativi Engine                               |
+| `TivuStream.Pie.Adapters`            | Contratti degli Adapter e Adapter Manager            |
+| `TivuStream.Pie.Adapters.Technitium` | Technitium Adapter                                   |
+| `TivuStream.Pie.Api`                 | Host applicativo, REST API e composition root        |
+
+---
+
+## Project References
+
+```text
+Model            → nessun riferimento
+
+Core             → Model
+
+Adapters         → Model
+
+Adapters.Technitium → Adapters
+
+Api              → Core, Adapters, Adapters.Technitium
+```
+
+Le seguenti regole costituiscono vincoli architetturali.
+
+* Il progetto `Model` non referenzia alcun altro progetto.
+* Il progetto `Core` non referenzia gli Adapter né l'host.
+* Il progetto `Adapters` non referenzia il Core.
+* Soltanto `Api`, in quanto composition root, referenzia un Adapter concreto.
+
+L'aggiunta di un riferimento in violazione di queste regole rende il vincolo architetturale immediatamente visibile in fase di build.
+
+---
+
 # Configuration Files
 
 Il Backend utilizza configurazioni centralizzate.
 
 Le configurazioni devono essere indipendenti dal codice.
 
+La configurazione di build condivisa risiede in `Directory.Build.props` e si applica a tutti i progetti del Backend.
+
+I warning sono trattati come errori, in coerenza con i criteri di qualità del progetto.
+
 ---
 
 # Data Flow
+
+Il Backend gestisce due flussi distinti.
+
+---
+
+## Query Flow
+
+Percorso seguito da una richiesta proveniente dal Frontend.
 
 ```text id="kfz0c6"
 REST API
@@ -226,7 +392,23 @@ Authorization
 
 ↓
 
-Core Engine
+Risultati prodotti dal Core Engine
+```
+
+Il Query Flow non raggiunge mai gli Adapter né le Data Sources.
+
+---
+
+## Acquisition Flow
+
+Percorso seguito dall'acquisizione periodica dei dati.
+
+```text
+Scheduler
+
+↓
+
+Adapter Manager
 
 ↓
 
@@ -235,7 +417,23 @@ Adapter
 ↓
 
 Data Source
+
+↓
+
+Unified Data Model
+
+↓
+
+Core Engine
+
+↓
+
+Risultati
 ```
+
+L'Adapter Manager orchestra l'acquisizione e invoca il Core Engine fornendo dati già espressi nel Unified Data Model.
+
+Il Core Engine non invoca mai un Adapter.
 
 ---
 
@@ -319,7 +517,12 @@ Il Backend:
 * non contiene logica di presentazione;
 * non dipende da uno specifico backend;
 * utilizza esclusivamente il Unified Data Model;
-* comunica con le Data Sources esclusivamente tramite Adapter.
+* comunica con le Data Sources esclusivamente tramite Adapter;
+* mantiene il Core Engine isolato dagli Adapter e dalle Data Sources.
+
+Il progetto che implementa il Core Engine non referenzia né gli Adapter né l'host delle REST API.
+
+Questo isolamento rende il vincolo verificabile in fase di compilazione.
 
 ---
 

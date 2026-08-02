@@ -4,7 +4,7 @@
 
 **Document:** Glossary Specification
 
-**Version:** 1.0.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
@@ -102,6 +102,30 @@ Ogni Data Source possiede un Adapter dedicato.
 Modello dati interno utilizzato dal Core.
 
 Tutti i moduli comunicano esclusivamente attraverso questo modello.
+
+---
+
+# Capability
+
+Dichiarazione di ciò che una Data Source è **in grado di fornire**.
+
+Il vocabolario delle capability coincide con i nomi delle entità del Unified Data Model.
+
+Una capability non descrive le funzionalità del prodotto esterno: le funzionalità di un backend costituiscono dati da analizzare, non capacità strutturali.
+
+L'assenza di una capability significa che il dato non è misurabile, non che sia pari a zero.
+
+---
+
+# Coverage
+
+Porzione del sistema di valutazione effettivamente osservata nel calcolo del Network Privacy & Security Score.
+
+Si esprime come somma dei punteggi ottenibili di tutte le aree, su un massimo di 100.
+
+Un'area può essere misurata per intero, in parte, o non essere misurabile. La porzione non osservata è esclusa dal calcolo e non può migliorare il punteggio.
+
+Punteggi con copertura differente non sono confrontabili.
 
 ---
 
@@ -213,23 +237,41 @@ Visualizza esclusivamente informazioni prodotte dal Core.
 
 ---
 
-# Threat Intelligence
+# Core Modules
+
+I moduli che compongono il Core utilizzano tutti il suffisso **Engine**.
+
+Questa forma rappresenta la nomenclatura ufficiale del progetto.
+
+---
+
+# Threat Engine
 
 Modulo responsabile della classificazione delle minacce.
 
 Acronimo suggerito:
 
-**TI**
+**TE**
 
 ---
 
-# Device Intelligence
+# Device Engine
 
 Modulo responsabile dell'analisi dei dispositivi.
 
 Acronimo suggerito:
 
-**DI**
+**DE**
+
+---
+
+# NPSS Engine
+
+Modulo responsabile del calcolo del Network Privacy & Security Score.
+
+Acronimo suggerito:
+
+**NE**
 
 ---
 
@@ -253,6 +295,70 @@ Acronimo suggerito:
 
 ---
 
+# Threat Intelligence
+
+Materia trattata dal Threat Engine.
+
+Il termine identifica la disciplina, non il componente software.
+
+Come nome di modulo deve essere utilizzato **Threat Engine**.
+
+---
+
+# Acquisition Flow
+
+Percorso seguito dai dati durante l'acquisizione periodica.
+
+```text
+Scheduler
+
+↓
+
+Adapter Manager
+
+↓
+
+Adapter
+
+↓
+
+Data Source
+
+↓
+
+Unified Data Model
+
+↓
+
+Core
+```
+
+L'acquisizione è orchestrata dall'Adapter Manager.
+
+Il Core non partecipa all'orchestrazione.
+
+---
+
+# Query Flow
+
+Percorso seguito da una richiesta proveniente dal Frontend.
+
+```text
+Frontend
+
+↓
+
+REST API
+
+↓
+
+Risultati prodotti dal Core
+```
+
+Il Query Flow non attiva alcuna comunicazione verso le Data Sources.
+
+---
+
 # Terminology Rules
 
 All'interno del progetto:
@@ -262,6 +368,7 @@ All'interno del progetto:
 * utilizzare sempre **Data Source** per indicare l'origine dei dati;
 * utilizzare sempre **Adapter** per il livello di integrazione;
 * utilizzare sempre **Core** per indicare il motore principale;
+* utilizzare sempre il suffisso **Engine** per i moduli del Core;
 * utilizzare sempre **Frontend** e **Backend** senza traduzioni.
 
 ---
@@ -270,14 +377,16 @@ All'interno del progetto:
 
 Per garantire uniformità, evitare l'utilizzo dei seguenti termini quando esiste già un termine ufficiale.
 
-| Evitare                        | Utilizzare                              |
-| ------------------------------ | --------------------------------------- |
-| Privacy Score                  | Network Privacy & Security Score (NPSS) |
-| Connector                      | Adapter                                 |
-| Source Provider                | Data Source                             |
-| DNS Engine                     | Backend                                 |
-| Main Engine                    | Core                                    |
-| Plugin (per integrazioni dati) | Adapter                                 |
+| Evitare                                   | Utilizzare                              |
+| ----------------------------------------- | --------------------------------------- |
+| Privacy Score                             | Network Privacy & Security Score (NPSS) |
+| Connector                                 | Adapter                                 |
+| Source Provider                           | Data Source                             |
+| DNS Engine                                | Backend                                 |
+| Main Engine                               | Core                                    |
+| Plugin (per integrazioni dati)            | Adapter                                 |
+| Threat Intelligence (come nome di modulo) | Threat Engine                           |
+| Device Intelligence (come nome di modulo) | Device Engine                           |
 
 ---
 

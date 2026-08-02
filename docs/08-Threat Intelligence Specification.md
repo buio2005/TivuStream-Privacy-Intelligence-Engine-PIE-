@@ -4,7 +4,7 @@
 
 **Document:** Threat Intelligence Specification
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 
 **Status:** Approved
 
@@ -16,13 +16,17 @@
 
 Questa specifica definisce il sistema di **Threat Intelligence** del Privacy Intelligence Engine.
 
-Il modulo è responsabile dell'identificazione, classificazione e valutazione delle minacce rilevate durante l'analisi dei dati provenienti dalle Data Sources.
+Threat Intelligence identifica la materia trattata.
+
+Il modulo che la implementa è il **Threat Engine**.
+
+Il Threat Engine è responsabile dell'identificazione, classificazione e valutazione delle minacce rilevate durante l'analisi dei dati provenienti dalle Data Sources.
 
 ---
 
 # Objectives
 
-Il modulo Threat Intelligence ha i seguenti obiettivi.
+Il Threat Engine ha i seguenti obiettivi.
 
 * identificare domini potenzialmente pericolosi;
 * classificare le minacce;
@@ -35,7 +39,7 @@ Il modulo Threat Intelligence ha i seguenti obiettivi.
 
 # Scope
 
-Threat Intelligence analizza esclusivamente le informazioni presenti nel Unified Data Model.
+Il Threat Engine analizza esclusivamente le informazioni presenti nel Unified Data Model.
 
 Non comunica direttamente con le Data Sources.
 
@@ -198,7 +202,7 @@ Archived
 
 # Correlation
 
-Threat Intelligence può correlare eventi provenienti da differenti Data Sources.
+Il Threat Engine può correlare eventi provenienti da differenti Data Sources.
 
 La correlazione consente di migliorare la precisione della classificazione.
 
@@ -227,7 +231,7 @@ Informazioni registrate.
 
 # Alert Generation
 
-Threat Intelligence può generare Alert quando vengono rilevate condizioni significative.
+Il Threat Engine può generare Alert quando vengono rilevate condizioni significative.
 
 La severità dell'Alert dipende dalla gravità della minaccia.
 
@@ -243,7 +247,7 @@ Ogni suggerimento è collegato alla minaccia che lo ha generato.
 
 # NPSS Integration
 
-Threat Intelligence contribuisce direttamente al calcolo del Network Privacy & Security Score.
+Il Threat Engine contribuisce direttamente al calcolo del Network Privacy & Security Score.
 
 La presenza di Threat critici riduce il punteggio complessivo.
 
@@ -259,7 +263,7 @@ Le classificazioni già esistenti non vengono modificate.
 
 # Design Principles
 
-Threat Intelligence segue i seguenti principi.
+Il Threat Engine segue i seguenti principi.
 
 * uniformità;
 * modularità;
@@ -272,7 +276,7 @@ Threat Intelligence segue i seguenti principi.
 
 # Constraints
 
-Threat Intelligence:
+Il Threat Engine:
 
 * non modifica i dati originali;
 * non comunica direttamente con il Frontend;

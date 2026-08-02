@@ -4,7 +4,7 @@
 
 **Document:** API Specification
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 
 **Status:** Approved
 
@@ -34,6 +34,10 @@ Le API sono progettate per essere:
 
 # Architecture
 
+Le REST API appartengono al Query Flow.
+
+Una richiesta API restituisce esclusivamente risultati già elaborati dal Core.
+
 ```text id="jlwmxt"
 Frontend Application
 
@@ -43,16 +47,12 @@ REST API
 
 ↓
 
-Privacy Intelligence Engine
-
-↓
-
-Adapter
-
-↓
-
-Data Source
+Risultati prodotti dal Privacy Intelligence Engine
 ```
+
+Nessun endpoint attiva una comunicazione verso gli Adapter o le Data Sources.
+
+L'acquisizione dei dati appartiene all'Acquisition Flow ed è descritta nella Architecture Specification.
 
 ---
 
@@ -422,6 +422,7 @@ Le API:
 * non espongono direttamente i backend;
 * non restituiscono dati non normalizzati;
 * non contengono logica di business;
+* non attivano l'Acquisition Flow;
 * rappresentano l'unico punto di accesso ufficiale al Core.
 
 ---

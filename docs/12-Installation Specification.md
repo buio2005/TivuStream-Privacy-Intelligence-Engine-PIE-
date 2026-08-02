@@ -4,7 +4,7 @@
 
 **Document:** Installation Specification
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 
 **Status:** Approved
 
@@ -169,6 +169,63 @@ Durante la configurazione iniziale vengono definiti.
 Ogni Data Source viene registrata attraverso il relativo Adapter.
 
 Il sistema verifica automaticamente la connettività.
+
+---
+
+# Capability Detection
+
+Al termine della registrazione il sistema rileva **quali capacità la Data Source è in grado di offrire** nella sua configurazione corrente.
+
+Il risultato viene presentato all'utente prima del completamento dell'installazione.
+
+Per ciascuna capacità mancante il sistema indica:
+
+* quali analisi non saranno disponibili;
+* quale intervento la renderebbe disponibile;
+* quali conseguenze comporta tale intervento.
+
+---
+
+# Optional Capabilities
+
+Alcune capacità richiedono componenti facoltativi della Data Source.
+
+Quando tali componenti sono installabili in modo automatico, il sistema può proporne l'installazione durante la configurazione guidata.
+
+La proposta rispetta tre regole.
+
+**Scelta esplicita.** Nessun componente facoltativo viene installato senza una decisione dell'utente.
+
+**Informazione simmetrica.** Vantaggi e costi sono presentati insieme. Se l'attivazione comporta un aumento del consumo di risorse, la registrazione di dati aggiuntivi o un impatto sulle prestazioni, tali aspetti vengono dichiarati prima della scelta.
+
+**Reversibilità.** L'utente può rifiutare la proposta e completare comunque l'installazione, oppure attivare la capacità in un momento successivo.
+
+---
+
+# Retention Configuration
+
+Quando una capacità dipende da un componente che registra dati con una politica di ritenzione propria, il sistema verifica la coerenza fra tale ritenzione e la frequenza di acquisizione configurata.
+
+Una ritenzione inferiore all'intervallo di acquisizione comporta una **perdita di dati non segnalata dal backend**.
+
+Il sistema propone valori coerenti e segnala la condizione quando si verifica.
+
+Questa verifica viene ripetuta a ogni modifica della frequenza di acquisizione.
+
+---
+
+# Privacy Disclosure
+
+Quando una capacità comporta la registrazione di dati aggiuntivi relativi all'attività degli utenti, l'installazione dichiara in modo esplicito:
+
+* quali dati vengono registrati;
+* dove risiedono;
+* per quanto tempo vengono conservati;
+* quali dati vengono conservati da PIE e quali restano nella Data Source.
+
+Il progetto adotta il principio di aggregare il dato al momento dell'acquisizione e di non conservare il dettaglio puntuale all'interno di PIE.
+
+Questa scelta va comunicata all'utente, poiché ne determina l'esposizione effettiva.
 
 ---
 

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    Application host.
+
+    Hosts the REST API layer and acts as the composition root of the system.
+    Being the composition root, this is the only project allowed to reference
+    a concrete Adapter.
+
+    No endpoint is defined at this milestone.
+  -->
+
+  <PropertyGroup>
+    <Description>Host of the Privacy Intelligence Engine.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TivuStream.Pie.Core\TivuStream.Pie.Core.csproj" />
+    <ProjectReference Include="..\TivuStream.Pie.Adapters\TivuStream.Pie.Adapters.csproj" />
+    <ProjectReference Include="..\TivuStream.Pie.Adapters.Technitium\TivuStream.Pie.Adapters.Technitium.csproj" />
+  </ItemGroup>
+
+</Project>

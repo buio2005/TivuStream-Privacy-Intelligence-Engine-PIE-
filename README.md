@@ -41,9 +41,11 @@ Ogni funzionalità dovrà contribuire a rendere la privacy più comprensibile e 
 
 Il Privacy Intelligence Engine rappresenta il livello di analisi del sistema.
 
-I motori sottostanti raccolgono i dati.
+Le Data Sources raccolgono i dati.
 
-Il motore PIE li interpreta.
+Gli Adapter li convertono nel Unified Data Model.
+
+Il Core li interpreta.
 
 Le applicazioni TivuStream li presentano all'utente.
 
@@ -51,16 +53,36 @@ Le applicazioni TivuStream li presentano all'utente.
                 Data Sources
                      │
                      ▼
+                  Adapters
+                     │
+                     ▼
+            Unified Data Model
+                     │
+                     ▼
      TivuStream Privacy Intelligence Engine
                      │
       ┌──────────────┼──────────────┐
-      │              │              │
- Privacy Score   Threat Engine   Device Engine
+      ▼              ▼              ▼
+ Threat Engine  Device Engine   NPSS Engine
       │              │              │
       └──────────────┼──────────────┘
                      ▼
+             Recommendation Engine
+                     │
+                     ▼
+                  REST API
+                     │
+                     ▼
           TivuStream Applications
 ```
+
+Il sistema utilizza due flussi distinti.
+
+L'**Acquisition Flow** acquisisce periodicamente i dati dalle Data Sources.
+
+Il **Query Flow** serve le richieste del Frontend restituendo esclusivamente risultati già elaborati.
+
+La descrizione completa è contenuta nella Architecture Specification.
 
 ---
 
@@ -95,22 +117,24 @@ Il progetto sarà composto da moduli indipendenti.
 
 ## Core
 
-* Privacy Intelligence Engine
-* API Layer
-* Data Normalizer
+I moduli del Core utilizzano tutti il suffisso **Engine**.
+
+* Threat Engine
+* Device Engine
+* NPSS Engine
+* Alert Engine
 * Recommendation Engine
 
-## Analysis
+## Integration
 
-* Privacy Score
-* Threat Intelligence
-* Device Intelligence
-* Alert Engine
+* Adapter Manager
+* Technitium Adapter
+* Unified Data Model
 
-## Applications
+## Interface
 
+* REST API
 * Network Privacy
-* Future Modules
 
 ---
 
@@ -126,57 +150,59 @@ Il progetto sarà composto da moduli indipendenti.
 
 # Tecnologie
 
-Il progetto utilizzerà principalmente:
+## Backend
 
-* Technitium DNS Server
-* HTTP API
-* Backend modulare
-* Frontend Web
-* Docker
+* ASP.NET Core
+* C#
+* REST API
+* SQLite
+
+## Frontend
+
+* Vue 3
+* TypeScript
+* Pinia
+* Vite
+
+## Data Source
+
+* Technitium DNS Server (prima integrazione supportata)
+
+## Piattaforme
+
 * Linux
 * Windows
+* Docker
 
-Ulteriori componenti verranno documentati durante lo sviluppo.
+Ogni dipendenza introdotta nel progetto viene documentata con nome, versione, licenza e scopo.
 
 ---
 
 # Roadmap
 
-## Fase 1
+| Milestone | Descrizione           | Stato     |
+| --------- | --------------------- | --------- |
+| M1        | Documentation Release | Completed |
+| M2        | Backend Core          | Planned   |
+| M3        | Technitium Adapter    | Planned   |
+| M4        | Core Modules          | Planned   |
+| M5        | Frontend              | Planned   |
+| M6        | Reports               | Planned   |
+| M7        | Testing               | Planned   |
+| M8        | Beta Release          | Planned   |
+| M9        | Stable Release        | Planned   |
 
-Analisi completa del backend Technitium.
-
-## Fase 2
-
-Progettazione del Privacy Intelligence Engine.
-
-## Fase 3
-
-Sviluppo del backend.
-
-## Fase 4
-
-Dashboard.
-
-## Fase 5
-
-Privacy Score.
-
-## Fase 6
-
-Threat Intelligence.
-
-## Fase 7
-
-Beta pubblica.
+Il dettaglio delle fasi è contenuto nella Roadmap Specification.
 
 ---
 
 # Stato del progetto
 
-**Versione documentazione:** 1.0
+**Documentation Release:** 1.0.4
 
-**Stato:** Progettazione completata – inizio sviluppo.
+**Project Status:** Documentation Completed
+
+**Development Status:** Not Started
 
 ---
 
@@ -186,10 +212,27 @@ La documentazione tecnica completa è disponibile nella cartella `docs/`.
 
 Ogni documento descrive uno specifico componente dell'architettura e costituisce il riferimento ufficiale per lo sviluppo del progetto.
 
+Il progetto segue un modello **Documentation First**: la documentazione rappresenta la fonte autorevole, il codice la implementa.
+
+Prima di contribuire consultare nell'ordine:
+
+1. `README.md`
+2. `PROJECT_CONTEXT.md`
+3. `AI_DEVELOPMENT_GUIDE.md`
+4. le Specification in `docs/`
+
+Le modifiche alla documentazione sono registrate in `CHANGELOG.md`.
+
 ---
 
 # Licenza
 
-La licenza del progetto verrà definita durante le prime fasi di sviluppo.
+La licenza definitiva del progetto non è ancora stata scelta.
 
-Le componenti open source integrate manterranno le rispettive licenze originali.
+La decisione verrà presa prima della prima Beta pubblica.
+
+Le componenti open source integrate mantengono le rispettive licenze originali.
+
+Technitium DNS Server rappresenta un software indipendente: PIE ne utilizza esclusivamente le API pubbliche e non ne costituisce un fork.
+
+La politica completa è descritta nella License Specification.
