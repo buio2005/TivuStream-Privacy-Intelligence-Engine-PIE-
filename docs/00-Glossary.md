@@ -4,7 +4,7 @@
 
 **Document:** Glossary Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
@@ -114,6 +114,24 @@ Il vocabolario delle capability coincide con i nomi delle entità del Unified Da
 Una capability non descrive le funzionalità del prodotto esterno: le funzionalità di un backend costituiscono dati da analizzare, non capacità strutturali.
 
 L'assenza di una capability significa che il dato non è misurabile, non che sia pari a zero.
+
+---
+
+# Storage
+
+Componente del Backend responsabile della conservazione nel tempo delle acquisizioni e dei risultati prodotti dal Core.
+
+Non esegue analisi e non è conosciuto dal Core.
+
+---
+
+# Observation Period
+
+Intervallo temporale fisso al quale sono allineate le acquisizioni.
+
+Un'acquisizione non è un insieme di eventi ma l'osservazione di un intervallo: due osservazioni di intervalli sovrapposti non sono sommabili.
+
+Una nuova osservazione dello stesso periodo sostituisce la precedente. Un periodo concluso è immutabile.
 
 ---
 

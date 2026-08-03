@@ -18,6 +18,7 @@
     <ProjectReference Include="..\TivuStream.Pie.Core\TivuStream.Pie.Core.csproj" />
     <ProjectReference Include="..\TivuStream.Pie.Adapters\TivuStream.Pie.Adapters.csproj" />
     <ProjectReference Include="..\TivuStream.Pie.Adapters.Technitium\TivuStream.Pie.Adapters.Technitium.csproj" />
+    <ProjectReference Include="..\TivuStream.Pie.Storage\TivuStream.Pie.Storage.csproj" />
   </ItemGroup>
 
 </Project>

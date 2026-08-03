@@ -8,6 +8,143 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M5.1 — Storage, schema e migrazioni — 2026-08-03
+
+Fondamenta della persistenza. Nessun dato applicativo viene ancora scritto.
+
+### Added
+
+**Progetto `TivuStream.Pie.Storage`**
+
+Referenzia il solo Unified Data Model. Il Core non lo conosce.
+
+**`SqliteConnectionFactory`**
+
+Apre le connessioni e crea la cartella del database se assente.
+
+Abilita i vincoli di integrità referenziale su ogni connessione: SQLite li lascia disattivati per impostazione predefinita, e un riferimento non verificato è un riferimento che prima o poi risulterà errato.
+
+**`SchemaMigrator` e `IMigration`**
+
+Migrazioni scritte a mano, ordinate, applicate ciascuna in una propria transazione.
+
+Nessuna migrazione viene generata a partire dal modello: uno schema prodotto automaticamente cambia ogni volta che cambia il modello, che è esattamente ciò che non deve accadere a dati già presenti sulla macchina di una persona.
+
+Una migrazione già applicata non viene mai modificata; un errore si corregge con una migrazione successiva.
+
+**Rifiuto dello schema più recente**
+
+Se il database dichiara una versione superiore a quella attesa, l'avvio viene interrotto con un messaggio esplicito.
+
+Proseguire significherebbe scrivere record che questa versione non comprende, con danni che emergerebbero molto dopo la causa.
+
+**Migrazione 0001**
+
+Crea le tabelle `data_source` e `observation_period`.
+
+Il vincolo di unicità su sorgente e inizio del periodo **rende impossibile violare la regola dei periodi di osservazione**: una regola architetturale diventa un vincolo del database anziché una raccomandazione.
+
+**`MigrationOutcome`**
+
+Riporta versione iniziale, finale e migrazioni applicate. Una modifica alla forma dei dati conservati non viene mai eseguita in silenzio.
+
+### Dependencies
+
+**Prima dipendenza esterna, e primo blocco dell'audit**
+
+`Microsoft.Data.Sqlite` 10.0.0 ha portato con sé `SQLitePCLRaw.lib.e_sqlite3` 2.1.11, segnalata dall'advisory GHSA-2m69-gcr7-jv3q.
+
+Si tratta di CVE-2025-6965: nelle versioni di SQLite precedenti alla 3.50.2 il numero di termini di aggregazione può eccedere le colonne disponibili, con possibile corruzione di memoria. Gravità 7,2.
+
+L'audit delle dipendenze, configurato in M2.1 quando il progetto non aveva ancora alcuna dipendenza, ha rifiutato la compilazione. Il primo pacchetto esterno del progetto è stato anche il primo caso in cui quel controllo è servito.
+
+**Percorso seguito**
+
+1. Aggiornamento a `Microsoft.Data.Sqlite` 10.0.10, l'ultima disponibile. Insufficiente: risolve ancora a 2.1.11.
+2. Pinning transitivo centralizzato dell'intera famiglia SQLitePCLRaw a 2.1.12. Le versioni risultano registrate ma NuGet non le applica.
+3. **Riferimento diretto** a `SQLitePCLRaw.bundle_e_sqlite3` nel progetto Storage. Un riferimento diretto prevale sempre sulla risoluzione transitiva.
+
+L'audit accetta la 2.1.12. Nessuna deroga è stata necessaria.
+
+| Nome                              | Scopo                       | Licenza    |
+| --------------------------------- | --------------------------- | ---------- |
+| `Microsoft.Data.Sqlite` 10.0.10   | Accesso al database SQLite  | MIT        |
+| `SQLitePCLRaw.bundle_e_sqlite3` 2.1.12 | Libreria SQLite nativa | Apache-2.0 |
+
+Il riferimento diretto alla libreria nativa è una forzatura consapevole, annotata nel file di progetto con la propria condizione di uscita: va rimosso quando `Microsoft.Data.Sqlite` aggiornerà la dipendenza per conto proprio.
+
+### Changed
+
+**Host applicativo**
+
+Lo schema viene portato alla versione attesa prima che qualunque richiesta venga servita, e l'esito viene registrato.
+
+L'endpoint di stato riporta ora lo stato dello Storage e la versione dello schema.
+
+Il percorso del database è deliberatamente escluso dalla risposta: l'endpoint non verifica ancora i permessi, e la posizione dei dati di una persona non è un'informazione da fornire a chiunque la chieda.
+
+---
+
+## Documentation Release 1.0.5 — 2026-08-03
+
+Definizione della persistenza, ultima lacuna documentale rilevata durante la revisione iniziale.
+
+Nessun codice è stato prodotto in questa release.
+
+### Added
+
+**16 - Persistence Specification**
+
+Nuovo documento. Definisce cosa viene conservato, per quanto tempo, dove e con quali garanzie.
+
+Elementi principali.
+
+* Si conservano le acquisizioni convertite nel Unified Data Model e i risultati del Core. Le prime consentono di ricalcolare le analisi su dati storici quando un algoritmo cambia, cosa altrimenti impossibile data la ritenzione dei backend.
+* **Non viene mai conservato il dettaglio della singola interrogazione DNS.** L'aggregazione avviene nell'Adapter. È la principale misura di protezione dell'utente prevista dal progetto.
+* Ritenzione a livelli: dettaglio orario per 30 giorni, aggregati giornalieri per 12 mesi, aggregati mensili per 5 anni. Valori predefiniti e configurabili.
+* Schema versionato, con migrazioni esplicite e ordinate. L'avvio viene rifiutato se lo schema è più recente del software, per evitare corruzione silenziosa.
+* Il database non lascia mai il dispositivo. Nessuna telemetria. L'eliminazione dei dati è effettiva e non una marcatura logica.
+
+**Periodi di osservazione**
+
+Concetto centrale introdotto da questa specifica.
+
+Un'acquisizione **non è un insieme di eventi ma l'osservazione di un intervallo**. Due osservazioni di intervalli sovrapposti descrivono in parte lo stesso traffico e non sono sommabili.
+
+Con la configurazione attuale, che acquisisce ogni cinque minuti una finestra di sessanta, si sarebbero prodotte dodici osservazioni all'ora largamente ridondanti. Sommarle avrebbe generato valori privi di senso.
+
+Le acquisizioni sono quindi allineate a periodi fissi, per impostazione predefinita l'ora solare. Una nuova osservazione dello stesso periodo **sostituisce** la precedente; un periodo concluso è immutabile; lo storico è la sequenza dei periodi conclusi, che non si sovrappongono e sono aggregabili.
+
+L'idempotenza è garantita per costruzione. La frequenza di acquisizione diventa un parametro di freschezza, non di correttezza.
+
+**Componente Storage**
+
+Aggiunto ai componenti ufficiali del Backend. Nessuno degli otto esistenti riguardava la conservazione dei dati.
+
+Il Core non lo conosce, il Frontend non lo raggiunge, il Unified Data Model resta privo di qualunque elemento di persistenza.
+
+### Dependencies
+
+Approvata la prima dipendenza esterna del progetto.
+
+| Nome                   | Scopo                    | Licenza |
+| ---------------------- | ------------------------ | ------- |
+| `Microsoft.Data.Sqlite`| Accesso al database SQLite | MIT   |
+
+L'accesso ai dati avviene tramite SQL esplicito. Schema e interrogazioni restano ispezionabili, senza livelli di comportamento implicito.
+
+### Changed
+
+**11 - Backend Specification** — aggiunto il componente Storage con responsabilità e vincoli, e il riferimento ai periodi di osservazione nell'Adapter Manager.
+
+**00 - Glossary** — aggiunti i termini `Storage` e `Observation Period`.
+
+### Known Impact
+
+L'attuale `AcquisitionService` richiede una finestra mobile degli ultimi sessanta minuti. Andrà allineato ai periodi di osservazione fissi al momento dell'implementazione dello Storage.
+
+---
+
 ## Milestone M3.4 — Prima fetta verticale — 2026-08-02
 
 Primo percorso completo dal Data Source al browser: Technitium, Adapter, Unified Data Model, REST API.

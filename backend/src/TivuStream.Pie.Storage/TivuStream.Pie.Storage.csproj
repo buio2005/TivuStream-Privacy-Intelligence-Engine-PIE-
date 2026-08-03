@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Storage.
+
+    Keeps acquisitions and Core results over time, because the Data Sources
+    apply a retention of their own: what is not kept at the moment of the
+    acquisition is lost for good.
+
+    This project references the Unified Data Model and nothing else. The Core
+    does not know it exists, and the model carries no trace of persistence.
+  -->
+
+  <PropertyGroup>
+    <Description>Persistence of the Privacy Intelligence Engine.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TivuStream.Pie.Model\TivuStream.Pie.Model.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+
+    <!--
+      Referenced explicitly, although Microsoft.Data.Sqlite already brings it
+      in, to hold the native SQLite library at a version the dependency audit
+      accepts.
+
+      Every release of Microsoft.Data.Sqlite up to 10.0.10 resolves to 2.1.11,
+      which the audit reports under advisory GHSA-2m69-gcr7-jv3q. Raising it
+      through central transitive pinning had no effect, so the version is
+      taken over by a direct reference, which always wins.
+
+      To be removed once Microsoft.Data.Sqlite moves forward on its own.
+    -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
+  </ItemGroup>
+
+</Project>

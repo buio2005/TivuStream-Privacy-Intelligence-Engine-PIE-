@@ -10,6 +10,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TivuStream.Pie.Adapters", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TivuStream.Pie.Adapters.Technitium", "src\TivuStream.Pie.Adapters.Technitium\TivuStream.Pie.Adapters.Technitium.csproj", "{7D2F4A25-E10A-55FB-86DC-A02401BF727C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TivuStream.Pie.Storage", "src\TivuStream.Pie.Storage\TivuStream.Pie.Storage.csproj", "{3F5A9C21-8D4E-4B7A-9E16-2C8B0D5F7A34}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TivuStream.Pie.Api", "src\TivuStream.Pie.Api\TivuStream.Pie.Api.csproj", "{77B2B3C5-129D-5BA3-818D-9532BD757B47}"
 EndProject
 Global
@@ -34,6 +36,10 @@ Global
 		{7D2F4A25-E10A-55FB-86DC-A02401BF727C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D2F4A25-E10A-55FB-86DC-A02401BF727C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D2F4A25-E10A-55FB-86DC-A02401BF727C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F5A9C21-8D4E-4B7A-9E16-2C8B0D5F7A34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F5A9C21-8D4E-4B7A-9E16-2C8B0D5F7A34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F5A9C21-8D4E-4B7A-9E16-2C8B0D5F7A34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F5A9C21-8D4E-4B7A-9E16-2C8B0D5F7A34}.Release|Any CPU.Build.0 = Release|Any CPU
 		{77B2B3C5-129D-5BA3-818D-9532BD757B47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{77B2B3C5-129D-5BA3-818D-9532BD757B47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77B2B3C5-129D-5BA3-818D-9532BD757B47}.Release|Any CPU.ActiveCfg = Release|Any CPU

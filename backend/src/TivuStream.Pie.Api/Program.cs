@@ -14,7 +14,10 @@ using Microsoft.Extensions.Options;
 using TivuStream.Pie.Adapters.Technitium;
 using TivuStream.Pie.Api.Acquisition;
 using TivuStream.Pie.Api.Contracts;
+using TivuStream.Pie.Api.Storage;
 using TivuStream.Pie.Model.Entities;
+using TivuStream.Pie.Storage;
+using TivuStream.Pie.Storage.Schema;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -23,11 +26,18 @@ builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, relo
 
 builder.Services.Configure<TechnitiumOptions>(builder.Configuration.GetSection("Technitium"));
 builder.Services.Configure<AcquisitionOptions>(builder.Configuration.GetSection("Acquisition"));
+builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Storage"));
 
 builder.Services.AddSingleton(
     serviceProvider => serviceProvider.GetRequiredService<IOptions<TechnitiumOptions>>().Value);
 
 builder.Services.AddHttpClient<TechnitiumAdapter>();
+
+builder.Services.AddSingleton(
+    serviceProvider => serviceProvider.GetRequiredService<IOptions<StorageOptions>>().Value);
+
+builder.Services.AddSingleton<SqliteConnectionFactory>();
+builder.Services.AddSingleton<SchemaMigrator>();
 
 builder.Services.AddSingleton<AcquisitionState>();
 builder.Services.AddHostedService<AcquisitionService>();
@@ -39,6 +49,24 @@ builder.Services.ConfigureHttpJsonOptions(
 
 WebApplication app = builder.Build();
 
+// The schema is brought up to date before anything else runs. Serving
+// requests against a database of the wrong shape would produce failures far
+// from their cause.
+MigrationOutcome migration = app.Services.GetRequiredService<SchemaMigrator>().Migrate();
+
+if (migration.DatabaseWasCreated)
+{
+    SchemaLog.Created(app.Logger, migration.FinalVersion);
+}
+else if (migration.SchemaChanged)
+{
+    SchemaLog.Updated(app.Logger, migration.InitialVersion, migration.FinalVersion);
+}
+else
+{
+    SchemaLog.Unchanged(app.Logger, migration.FinalVersion);
+}
+
 app.MapGet("/api/v1/health", (AcquisitionState state) =>
 {
     AcquisitionResult? last = state.Current;
@@ -48,6 +76,8 @@ app.MapGet("/api/v1/health", (AcquisitionState state) =>
         Api = "Online",
         Core = "NotImplemented",
         Adapter = last is null ? "Idle" : last.Succeeded ? "Online" : "Failing",
+        Storage = "Ready",
+        SchemaVersion = migration.FinalVersion,
         Backend = last?.DataSource,
         LastAcquisitionAt = last?.AttemptedAt,
         LastFailure = last?.Failure,

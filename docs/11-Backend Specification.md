@@ -4,7 +4,7 @@
 
 **Document:** Backend Specification
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
@@ -110,6 +110,7 @@ Il Backend è composto dai seguenti componenti.
 * REST API
 * Core Engine
 * Adapter Manager
+* Storage
 * Authentication
 * Configuration Manager
 * Logging Service
@@ -224,6 +225,30 @@ Gli Adapter convertono gli errori della propria Data Source in un'eccezione dedi
 Il resto del sistema non gestisce mai errori espressi nel vocabolario di uno specifico backend.
 
 I dettagli diagnostici prodotti dalla Data Source non oltrepassano l'Adapter.
+
+---
+
+# Storage
+
+Conserva nel tempo le acquisizioni e i risultati prodotti dal Core.
+
+La conservazione è necessaria perché le Data Sources applicano una ritenzione propria: ciò che non viene conservato al momento dell'acquisizione è perduto in modo definitivo.
+
+Responsabilità.
+
+* conservazione delle acquisizioni convertite nel Unified Data Model;
+* conservazione dei risultati del Core;
+* applicazione della ritenzione a livelli;
+* gestione della versione dello schema.
+
+Vincoli.
+
+* Lo Storage non esegue analisi e non modifica i dati che riceve.
+* Il Core non conosce lo Storage.
+* Il Unified Data Model non contiene alcun elemento di persistenza.
+* Il Frontend non raggiunge mai lo Storage direttamente.
+
+Il funzionamento è descritto nella Persistence Specification.
 
 ---
 
@@ -434,6 +459,10 @@ Risultati
 L'Adapter Manager orchestra l'acquisizione e invoca il Core Engine fornendo dati già espressi nel Unified Data Model.
 
 Il Core Engine non invoca mai un Adapter.
+
+Le acquisizioni sono allineate a periodi di osservazione fissi. Una nuova osservazione dello stesso periodo sostituisce la precedente anziché aggiungersi: due osservazioni di intervalli sovrapposti descrivono in parte lo stesso traffico e non sono sommabili.
+
+Il criterio è definito nella Persistence Specification.
 
 ---
 

@@ -22,9 +22,41 @@
 
   <ItemGroup>
     <!--
-      Example, once a dependency has been approved:
-      <PackageVersion Include="Package.Name" Version="1.0.0" />
+      Microsoft.Data.Sqlite
+      Purpose : access to the SQLite database of the Storage component
+      Licence : MIT
+      Approved: Documentation Release 1.0.5, Persistence Specification
+
+      Version 10.0.0 brought in SQLitePCLRaw.lib.e_sqlite3 2.1.11, which
+      carries a known vulnerability of high severity. The dependency audit
+      refused the build, which is what it is there for.
     -->
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.10" />
+
+    <!--
+      SQLitePCLRaw family
+      Purpose : native SQLite library, reached through Microsoft.Data.Sqlite
+      Licence : Apache-2.0
+
+      None of these is referenced directly by any project.
+
+      Every release of Microsoft.Data.Sqlite up to 10.0.10 still brings in
+      2.1.11, which carries advisory GHSA-2m69-gcr7-jv3q.
+
+      Central transitive pinning proved ineffective on this family, so the
+      Storage project references the bundle directly. A direct reference
+      always wins over transitive resolution.
+
+      These entries provide the version for that reference and keep the family
+      consistent.
+
+      Series 3.x exists but is a major change that Microsoft.Data.Sqlite 10.x
+      does not expect, so 2.1.12 is the correct target.
+    -->
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.12" />
+    <PackageVersion Include="SQLitePCLRaw.core" Version="2.1.12" />
+    <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" />
+    <PackageVersion Include="SQLitePCLRaw.provider.e_sqlite3" Version="2.1.12" />
   </ItemGroup>
 
 </Project>

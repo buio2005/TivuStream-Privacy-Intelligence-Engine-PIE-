@@ -32,6 +32,21 @@ public sealed record HealthReport
     public required string Adapter { get; init; }
 
     /// <summary>
+    /// State of the Storage component.
+    /// </summary>
+    public required string Storage { get; init; }
+
+    /// <summary>
+    /// Version of the database schema in use.
+    /// </summary>
+    /// <remarks>
+    /// The path of the database is deliberately left out: this endpoint does
+    /// not verify permissions yet, and the location of the data of a person
+    /// is not something to hand out to whoever asks.
+    /// </remarks>
+    public required int SchemaVersion { get; init; }
+
+    /// <summary>
     /// Description of the Data Source at the time of the last acquisition.
     /// </summary>
     public DataSource? Backend { get; init; }
