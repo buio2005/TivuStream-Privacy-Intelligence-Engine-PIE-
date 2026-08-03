@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy & Security Score (NPSS) Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
@@ -86,17 +86,94 @@ I pesi appartengono all'algoritmo NPSS e seguono il versionamento dell'algoritmo
 
 ---
 
+# Indicator Definitions
+
+Gli indicatori di ciascuna area sono definiti in modo **calcolabile e verificabile**.
+
+Un indicatore descritto soltanto da un titolo non è utilizzabile: renderebbe il punteggio dipendente dall'interpretazione di chi scrive il codice, in contrasto con il principio di Transparency, che richiede che ogni valutazione sia spiegabile.
+
+Ogni indicatore dichiara il dato da cui deriva. Un indicatore il cui dato non è disponibile è **non misurabile**, e la sua quota di peso viene esclusa dal calcolo.
+
+---
+
 # DNS Security
 
 Valuta la configurazione del servizio DNS.
 
-Indicatori.
+Peso complessivo **20**, distribuito su quattro indicatori da **5** punti.
 
-* DNSSEC
-* DNS Encryption
-* Resolver Configuration
-* Query Validation
-* DNS Errors
+---
+
+## DNSSEC Validation
+
+La validazione DNSSEC protegge dalla manomissione delle risposte.
+
+| Condizione             | Punti |
+| ---------------------- | ----- |
+| Validazione attiva     | 5     |
+| Validazione non attiva | 0     |
+
+Dato: configurazione della Data Source.
+
+---
+
+## Transport Encryption
+
+Valuta sia la disponibilità di trasporti cifrati sia il loro utilizzo effettivo.
+
+| Componente                                            | Punti |
+| ----------------------------------------------------- | ----- |
+| Almeno un trasporto cifrato abilitato                  | 2     |
+| Quota di interrogazioni ricevute su trasporto cifrato  | 3     |
+
+La seconda componente è proporzionale alla quota osservata.
+
+La distinzione è voluta: un servizio può offrire trasporti cifrati senza che alcun dispositivo li utilizzi. Misurare solo la disponibilità premierebbe un'intenzione, misurare solo l'utilizzo ignorerebbe una configurazione corretta.
+
+Dato: configurazione della Data Source e statistiche per protocollo.
+
+**Limite dichiarato.** L'indicatore misura il trasporto fra i dispositivi e il server DNS locale, non fra il server e i resolver esterni.
+
+---
+
+## Resolver Configuration
+
+Valuta le impostazioni del resolver che incidono sulla privacy.
+
+| Componente                                     | Punti |
+| ---------------------------------------------- | ----- |
+| Minimizzazione del nome interrogato attiva      | 2,5   |
+| Inoltro della sottorete del client disattivato  | 2,5   |
+
+La minimizzazione riduce le informazioni trasmesse ai server autoritativi.
+
+L'inoltro della sottorete del client comunica ai server esterni la porzione di rete da cui proviene l'interrogazione: è una funzione di ottimizzazione che riduce la privacy, quindi il punteggio premia la sua **assenza**.
+
+Dato: configurazione della Data Source.
+
+---
+
+## DNS Errors
+
+Valuta la quota di interrogazioni che il servizio non è riuscito a soddisfare.
+
+```text
+punti = 5 × ( 1 − interrogazioni fallite / interrogazioni totali )
+```
+
+Le risposte di dominio inesistente non concorrono al conteggio delle interrogazioni fallite, trattandosi di risposte corrette.
+
+In assenza di traffico l'indicatore è **non misurabile**: non esiste nulla su cui esprimere un giudizio.
+
+Dato: statistiche.
+
+---
+
+## Removed Indicator
+
+La versione precedente elencava un indicatore denominato **Query Validation**, privo di una definizione distinta da DNSSEC Validation.
+
+È stato rimosso anziché reinterpretato. Un indicatore senza significato proprio avrebbe prodotto punti arbitrari.
 
 ---
 
@@ -145,25 +222,81 @@ Indicatori.
 
 Valuta la qualità della configurazione complessiva.
 
-Indicatori.
+Peso complessivo **10**, distribuito su due indicatori da **5** punti.
 
-* configurazione valida;
-* servizi disponibili;
-* sincronizzazione;
-* stato operativo.
+---
+
+## Source Availability
+
+| Condizione                              | Punti |
+| --------------------------------------- | ----- |
+| La Data Source ha risposto correttamente | 5     |
+| La Data Source non è raggiungibile       | 0     |
+
+Dato: stato della Data Source.
+
+---
+
+## Filtering Configuration
+
+| Componente                          | Punti |
+| ----------------------------------- | ----- |
+| Filtraggio attivo                    | 2,5   |
+| Almeno una lista di filtro configurata | 2,5  |
+
+Il filtraggio attivo senza alcuna lista configurata non produce alcun effetto: le due componenti sono distinte perché descrivono condizioni diverse.
+
+Dato: configurazione della Data Source.
+
+---
+
+## Redefined Indicators
+
+La versione precedente elencava quattro indicatori: configurazione valida, servizi disponibili, sincronizzazione, stato operativo.
+
+Erano sovrapposti fra loro e privi di criterio. Sono stati sostituiti da due indicatori definiti in modo verificabile.
 
 ---
 
 # Network Integrity
 
-Valuta lo stato generale della rete.
+Valuta la continuità e l'affidabilità dell'osservazione della rete.
 
-Indicatori.
+Peso complessivo **10**, distribuito su due indicatori da **5** punti.
 
-* errori;
-* disponibilità;
-* consistenza;
-* stabilità.
+---
+
+## Observation Continuity
+
+Valuta quanti dei periodi di osservazione attesi sono stati effettivamente osservati.
+
+```text
+punti = 5 × ( periodi osservati / periodi attesi )
+```
+
+L'intervallo di riferimento predefinito è di ventiquattro ore.
+
+Un periodo mancante indica che il sistema non ha potuto osservare la rete in quel lasso di tempo, e quindi che l'analisi presenta una lacuna.
+
+Dato: periodi conservati.
+
+---
+
+## Acquisition Reliability
+
+Valuta la quota di tentativi di acquisizione andati a buon fine.
+
+Richiede la registrazione dei tentativi, compresi quelli falliti.
+
+Finché tale registrazione non esiste, l'indicatore è **non misurabile**.
+
+---
+
+## Redefined Indicators
+
+La versione precedente elencava errori, disponibilità, consistenza e stabilità.
+
+Il primo duplicava l'indicatore DNS Errors, gli altri erano privi di definizione. Sono stati sostituiti da due indicatori riferiti alla continuità dell'osservazione, che è ciò che questa area può realmente misurare.
 
 ---
 

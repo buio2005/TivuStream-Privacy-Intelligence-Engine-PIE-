@@ -4,7 +4,7 @@
 
 **Document:** Threat Intelligence Specification
 
-**Version:** 1.0.1
+**Version:** 1.1.0
 
 **Status:** Approved
 
@@ -159,14 +159,33 @@ Il livello di confidenza permette di distinguere una classificazione certa da un
 
 # Threat Sources
 
-Le classificazioni possono essere ottenute da:
+Le classificazioni sono ottenute da:
 
+* liste locali, scaricate periodicamente;
 * regole interne;
-* blocklist;
-* fonti esterne;
 * algoritmi di correlazione.
 
 La provenienza della classificazione viene sempre registrata.
+
+---
+
+## Local Classification Only
+
+La corrispondenza avviene **esclusivamente sul dispositivo**.
+
+I domini contattati dalla rete dell'utente **non vengono mai trasmessi a terzi**, per alcuna finalità, compresa la consultazione di servizi di reputazione.
+
+La motivazione è diretta: un dominio interrogato rivela cosa un dispositivo stava facendo. Consultare un servizio esterno per stabilire se un dominio sia pericoloso significherebbe comunicare a quel servizio la cronologia della rete che si sta proteggendo.
+
+Uno strumento che analizza la privacy non può ottenere i propri risultati riducendola.
+
+Conseguenze accettate.
+
+* Le minacce comparse di recente vengono riconosciute con il ritardo di aggiornamento delle liste.
+* L'accuratezza dipende dalla qualità delle liste adottate.
+* Il sistema funziona anche in assenza di connessione verso l'esterno.
+
+Le liste vengono scaricate periodicamente. Il download riguarda le liste, mai i domini osservati: nessuna informazione sulla rete dell'utente lascia il dispositivo in quell'occasione.
 
 ---
 

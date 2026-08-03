@@ -4,7 +4,7 @@
 
 **Document:** Technitium Integration Specification
 
-**Version:** 1.3.0
+**Version:** 1.4.0
 
 **Status:** Approved
 
@@ -196,6 +196,7 @@ Capability dichiarate.
 Statistics
 Device
 Domain
+SourceConfiguration
 ```
 
 Dati acquisibili.
@@ -220,6 +221,7 @@ Capability dichiarate.
 Statistics
 Device
 Domain
+SourceConfiguration
 DomainActivity
 ```
 
@@ -287,9 +289,13 @@ Authorization: Bearer <token>
 
 Il token deve appartenere a un **utente dedicato con permessi minimi**.
 
-Il permesso di sola lettura sulla sezione Dashboard è sufficiente per il livello base.
+Sono richiesti i permessi di **sola lettura** sulle sezioni **Dashboard** e **Settings**.
 
-L'utilizzo dell'utente amministrativo è sconsigliato: un token compromesso erediterebbe privilegi non necessari all'acquisizione.
+Il permesso sulle impostazioni è necessario per acquisire la configurazione del server, dalla quale dipendono le aree DNS Security e Configuration del punteggio. Senza di esso quelle aree risulterebbero in larga parte non misurabili.
+
+Nessun permesso di modifica è richiesto in alcun caso: PIE non altera mai la configurazione della Data Source.
+
+L'utilizzo dell'utente amministrativo è sconsigliato: un token compromesso erediterebbe privilegi non necessari all'acquisizione, compresa la facoltà di modificare il server.
 
 ---
 

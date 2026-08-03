@@ -8,6 +8,70 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Documentation Release 1.0.6 — 2026-08-03
+
+Definizione di ciò che il punteggio misura, preliminare alla scrittura del Core.
+
+Nessun codice è stato prodotto in questa release.
+
+### Context
+
+La Specification 07 elencava gli indicatori come **titoli**, non come definizioni. Nessuno indicava come si traduce in punti.
+
+Portarli in codice così com'erano avrebbe significato deciderne il significato dentro un metodo, rendendo il punteggio dipendente da un'interpretazione non verificabile. È l'opposto del principio di Transparency, che richiede che ogni valutazione sia spiegabile.
+
+### Changed
+
+**07 - NPSS**
+
+Ogni indicatore è ora definito in modo calcolabile, con il dato da cui deriva dichiarato.
+
+* **DNS Security** passa da cinque a quattro indicatori da 5 punti: validazione DNSSEC, cifratura del trasporto, configurazione del resolver, errori DNS.
+* **Configuration** passa da quattro indicatori sovrapposti a due: raggiungibilità della sorgente e configurazione del filtraggio.
+* **Network Integrity** viene ridefinita attorno alla continuità dell'osservazione. Il precedente indicatore sugli errori duplicava DNS Errors.
+
+Rimosso l'indicatore **Query Validation**, privo di significato distinto da DNSSEC Validation. È stato eliminato anziché reinterpretato: un indicatore senza definizione propria avrebbe prodotto punti arbitrari.
+
+L'indicatore sulla cifratura distingue la disponibilità dei trasporti dal loro utilizzo effettivo. Misurare solo la prima premierebbe un'intenzione, misurare solo il secondo ignorerebbe una configurazione corretta.
+
+Dichiarato un limite: la cifratura misurata è quella fra dispositivi e server locale, non fra server e resolver esterni.
+
+**05 - Data Model**
+
+Introdotta l'entità `SourceConfiguration` e la capability corrispondente.
+
+Il modello non aveva alcun posto per la configurazione della sorgente, benché la Specification 04 la elencasse fra i dati da acquisire.
+
+**04 - Technitium Integration**
+
+Il token richiede ora la sola lettura su **Dashboard** e **Settings**.
+
+Il secondo permesso è necessario per acquisire la configurazione, dalla quale dipendono due aree del punteggio. Nessun permesso di modifica è richiesto: PIE non altera mai la configurazione della Data Source.
+
+**08 - Threat Intelligence**
+
+Stabilito che la classificazione avviene **esclusivamente in locale**.
+
+I domini contattati dalla rete non vengono mai trasmessi a terzi, nemmeno per stabilire se siano pericolosi.
+
+Un dominio interrogato rivela cosa un dispositivo stava facendo: consultare un servizio esterno significherebbe comunicargli la cronologia della rete che si sta proteggendo. Uno strumento che analizza la privacy non può ottenere i propri risultati riducendola.
+
+Conseguenze accettate e dichiarate: le minacce recenti vengono riconosciute con il ritardo di aggiornamento delle liste, e l'accuratezza dipende dalla qualità delle liste adottate. In compenso il sistema funziona anche senza connessione.
+
+### Expected Coverage
+
+Con queste definizioni, la copertura del punteggio cresce per gradi.
+
+| Milestone | Aree misurabili                                        | Copertura |
+| --------- | ------------------------------------------------------ | --------- |
+| M4.1      | DNS Security, Configuration, Network Integrity parziale | circa 35  |
+| M4.2      | più Privacy Protection e Threat Protection              | circa 80  |
+| M4.3      | più Device Health                                       | circa 100 |
+
+La copertura viene dichiarata all'utente in ogni caso, come previsto dalla specifica.
+
+---
+
 ## Milestone M3.6 — Ispezionabilità — 2026-08-03
 
 Correzione di un'incompletezza e introduzione degli endpoint che rendono verificabile ciò che viene conservato.

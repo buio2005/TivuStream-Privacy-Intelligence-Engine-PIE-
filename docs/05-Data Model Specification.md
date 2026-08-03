@@ -4,7 +4,7 @@
 
 **Document:** Data Model Specification
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 
 **Status:** Approved
 
@@ -67,6 +67,7 @@ Il modello dati è composto dalle seguenti entità principali.
 * Domain
 * DomainActivity
 * Threat
+* SourceConfiguration
 * Alert
 * Recommendation
 * Network Privacy & Security Score (NPSS)
@@ -103,12 +104,13 @@ Questa distinzione è essenziale.
 
 Il vocabolario delle capability coincide con i nomi delle entità del Unified Data Model.
 
-| Capability      | Significato                                          |
-| --------------- | ---------------------------------------------------- |
-| `Statistics`    | La sorgente fornisce statistiche aggregate            |
-| `Device`        | La sorgente permette di identificare i dispositivi    |
-| `Domain`        | La sorgente espone i domini osservati                 |
-| `DomainActivity`| La sorgente correla dispositivi e domini              |
+| Capability            | Significato                                          |
+| --------------------- | ---------------------------------------------------- |
+| `Statistics`          | La sorgente fornisce statistiche aggregate            |
+| `Device`              | La sorgente permette di identificare i dispositivi    |
+| `Domain`              | La sorgente espone i domini osservati                 |
+| `DomainActivity`      | La sorgente correla dispositivi e domini              |
+| `SourceConfiguration` | La sorgente espone le proprie impostazioni            |
 
 Nuove capability possono essere aggiunte quando vengono introdotte nuove entità.
 
@@ -151,6 +153,30 @@ Contiene le statistiche aggregate della rete.
 * activeDevices
 * encryptedQueries
 * dnssecEnabled
+
+---
+
+# SourceConfiguration
+
+Rappresenta le impostazioni della Data Source che incidono su privacy e sicurezza.
+
+Le funzionalità offerte da un backend costituiscono **dati da analizzare**, distinti dalle capability, che dichiarano invece quali entità la sorgente è in grado di fornire.
+
+## Properties
+
+* dnssecValidationEnabled
+* encryptedTransports
+* queryMinimisationEnabled
+* clientSubnetForwardingEnabled
+* filteringEnabled
+* filterListCount
+* filterListUpdateIntervalHours
+
+Le proprietà sono espresse in termini indipendenti dal backend.
+
+Il campo `encryptedTransports` elenca i trasporti cifrati abilitati sulla sorgente.
+
+Il campo `clientSubnetForwardingEnabled` descrive una funzione che **riduce** la privacy comunicando ai server esterni la sottorete di provenienza dell'interrogazione. Il suo valore positivo peggiora la valutazione.
 
 ---
 
