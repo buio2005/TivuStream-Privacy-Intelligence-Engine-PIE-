@@ -14,7 +14,6 @@
     "ApiToken": "incollare qui il token"
   },
   "Acquisition": {
-    "IntervalMinutes": 1,
-    "WindowMinutes": 60
+    "IntervalMinutes": 1
   }
 }

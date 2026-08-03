@@ -11,6 +11,7 @@ public sealed class SchemaMigrator
     private static readonly IMigration[] Migrations =
     [
         new Migration0001Foundation(),
+        new Migration0002Acquisitions(),
     ];
 
     private readonly SqliteConnectionFactory _connectionFactory;

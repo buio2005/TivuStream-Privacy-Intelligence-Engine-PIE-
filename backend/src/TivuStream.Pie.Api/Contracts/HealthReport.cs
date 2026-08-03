@@ -47,6 +47,11 @@ public sealed record HealthReport
     public required int SchemaVersion { get; init; }
 
     /// <summary>
+    /// Number of observation periods kept.
+    /// </summary>
+    public required long StoredPeriods { get; init; }
+
+    /// <summary>
     /// Description of the Data Source at the time of the last acquisition.
     /// </summary>
     public DataSource? Backend { get; init; }

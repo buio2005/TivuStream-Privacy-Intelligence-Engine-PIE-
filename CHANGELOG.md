@@ -8,6 +8,71 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M5.2 — Persistenza delle acquisizioni — 2026-08-03
+
+Le acquisizioni vengono conservate. Il riavvio non azzera più nulla.
+
+### Added
+
+**`ObservationPeriod`**
+
+Intervallo fisso, allineato all'ora solare, che un'acquisizione osserva.
+
+Colloca un istante nel proprio periodo e sa dire se un periodo è già trascorso, quindi immutabile.
+
+**Migrazione 0002**
+
+Tabelle `statistics`, `device` e `domain`, tutte agganciate a un periodo di osservazione ed eliminate insieme a esso.
+
+Applicare la ritenzione consisterà quindi nell'eliminare periodi, e nient'altro.
+
+**`AcquisitionRepository`**
+
+Registra un'osservazione in un'unica transazione: o viene conservata per intero, o non viene conservata affatto.
+
+L'osservazione di un periodo già osservato **sostituisce** la precedente. Il periodo viene rimosso e riscritto, così che nulla della prima osservazione sopravviva accanto alla seconda.
+
+### Changed
+
+**Acquisizione allineata ai periodi**
+
+Chiude il debito registrato come Known Impact nella Documentation Release 1.0.5.
+
+L'`AcquisitionService` non chiede più una finestra mobile degli ultimi sessanta minuti ma il periodo in cui cade l'istante corrente.
+
+I log della sessione precedente mostravano il problema dal vivo: tre acquisizioni consecutive che osservavano intervalli sovrapposti per cinquantanove minuti su sessanta. Scritte così com'erano, avrebbero prodotto decine di righe al giorno che raccontano la stessa ora.
+
+`WindowMinutes` è stato rimosso dalla configurazione: il periodo è fisso e non più negoziabile. `IntervalMinutes` resta e governa soltanto la freschezza del periodo corrente.
+
+**L'acquisizione raccoglie anche dispositivi e domini**
+
+In precedenza venivano richieste le sole statistiche.
+
+Dispositivi e domini vengono conservati ma non ancora riletti: la lettura arriverà con gli endpoint che li presentano.
+
+**Gli endpoint leggono dal database**
+
+`statistics` restituisce l'ultima osservazione conservata anziché lo stato in memoria.
+
+`health` riporta il numero di periodi conservati.
+
+Lo stato in memoria e il database rispondono a domande diverse e restano separati: il primo dice cosa è appena successo, compresi i guasti, il secondo cosa si sa. Un guasto non cancella lo storico, e lo storico non nasconde un guasto.
+
+### Verified
+
+La persistenza è stata verificata con una prova che esclude ogni altra spiegazione.
+
+1. Traffico DNS generato verso l'istanza, acquisito e reso disponibile dagli endpoint.
+2. Numero di periodi conservati rimasto a **1** dopo più acquisizioni della stessa ora: ciascuna ha sostituito la precedente anziché accodarsi.
+3. Applicazione arrestata, **Data Source spenta**, applicazione riavviata.
+4. `health` ha riportato `Failing`, mentre `statistics` ha continuato a restituire gli stessi valori.
+
+Con la sorgente spenta l'acquisizione è impossibile, e il riavvio azzera la memoria. I dati serviti provenivano quindi necessariamente dal database.
+
+La prova ha confermato anche la separazione fra stato e storico: il sistema ha dichiarato di non riuscire a leggere e nello stesso momento ha continuato a servire l'ultimo dato valido.
+
+---
+
 ## Milestone M5.1 — Storage, schema e migrazioni — 2026-08-03
 
 Fondamenta della persistenza. Nessun dato applicativo viene ancora scritto.

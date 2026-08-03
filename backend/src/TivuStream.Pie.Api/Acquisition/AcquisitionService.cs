@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Options;
 using TivuStream.Pie.Adapters;
 using TivuStream.Pie.Adapters.Technitium;
+using TivuStream.Pie.Model;
 using TivuStream.Pie.Model.Entities;
+using TivuStream.Pie.Storage;
 
 namespace TivuStream.Pie.Api.Acquisition;
 
@@ -17,12 +19,14 @@ internal sealed class AcquisitionService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly AcquisitionState _state;
+    private readonly AcquisitionRepository _repository;
     private readonly AcquisitionOptions _options;
     private readonly ILogger<AcquisitionService> _logger;
 
     public AcquisitionService(
         IServiceScopeFactory scopeFactory,
         AcquisitionState state,
+        AcquisitionRepository repository,
         IOptions<AcquisitionOptions> options,
         ILogger<AcquisitionService> logger)
     {
@@ -30,6 +34,7 @@ internal sealed class AcquisitionService : BackgroundService
 
         _scopeFactory = scopeFactory;
         _state = state;
+        _repository = repository;
         _options = options.Value;
         _logger = logger;
     }
@@ -51,9 +56,13 @@ internal sealed class AcquisitionService : BackgroundService
     {
         DateTimeOffset attemptedAt = DateTimeOffset.UtcNow;
 
-        AcquisitionWindow window = new(
-            attemptedAt.AddMinutes(-Math.Max(1, _options.WindowMinutes)),
-            attemptedAt);
+        // The acquisition observes the period the current instant falls into,
+        // not a window trailing behind it. Observing the same period again
+        // replaces the previous observation instead of adding to it, so
+        // acquiring more often costs nothing in correctness.
+        ObservationPeriod period = ObservationPeriod.Containing(attemptedAt);
+
+        AcquisitionWindow window = new(period.Start, period.End);
 
         using IServiceScope scope = _scopeFactory.CreateScope();
 
@@ -73,17 +82,48 @@ internal sealed class AcquisitionService : BackgroundService
                 .GetStatisticsAsync(window, cancellationToken)
                 .ConfigureAwait(false);
 
+            IReadOnlyList<Device> devices = await adapter
+                .GetDevicesAsync(window, cancellationToken)
+                .ConfigureAwait(false);
+
+            IReadOnlyList<Domain> domains = await adapter
+                .GetDomainsAsync(window, cancellationToken)
+                .ConfigureAwait(false);
+
+            _repository.Save(new StoredAcquisition
+            {
+                Period = period,
+                ObservedAt = attemptedAt,
+                DataSource = dataSource,
+                Statistics = statistics,
+                Devices = devices,
+                Domains = domains,
+            });
+
             _state.Update(new AcquisitionResult
             {
                 AttemptedAt = attemptedAt,
                 Succeeded = true,
-                WindowStart = window.Start,
-                WindowEnd = window.End,
+                PeriodStart = period.Start,
+                PeriodEnd = period.End,
                 DataSource = dataSource,
                 Statistics = statistics,
             });
 
             AcquisitionLog.Completed(_logger, adapter.Provider, window.Start, window.End);
+        }
+        catch (StorageException exception)
+        {
+            _state.Update(new AcquisitionResult
+            {
+                AttemptedAt = attemptedAt,
+                Succeeded = false,
+                Failure = exception.Message,
+                PeriodStart = period.Start,
+                PeriodEnd = period.End,
+            });
+
+            AcquisitionLog.Failed(_logger, exception.Message);
         }
         catch (AdapterException exception)
         {
@@ -92,8 +132,8 @@ internal sealed class AcquisitionService : BackgroundService
                 AttemptedAt = attemptedAt,
                 Succeeded = false,
                 Failure = exception.Message,
-                WindowStart = window.Start,
-                WindowEnd = window.End,
+                PeriodStart = period.Start,
+                PeriodEnd = period.End,
             });
 
             AcquisitionLog.Failed(_logger, exception.Message);

@@ -38,6 +38,7 @@ builder.Services.AddSingleton(
 
 builder.Services.AddSingleton<SqliteConnectionFactory>();
 builder.Services.AddSingleton<SchemaMigrator>();
+builder.Services.AddSingleton<AcquisitionRepository>();
 
 builder.Services.AddSingleton<AcquisitionState>();
 builder.Services.AddHostedService<AcquisitionService>();
@@ -67,9 +68,13 @@ else
     SchemaLog.Unchanged(app.Logger, migration.FinalVersion);
 }
 
-app.MapGet("/api/v1/health", (AcquisitionState state) =>
+// The state reports what has just happened, including failures. The
+// repository reports what is known. The two answer different questions and
+// are kept apart on purpose.
+app.MapGet("/api/v1/health", (AcquisitionState state, AcquisitionRepository repository) =>
 {
     AcquisitionResult? last = state.Current;
+    StoredAcquisition? stored = repository.GetLatest();
 
     HealthReport report = new()
     {
@@ -78,7 +83,8 @@ app.MapGet("/api/v1/health", (AcquisitionState state) =>
         Adapter = last is null ? "Idle" : last.Succeeded ? "Online" : "Failing",
         Storage = "Ready",
         SchemaVersion = migration.FinalVersion,
-        Backend = last?.DataSource,
+        StoredPeriods = repository.CountPeriods(),
+        Backend = stored?.DataSource ?? last?.DataSource,
         LastAcquisitionAt = last?.AttemptedAt,
         LastFailure = last?.Failure,
     };
@@ -86,29 +92,20 @@ app.MapGet("/api/v1/health", (AcquisitionState state) =>
     return Results.Ok(ApiResponse.Ok(report));
 });
 
-app.MapGet("/api/v1/statistics", (AcquisitionState state) =>
+app.MapGet("/api/v1/statistics", (AcquisitionRepository repository) =>
 {
-    AcquisitionResult? last = state.Current;
+    StoredAcquisition? stored = repository.GetLatest();
 
-    if (last is null)
+    if (stored is null)
     {
         return Results.Json(
             ApiResponse.Failed<Statistics>(
                 "AcquisitionPending",
-                "No acquisition has taken place yet."),
+                "No acquisition has been recorded yet."),
             statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 
-    if (!last.Succeeded || last.Statistics is null)
-    {
-        return Results.Json(
-            ApiResponse.Failed<Statistics>(
-                "BackendUnavailable",
-                last.Failure ?? "The last acquisition did not complete."),
-            statusCode: StatusCodes.Status503ServiceUnavailable);
-    }
-
-    return Results.Ok(ApiResponse.Ok(last.Statistics));
+    return Results.Ok(ApiResponse.Ok(stored.Statistics));
 });
 
 app.Run();

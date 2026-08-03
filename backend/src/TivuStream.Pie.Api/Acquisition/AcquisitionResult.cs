@@ -28,14 +28,14 @@ public sealed record AcquisitionResult
     public string? Failure { get; init; }
 
     /// <summary>
-    /// Beginning of the interval that was requested.
+    /// Beginning of the observation period.
     /// </summary>
-    public DateTimeOffset? WindowStart { get; init; }
+    public DateTimeOffset? PeriodStart { get; init; }
 
     /// <summary>
-    /// End of the interval that was requested.
+    /// End of the observation period.
     /// </summary>
-    public DateTimeOffset? WindowEnd { get; init; }
+    public DateTimeOffset? PeriodEnd { get; init; }
 
     /// <summary>
     /// Description of the Data Source as it was at the time of the cycle.
