@@ -4,7 +4,7 @@
 
 **Document:** Data Model Specification
 
-**Version:** 1.3.0
+**Version:** 1.4.0
 
 **Status:** Approved
 
@@ -237,6 +237,20 @@ Quando la capability è assente:
 L'assenza della capability non è un errore e non interrompe l'elaborazione.
 
 Il Core non deve mai sostituire il dato mancante con valori stimati o predefiniti.
+
+---
+
+## Aggregation Criterion
+
+Una `DomainActivity` rappresenta una singola combinazione di dispositivo, dominio, **esito** e **protocollo**.
+
+Esito e protocollo concorrono all'identità dell'entità e non vengono accorpati.
+
+Un dispositivo che ha raggiunto lo stesso dominio sia normalmente sia venendo bloccato ha prodotto **due fatti distinti**, e vengono rappresentati da due oggetti separati.
+
+Accorparli in un unico oggetto costringerebbe a scegliere un esito prevalente, affermando qualcosa che non è avvenuto.
+
+Le proprietà `queryCount`, `firstSeen` e `lastSeen` si riferiscono alla combinazione così definita.
 
 ---
 

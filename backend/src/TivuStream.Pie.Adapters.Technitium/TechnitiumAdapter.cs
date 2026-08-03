@@ -16,9 +16,16 @@ namespace TivuStream.Pie.Adapters.Technitium;
 /// implement the corresponding capability interface.
 /// </para>
 /// </remarks>
-public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomainSource
+public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomainSource, IDomainActivitySource
 {
     private const int TopListLimit = 1000;
+
+    private const int LogEntriesPerPage = 1000;
+
+    // The logging application keeps a limited number of records, well below
+    // this bound. The limit exists so that a misconfigured retention cannot
+    // turn a single acquisition into an unbounded read.
+    private const int MaxLogPages = 100;
 
     private static readonly string[] EncryptedProtocols = ["Tls", "Https", "Quic"];
 
@@ -52,6 +59,8 @@ public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomai
         SessionInfo info = session.Info
             ?? throw new AdapterException("The Technitium instance did not describe itself.");
 
+        QueryLogsApp? queryLogs = await FindQueryLogsAsync(cancellationToken).ConfigureAwait(false);
+
         return new DataSource
         {
             Id = _dataSourceId,
@@ -59,7 +68,7 @@ public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomai
             Provider = Provider,
             Version = info.Version ?? string.Empty,
             Status = DataSourceStatus.Online,
-            Capabilities = ResolveCapabilities(info),
+            Capabilities = ResolveCapabilities(info, queryLogs is not null),
             LastUpdate = DateTimeOffset.UtcNow,
         };
     }
@@ -141,22 +150,30 @@ public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomai
     /// <inheritdoc />
     public async Task<IReadOnlyList<Domain>> GetDomainsAsync(AcquisitionWindow window, CancellationToken cancellationToken)
     {
-        TopDomainsResponse response = await _client
+        // The source keeps resolved and blocked domains in separate lists.
+        // Both were observed, and the model draws no distinction by outcome,
+        // so both are read. Leaving the blocked ones out would hide precisely
+        // the domains a privacy tool exists to show.
+        TopDomainsResponse resolved = await _client
             .GetAsync<TopDomainsResponse>(BuildTopUrl(window, "TopDomains"), cancellationToken)
             .ConfigureAwait(false);
 
-        List<Domain> domains = [];
+        TopBlockedDomainsResponse blocked = await _client
+            .GetAsync<TopBlockedDomainsResponse>(BuildTopUrl(window, "TopBlockedDomains"), cancellationToken)
+            .ConfigureAwait(false);
 
-        foreach (TopDomain domain in response.TopDomains ?? [])
+        Dictionary<string, long> occurrences = new(StringComparer.OrdinalIgnoreCase);
+
+        Collect(occurrences, resolved.TopDomains);
+        Collect(occurrences, blocked.TopBlockedDomains);
+
+        List<Domain> domains = new(occurrences.Count);
+
+        foreach ((string name, long hits) in occurrences)
         {
-            if (string.IsNullOrWhiteSpace(domain.Name))
-            {
-                continue;
-            }
-
             domains.Add(new Domain
             {
-                Name = domain.Name,
+                Name = name,
 
                 // Classification and reputation belong to the Threat Engine.
                 // The Adapter states neither.
@@ -165,11 +182,144 @@ public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomai
 
                 FirstSeen = window.Start,
                 LastSeen = window.End,
-                Occurrences = domain.Hits,
+                Occurrences = hits,
             });
         }
 
         return domains;
+    }
+
+    private static void Collect(Dictionary<string, long> occurrences, List<TopDomain>? entries)
+    {
+        foreach (TopDomain entry in entries ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(entry.Name))
+            {
+                continue;
+            }
+
+            occurrences[entry.Name] = occurrences.TryGetValue(entry.Name, out long current)
+                ? current + entry.Hits
+                : entry.Hits;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<DomainActivity>> GetDomainActivitiesAsync(
+        AcquisitionWindow window,
+        CancellationToken cancellationToken)
+    {
+        QueryLogsApp? queryLogs = await FindQueryLogsAsync(cancellationToken).ConfigureAwait(false);
+
+        if (queryLogs is null)
+        {
+            throw new AdapterException(
+                "The Technitium instance does not provide query logs. Domain Activity is unavailable until the corresponding application is installed.");
+        }
+
+        // Entries are grouped as they arrive, so that the individual queries
+        // are never all held at once. They constitute the browsing history of
+        // the devices on the network and must not travel further than this
+        // method.
+        Dictionary<ActivityKey, ActivityAccumulator> activities = [];
+
+        for (int page = 1; page <= MaxLogPages; page++)
+        {
+            QueryLogsResponse logs = await _client
+                .GetAsync<QueryLogsResponse>(BuildLogsUrl(queryLogs, window, page), cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (QueryLogEntry entry in logs.Entries ?? [])
+            {
+                Accumulate(activities, entry);
+            }
+
+            if (page >= logs.TotalPages)
+            {
+                break;
+            }
+        }
+
+        List<DomainActivity> result = new(activities.Count);
+
+        foreach ((ActivityKey key, ActivityAccumulator accumulator) in activities)
+        {
+            result.Add(new DomainActivity
+            {
+                DeviceId = key.DeviceId,
+                Domain = key.Domain,
+                QueryCount = accumulator.QueryCount,
+                Blocked = key.Blocked,
+                Protocol = key.Protocol,
+                FirstSeen = accumulator.FirstSeen,
+                LastSeen = accumulator.LastSeen,
+            });
+        }
+
+        return result;
+    }
+
+    private static void Accumulate(Dictionary<ActivityKey, ActivityAccumulator> activities, QueryLogEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.ClientIpAddress) || string.IsNullOrWhiteSpace(entry.QName))
+        {
+            return;
+        }
+
+        // Outcome and transport take part in the key rather than being
+        // collapsed. A device that reached a domain both directly and through
+        // a block produced two different facts, and merging them would state
+        // something that did not happen.
+        ActivityKey key = new(
+            DeviceIdentity.FromAddress(entry.ClientIpAddress),
+            entry.QName,
+            string.Equals(entry.ResponseType, "Blocked", StringComparison.OrdinalIgnoreCase),
+            entry.Protocol ?? string.Empty);
+
+        if (activities.TryGetValue(key, out ActivityAccumulator? existing))
+        {
+            existing.Add(entry.Timestamp);
+        }
+        else
+        {
+            activities[key] = new ActivityAccumulator(entry.Timestamp);
+        }
+    }
+
+    private async Task<QueryLogsApp?> FindQueryLogsAsync(CancellationToken cancellationToken)
+    {
+        AppsResponse apps = await _client
+            .GetAsync<AppsResponse>("/api/apps/list", cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (InstalledApp app in apps.Apps ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(app.Name))
+            {
+                continue;
+            }
+
+            foreach (AppComponent component in app.DnsApps ?? [])
+            {
+                if (component.ClassPath?.Contains("QueryLogs", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    // The log interrogation requires both the name of the
+                    // application and the identifier of its component.
+                    return new QueryLogsApp(app.Name, component.ClassPath);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static string BuildLogsUrl(QueryLogsApp app, AcquisitionWindow window, int page)
+    {
+        return $"/api/logs/query?name={Uri.EscapeDataString(app.Name)}"
+            + $"&classPath={Uri.EscapeDataString(app.ClassPath)}"
+            + $"&pageNumber={page}&entriesPerPage={LogEntriesPerPage}&descendingOrder=false"
+            + $"&start={Uri.EscapeDataString(TechnitiumClient.FormatInstant(window.Start))}"
+            + $"&end={Uri.EscapeDataString(TechnitiumClient.FormatInstant(window.End))}";
     }
 
     private static string BuildStatsUrl(AcquisitionWindow window)
@@ -213,7 +363,7 @@ public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomai
         return total;
     }
 
-    private static IReadOnlyList<string> ResolveCapabilities(SessionInfo info)
+    private static List<string> ResolveCapabilities(SessionInfo info, bool queryLogsAvailable)
     {
         // A capability is declared only when the account behind the token can
         // actually read the data it depends on.
@@ -227,6 +377,62 @@ public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomai
             return [];
         }
 
-        return [nameof(Statistics), nameof(Device), nameof(Domain)];
+        List<string> capabilities = [nameof(Statistics), nameof(Device), nameof(Domain)];
+
+        // Declared only when the optional application is actually installed.
+        // The interface is implemented in any case, but implementing it says
+        // what this Adapter can do, not what this instance offers today.
+        if (queryLogsAvailable)
+        {
+            capabilities.Add(nameof(DomainActivity));
+        }
+
+        return capabilities;
+    }
+
+    /// <summary>
+    /// Application providing the query logs, as the interrogation needs it.
+    /// </summary>
+    /// <param name="Name">Name of the installed application.</param>
+    /// <param name="ClassPath">Identifier of the component to interrogate.</param>
+    private sealed record QueryLogsApp(string Name, string ClassPath);
+
+    /// <summary>
+    /// Identifies one interaction between a device and a domain.
+    /// </summary>
+    private readonly record struct ActivityKey(Guid DeviceId, string Domain, bool Blocked, string Protocol);
+
+    /// <summary>
+    /// Collects the entries belonging to a single interaction.
+    /// </summary>
+    private sealed class ActivityAccumulator
+    {
+        internal ActivityAccumulator(DateTimeOffset timestamp)
+        {
+            QueryCount = 1;
+            FirstSeen = timestamp;
+            LastSeen = timestamp;
+        }
+
+        internal long QueryCount { get; private set; }
+
+        internal DateTimeOffset FirstSeen { get; private set; }
+
+        internal DateTimeOffset LastSeen { get; private set; }
+
+        internal void Add(DateTimeOffset timestamp)
+        {
+            QueryCount++;
+
+            if (timestamp < FirstSeen)
+            {
+                FirstSeen = timestamp;
+            }
+
+            if (timestamp > LastSeen)
+            {
+                LastSeen = timestamp;
+            }
+        }
     }
 }

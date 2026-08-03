@@ -23,6 +23,17 @@ internal sealed class TopDomainsResponse
 }
 
 /// <summary>
+/// Payload of the top blocked domains call.
+/// </summary>
+internal sealed class TopBlockedDomainsResponse
+{
+    /// <summary>
+    /// Domains most frequently blocked within the interval.
+    /// </summary>
+    public List<TopDomain>? TopBlockedDomains { get; set; }
+}
+
+/// <summary>
 /// Client observed by the server.
 /// </summary>
 internal sealed class TopClient

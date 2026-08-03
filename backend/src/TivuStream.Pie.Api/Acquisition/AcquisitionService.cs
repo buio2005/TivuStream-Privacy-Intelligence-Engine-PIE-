@@ -90,6 +90,14 @@ internal sealed class AcquisitionService : BackgroundService
                 .GetDomainsAsync(window, cancellationToken)
                 .ConfigureAwait(false);
 
+            // Asked for only when the Data Source declares it can provide it.
+            // This is what makes the declared capability load bearing rather
+            // than merely descriptive.
+            IReadOnlyList<DomainActivity> activities =
+                dataSource.Capabilities.Contains(nameof(DomainActivity), StringComparer.Ordinal)
+                    ? await adapter.GetDomainActivitiesAsync(window, cancellationToken).ConfigureAwait(false)
+                    : [];
+
             _repository.Save(new StoredAcquisition
             {
                 Period = period,
@@ -98,6 +106,7 @@ internal sealed class AcquisitionService : BackgroundService
                 Statistics = statistics,
                 Devices = devices,
                 Domains = domains,
+                DomainActivities = activities,
             });
 
             _state.Update(new AcquisitionResult
@@ -110,7 +119,13 @@ internal sealed class AcquisitionService : BackgroundService
                 Statistics = statistics,
             });
 
-            AcquisitionLog.Completed(_logger, adapter.Provider, window.Start, window.End);
+            AcquisitionLog.Completed(
+                _logger,
+                adapter.Provider,
+                period.Start,
+                devices.Count,
+                domains.Count,
+                activities.Count);
         }
         catch (StorageException exception)
         {

@@ -8,6 +8,106 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M3.6 — Ispezionabilità — 2026-08-03
+
+Correzione di un'incompletezza e introduzione degli endpoint che rendono verificabile ciò che viene conservato.
+
+### Fixed
+
+**I domini bloccati non venivano acquisiti**
+
+`GetDomainsAsync` interrogava soltanto l'elenco dei domini risolti. Technitium tiene quelli bloccati in un elenco separato.
+
+Un dominio bloccato risultava quindi fra le interazioni ma assente dall'elenco dei domini, benché fosse stato osservato. La Specification 05 definisce `Domain` come dominio osservato durante l'analisi, senza distinguere per esito.
+
+Il difetto è emerso da un'osservazione dell'utente sui conteggi riportati nei log: cinque domini a fronte di sei interazioni.
+
+Sono proprio i domini bloccati quelli più significativi per uno strumento di privacy, trattandosi dei tracker e dei domini malevoli che il filtro ha fermato.
+
+### Added
+
+**Endpoint previsti dalla Specification 06**
+
+* `GET /api/v1/devices` — dispositivi dell'ultimo periodo conservato.
+* `GET /api/v1/domains` — domini dell'ultimo periodo conservato.
+* `GET /api/v1/domains/{domain}` — dettaglio del dominio con i dispositivi coinvolti.
+
+Fino a questo momento i dati venivano scritti nel database senza alcun modo di rileggerli. Per uno strumento che fonda la propria credibilità sulla trasparenza, l'impossibilità di ispezionare ciò che conserva era una lacuna sostanziale.
+
+**Letture nel repository**
+
+Dispositivi, domini e interazioni relative a un dominio dell'ultimo periodo.
+
+### Design Decisions
+
+**Il dettaglio del dominio dichiara se la correlazione è disponibile.**
+
+Il campo `activityAvailable` distingue l'assenza di interazioni dall'assenza della capacità di osservarle.
+
+Senza questa distinzione un elenco vuoto affermerebbe che nessun dispositivo ha raggiunto il dominio, mentre il sistema potrebbe soltanto non essere in grado di saperlo.
+
+---
+
+## Milestone M3.5 — Domain Activity — 2026-08-03
+
+L'Adapter acquisisce la correlazione fra dispositivi e domini, e PIE la conserva.
+
+È la capacità che distingue un motore di analisi da una dashboard: senza di essa una minaccia può essere rilevata ma non attribuita a un dispositivo.
+
+### Added
+
+**`TechnitiumAdapter` implementa `IDomainActivitySource`**
+
+Rileva il componente di registrazione delle query interrogando le applicazioni installate, legge i log in modo paginato e li aggrega.
+
+**Capability condizionata al rilevamento**
+
+`DomainActivity` viene dichiarata soltanto quando il componente risulta installato sull'istanza.
+
+L'implementazione dell'interfaccia esprime ciò che l'Adapter sa fare; la capability esprime ciò che quella istanza offre in quel momento. La distinzione introdotta in M3.2 trova qui il suo primo caso reale.
+
+**Acquisizione condizionata alla capability**
+
+L'`AcquisitionService` richiede la correlazione solo se la Data Source dichiara di poterla fornire. La capability smette di essere descrittiva e diventa portante.
+
+**Migrazione 0003**
+
+Tabella `domain_activity`, agganciata al periodo di osservazione come le altre.
+
+### Design Decisions
+
+**Esito e protocollo non vengono accorpati.**
+
+Una `DomainActivity` rappresenta la combinazione di dispositivo, dominio, esito e protocollo.
+
+Un dispositivo che ha raggiunto lo stesso dominio sia normalmente sia venendo bloccato ha prodotto due fatti distinti. Unirli avrebbe costretto a scegliere un esito prevalente, affermando qualcosa che non è avvenuto.
+
+La chiave primaria della tabella ripete il criterio, così che lo schema non consenta di violarlo.
+
+**Il registro puntuale non viene mai trattenuto per intero.**
+
+L'aggregazione avviene mentre le pagine arrivano. Le singole interrogazioni esistono per il tempo di una pagina e non oltrepassano l'Adapter.
+
+Non è un accorgimento sulla memoria: è il modo concreto di rispettare quanto la Specification 04 dichiara riguardo alla cronologia di navigazione dei dispositivi.
+
+**Limite di lettura.**
+
+L'acquisizione legge al massimo centomila voci per periodo. Il componente di registrazione ne conserva molte meno per impostazione predefinita, quindi il limite non interviene nell'uso normale: esiste perché una ritenzione configurata male non possa trasformare una singola acquisizione in una lettura illimitata.
+
+### Changed
+
+**Registrazione dell'acquisizione**
+
+Il messaggio riporta ora il periodo osservato e il numero di dispositivi, domini e interazioni.
+
+Riporta conteggi e mai i dati stessi: nessun indirizzo, nessun dominio, nulla che appartenga alla rete dell'utente.
+
+**05 - Data Model** — documentato il criterio di aggregazione di `DomainActivity`.
+
+**04 - Technitium Integration** — documentati il rilevamento del componente e il momento in cui avviene l'aggregazione.
+
+---
+
 ## Milestone M5.2 — Persistenza delle acquisizioni — 2026-08-03
 
 Le acquisizioni vengono conservate. Il riavvio non azzera più nulla.

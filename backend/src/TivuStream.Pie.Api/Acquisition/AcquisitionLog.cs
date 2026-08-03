@@ -4,18 +4,21 @@ namespace TivuStream.Pie.Api.Acquisition;
 /// Messages recorded by the Acquisition Flow.
 /// </summary>
 /// <remarks>
-/// No message carries data belonging to the network of the user.
+/// The messages carry counts and never the data itself: no address, no
+/// domain, nothing belonging to the network of the user.
 /// </remarks>
 internal static partial class AcquisitionLog
 {
     [LoggerMessage(
         Level = LogLevel.Information,
-        Message = "Acquisition completed for {Provider}, interval {Start} to {End}.")]
+        Message = "Acquisition completed for {Provider}, period {Period}: {Devices} devices, {Domains} domains, {Activities} interactions.")]
     internal static partial void Completed(
         ILogger logger,
         string provider,
-        DateTimeOffset start,
-        DateTimeOffset end);
+        DateTimeOffset period,
+        int devices,
+        int domains,
+        int activities);
 
     [LoggerMessage(
         Level = LogLevel.Warning,

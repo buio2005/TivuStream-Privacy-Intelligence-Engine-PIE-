@@ -108,4 +108,46 @@ app.MapGet("/api/v1/statistics", (AcquisitionRepository repository) =>
     return Results.Ok(ApiResponse.Ok(stored.Statistics));
 });
 
+app.MapGet("/api/v1/devices", (AcquisitionRepository repository) =>
+{
+    return Results.Ok(ApiResponse.Ok(repository.GetLatestDevices()));
+});
+
+app.MapGet("/api/v1/domains", (AcquisitionRepository repository) =>
+{
+    return Results.Ok(ApiResponse.Ok(repository.GetLatestDomains()));
+});
+
+app.MapGet("/api/v1/domains/{domain}", (string domain, AcquisitionRepository repository) =>
+{
+    Domain? found = repository.GetLatestDomains()
+        .FirstOrDefault(candidate => string.Equals(candidate.Name, domain, StringComparison.OrdinalIgnoreCase));
+
+    if (found is null)
+    {
+        return Results.Json(
+            ApiResponse.Failed<DomainDetail>(
+                "DomainNotObserved",
+                "The domain was not observed during the last recorded period."),
+            statusCode: StatusCodes.Status404NotFound);
+    }
+
+    StoredAcquisition? stored = repository.GetLatest();
+
+    bool activityAvailable =
+        stored?.DataSource.Capabilities.Contains(nameof(DomainActivity), StringComparer.Ordinal) == true;
+
+    DomainDetail detail = new()
+    {
+        Domain = found,
+
+        // Read only when the Data Source declares the capability, so that an
+        // empty list never gets mistaken for an absence of activity.
+        Activities = activityAvailable ? repository.GetLatestActivitiesFor(found.Name) : [],
+        ActivityAvailable = activityAvailable,
+    };
+
+    return Results.Ok(ApiResponse.Ok(detail));
+});
+
 app.Run();

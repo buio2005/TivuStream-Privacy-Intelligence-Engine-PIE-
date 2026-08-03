@@ -4,7 +4,7 @@
 
 **Document:** Technitium Integration Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
@@ -169,6 +169,12 @@ Technitium distingue due tipologie di log.
 **Log diagnostici del server.** Sempre disponibili. Contengono eventi di sistema e informazioni di funzionamento.
 
 **Log delle query.** Non disponibili in un'installazione predefinita. Richiedono l'attivazione di un componente facoltativo.
+
+La presenza del componente viene rilevata interrogando l'elenco delle applicazioni installate.
+
+L'Adapter dichiara la capability `DomainActivity` **soltanto quando il componente risulta effettivamente installato**. L'implementazione della relativa interfaccia esprime ciò che l'Adapter sa fare; la capability esprime ciò che quella istanza offre in quel momento.
+
+L'aggregazione avviene mentre le pagine dei log vengono lette. Il registro puntuale delle interrogazioni non viene mai trattenuto per intero e non oltrepassa l'Adapter.
 
 ---
 

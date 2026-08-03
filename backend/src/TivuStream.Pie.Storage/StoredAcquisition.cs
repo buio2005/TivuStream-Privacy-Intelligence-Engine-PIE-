@@ -41,4 +41,13 @@ public sealed record StoredAcquisition
     /// Domains observed during the period.
     /// </summary>
     public IReadOnlyList<Domain> Domains { get; init; } = [];
+
+    /// <summary>
+    /// Interactions between devices and domains observed during the period.
+    /// </summary>
+    /// <remarks>
+    /// Empty when the Data Source does not provide the corresponding
+    /// capability, which is not the same as there having been no activity.
+    /// </remarks>
+    public IReadOnlyList<DomainActivity> DomainActivities { get; init; } = [];
 }
