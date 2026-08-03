@@ -25,9 +25,16 @@ public sealed record Npss
     public required ScoreStatus Status { get; init; }
 
     /// <summary>
-    /// Direction of change compared with the previous score.
+    /// Direction of change compared with the previous score, when a
+    /// comparable one exists.
     /// </summary>
-    public required ScoreTrend Trend { get; init; }
+    /// <remarks>
+    /// Absent for the first score, and whenever the coverage has changed.
+    /// Scores computed over different portions of the evaluation system are
+    /// not comparable, so declaring a direction would state something the
+    /// system cannot know.
+    /// </remarks>
+    public ScoreTrend? Trend { get; init; }
 
     /// <summary>
     /// Portion of the evaluation system that was actually observed, on a

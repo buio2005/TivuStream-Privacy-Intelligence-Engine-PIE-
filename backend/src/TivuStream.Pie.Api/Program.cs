@@ -15,6 +15,7 @@ using TivuStream.Pie.Adapters.Technitium;
 using TivuStream.Pie.Api.Acquisition;
 using TivuStream.Pie.Api.Contracts;
 using TivuStream.Pie.Api.Storage;
+using TivuStream.Pie.Core;
 using TivuStream.Pie.Model.Entities;
 using TivuStream.Pie.Storage;
 using TivuStream.Pie.Storage.Schema;
@@ -39,6 +40,9 @@ builder.Services.AddSingleton(
 builder.Services.AddSingleton<SqliteConnectionFactory>();
 builder.Services.AddSingleton<SchemaMigrator>();
 builder.Services.AddSingleton<AcquisitionRepository>();
+builder.Services.AddSingleton<ScoreRepository>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<NpssEngine>();
 
 builder.Services.AddSingleton<AcquisitionState>();
 builder.Services.AddHostedService<AcquisitionService>();
@@ -106,6 +110,22 @@ app.MapGet("/api/v1/statistics", (AcquisitionRepository repository) =>
     }
 
     return Results.Ok(ApiResponse.Ok(stored.Statistics));
+});
+
+app.MapGet("/api/v1/npss", (ScoreRepository scores) =>
+{
+    Npss? score = scores.GetLatest();
+
+    if (score is null)
+    {
+        return Results.Json(
+            ApiResponse.Failed<Npss>(
+                "ScorePending",
+                "No score has been produced yet."),
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    return Results.Ok(ApiResponse.Ok(score));
 });
 
 app.MapGet("/api/v1/devices", (AcquisitionRepository repository) =>

@@ -16,7 +16,8 @@ namespace TivuStream.Pie.Adapters.Technitium;
 /// implement the corresponding capability interface.
 /// </para>
 /// </remarks>
-public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomainSource, IDomainActivitySource
+public sealed class TechnitiumAdapter
+    : IStatisticsSource, IDeviceSource, IDomainSource, IDomainActivitySource, ISourceConfigurationSource
 {
     private const int TopListLimit = 1000;
 
@@ -205,6 +206,42 @@ public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomai
     }
 
     /// <inheritdoc />
+    public async Task<SourceConfiguration> GetConfigurationAsync(CancellationToken cancellationToken)
+    {
+        SettingsResponse settings = await _client
+            .GetAsync<SettingsResponse>("/api/settings/get", cancellationToken)
+            .ConfigureAwait(false);
+
+        List<string> transports = [];
+
+        if (settings.EnableDnsOverTls)
+        {
+            transports.Add("Tls");
+        }
+
+        if (settings.EnableDnsOverHttps)
+        {
+            transports.Add("Https");
+        }
+
+        if (settings.EnableDnsOverQuic)
+        {
+            transports.Add("Quic");
+        }
+
+        return new SourceConfiguration
+        {
+            DnssecValidationEnabled = settings.DnssecValidation,
+            EncryptedTransports = transports,
+            QueryMinimisationEnabled = settings.QnameMinimization,
+            ClientSubnetForwardingEnabled = settings.EDnsClientSubnet,
+            FilteringEnabled = settings.EnableBlocking,
+            FilterListCount = settings.BlockListUrls?.Count ?? 0,
+            FilterListUpdateIntervalHours = settings.BlockListUpdateIntervalHours,
+        };
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<DomainActivity>> GetDomainActivitiesAsync(
         AcquisitionWindow window,
         CancellationToken cancellationToken)
@@ -378,6 +415,20 @@ public sealed class TechnitiumAdapter : IStatisticsSource, IDeviceSource, IDomai
         }
 
         List<string> capabilities = [nameof(Statistics), nameof(Device), nameof(Domain)];
+
+        // The configuration is readable only when the account behind the
+        // token holds read access to the settings of the server. Declaring
+        // the capability without it would promise a datum every acquisition
+        // would then fail to obtain.
+        bool canReadSettings =
+            info.Permissions is not null
+            && info.Permissions.TryGetValue("Settings", out SessionPermission? settings)
+            && settings.CanView;
+
+        if (canReadSettings)
+        {
+            capabilities.Add(nameof(SourceConfiguration));
+        }
 
         // Declared only when the optional application is actually installed.
         // The interface is implemented in any case, but implementing it says

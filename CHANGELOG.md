@@ -8,6 +8,79 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M4.1 — Configurazione e primo motore del Core — 2026-08-03
+
+Il progetto Core, vuoto dall'inizio, contiene il primo motore. PIE produce un punteggio.
+
+### Added
+
+**Acquisizione della configurazione**
+
+Entità `SourceConfiguration`, interfaccia di capacità corrispondente, lettura delle impostazioni nel Technitium Adapter, migrazione 0004 e persistenza.
+
+Le proprietà sono espresse in termini indipendenti dal backend: nessun nome proprio di Technitium compare nel modello.
+
+La configurazione è conservata **per periodo di osservazione**, non come stato corrente. Se una impostazione cambia e il punteggio ne risente, lo storico saprà dire quando è accaduto.
+
+**La capability si deduce dai permessi del token**
+
+L'Adapter dichiara `SourceConfiguration` soltanto se l'account può leggere le impostazioni del server.
+
+Senza il permesso, il sistema non fallisce: dichiara semplicemente meno, e la copertura del punteggio lo riflette.
+
+**`NpssEngine`**
+
+Primo motore del Core. Calcola DNS Security, Configuration e Network Integrity secondo le definizioni della Specification 07, e dichiara non misurabili le tre aree che dipendono da motori non ancora scritti.
+
+Per ogni area conserva i **fattori** che hanno determinato il punteggio, requisito minimo perché ogni variazione sia spiegabile.
+
+Il motore riceve i dati e non ne cerca: non sa da dove provengano né dove finirà il risultato.
+
+**Migrazione 0005, `ScoreRepository` e `GET /api/v1/npss`**
+
+Il punteggio e il suo dettaglio sono conservati per periodo. Il Query Flow legge, non ricalcola.
+
+### Changed
+
+**`Npss.Trend` diventa opzionale**
+
+Il primo punteggio non ha un predecessore, e punteggi con copertura diversa non sono confrontabili.
+
+Con l'enumerazione precedente sarebbe stato necessario dichiarare `Stable`, che significa "nessuna variazione significativa": un'affermazione che il sistema non può sostenere.
+
+Vale la stessa regola già applicata alla reputazione dei domini: ciò che non si conosce resta vuoto.
+
+**`NpssEngine` riceve il fornitore del tempo**
+
+L'istante non viene letto dall'orologio di sistema. Un motore che legge l'orologio non è verificabile: non sarebbe possibile riprodurne una valutazione a un momento scelto.
+
+### Fixed
+
+**La continuità penalizzava le installazioni recenti**
+
+I periodi attesi erano sempre ventiquattro. Un'istanza avviata da cinque ore risultava con diciannove periodi mancanti e un punteggio ridotto.
+
+Quei periodi non mancavano per un problema della rete: mancavano perché il sistema non stava ancora osservando.
+
+I periodi attesi decorrono ora dalla prima osservazione registrata. Chi osserva da cinque ore senza interruzioni ottiene il punteggio pieno.
+
+Il difetto è emerso alla prima esecuzione reale del motore.
+
+### First Evaluation
+
+Prima valutazione prodotta su dati reali.
+
+| Grandezza      | Valore |
+| -------------- | ------ |
+| Punteggio      | 69     |
+| Stato          | Fair   |
+| Copertura      | 35     |
+| Trend          | assente, primo punteggio |
+
+Il sistema ha inoltre rilevato la prima condizione reale della configurazione dell'utente: filtraggio dei domini attivo ma **nessuna lista configurata**, quindi privo di effetto.
+
+---
+
 ## Documentation Release 1.0.6 — 2026-08-03
 
 Definizione di ciò che il punteggio misura, preliminare alla scrittura del Core.

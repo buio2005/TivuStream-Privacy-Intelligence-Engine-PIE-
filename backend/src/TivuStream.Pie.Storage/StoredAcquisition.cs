@@ -33,6 +33,15 @@ public sealed record StoredAcquisition
     public required Statistics Statistics { get; init; }
 
     /// <summary>
+    /// Settings the Data Source had during the period.
+    /// </summary>
+    /// <remarks>
+    /// Absent when the Data Source does not provide the corresponding
+    /// capability.
+    /// </remarks>
+    public SourceConfiguration? Configuration { get; init; }
+
+    /// <summary>
     /// Devices observed during the period.
     /// </summary>
     public IReadOnlyList<Device> Devices { get; init; } = [];

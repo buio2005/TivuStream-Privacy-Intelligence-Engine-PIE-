@@ -54,6 +54,11 @@ public sealed class AcquisitionRepository
 
             InsertStatistics(connection, transaction, periodId, acquisition.Statistics);
 
+            if (acquisition.Configuration is not null)
+            {
+                InsertConfiguration(connection, transaction, periodId, acquisition.Configuration);
+            }
+
             foreach (Device device in acquisition.Devices)
             {
                 InsertDevice(connection, transaction, periodId, device);
@@ -111,10 +116,18 @@ public sealed class AcquisitionRepository
                     s.unique_domains,
                     s.active_devices,
                     s.encrypted_queries,
-                    s.dnssec_enabled
+                    s.dnssec_enabled,
+                    c.dnssec_validation_enabled,
+                    c.encrypted_transports,
+                    c.query_minimisation_enabled,
+                    c.client_subnet_forwarding_enabled,
+                    c.filtering_enabled,
+                    c.filter_list_count,
+                    c.filter_list_update_hours
             FROM        observation_period p
             INNER JOIN  data_source d ON d.id = p.data_source_id
             INNER JOIN  statistics  s ON s.observation_period_id = p.id
+            LEFT  JOIN  source_configuration c ON c.observation_period_id = p.id
             ORDER BY    p.period_start DESC
             LIMIT       1;
             """;
@@ -153,6 +166,21 @@ public sealed class AcquisitionRepository
                 EncryptedQueries = reader.GetInt64(16),
                 DnssecEnabled = reader.GetInt64(17) != 0,
             },
+
+            // Absent when the source did not provide the capability during
+            // that period, which is not the same as a configuration of zeros.
+            Configuration = reader.IsDBNull(18)
+                ? null
+                : new SourceConfiguration
+                {
+                    DnssecValidationEnabled = reader.GetInt64(18) != 0,
+                    EncryptedTransports = SplitCapabilities(reader.GetString(19)),
+                    QueryMinimisationEnabled = reader.GetInt64(20) != 0,
+                    ClientSubnetForwardingEnabled = reader.GetInt64(21) != 0,
+                    FilteringEnabled = reader.GetInt64(22) != 0,
+                    FilterListCount = reader.GetInt32(23),
+                    FilterListUpdateIntervalHours = reader.GetInt32(24),
+                },
         };
     }
 
@@ -276,6 +304,57 @@ public sealed class AcquisitionRepository
         }
 
         return activities;
+    }
+
+    /// <summary>
+    /// Returns the beginning of the earliest observation period recorded.
+    /// </summary>
+    /// <remarks>
+    /// Nothing can be expected of the system before this instant: it was not
+    /// observing the network yet.
+    /// </remarks>
+    public DateTimeOffset? GetFirstPeriodStart()
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT MIN(period_start) FROM observation_period;";
+
+        object? result = command.ExecuteScalar();
+
+        return result is null or DBNull
+            ? null
+            : DateTimeOffset.Parse(
+                Convert.ToString(result, CultureInfo.InvariantCulture)!,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind);
+    }
+
+    /// <summary>
+    /// Returns how many observation periods were recorded since the given
+    /// instant.
+    /// </summary>
+    /// <param name="since">Beginning of the interval to count over.</param>
+    public int CountPeriodsSince(DateTimeOffset since)
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText =
+            """
+            SELECT COUNT(*)
+            FROM   observation_period
+            WHERE  period_start >= $since;
+            """;
+
+        command.Parameters.AddWithValue("$since", Format(since));
+
+        object? result = command.ExecuteScalar();
+
+        return result is null or DBNull
+            ? 0
+            : Convert.ToInt32(result, CultureInfo.InvariantCulture);
     }
 
     /// <summary>
@@ -404,6 +483,39 @@ public sealed class AcquisitionRepository
         command.Parameters.AddWithValue("$activeDevices", statistics.ActiveDevices);
         command.Parameters.AddWithValue("$encryptedQueries", statistics.EncryptedQueries);
         command.Parameters.AddWithValue("$dnssecEnabled", statistics.DnssecEnabled ? 1 : 0);
+
+        command.ExecuteNonQuery();
+    }
+
+    private static void InsertConfiguration(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        long periodId,
+        SourceConfiguration configuration)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+
+        command.CommandText =
+            """
+            INSERT INTO source_configuration (
+                observation_period_id, dnssec_validation_enabled, encrypted_transports,
+                query_minimisation_enabled, client_subnet_forwarding_enabled,
+                filtering_enabled, filter_list_count, filter_list_update_hours)
+            VALUES (
+                $periodId, $dnssec, $transports,
+                $minimisation, $clientSubnet,
+                $filtering, $listCount, $updateHours);
+            """;
+
+        command.Parameters.AddWithValue("$periodId", periodId);
+        command.Parameters.AddWithValue("$dnssec", configuration.DnssecValidationEnabled ? 1 : 0);
+        command.Parameters.AddWithValue("$transports", string.Join(',', configuration.EncryptedTransports));
+        command.Parameters.AddWithValue("$minimisation", configuration.QueryMinimisationEnabled ? 1 : 0);
+        command.Parameters.AddWithValue("$clientSubnet", configuration.ClientSubnetForwardingEnabled ? 1 : 0);
+        command.Parameters.AddWithValue("$filtering", configuration.FilteringEnabled ? 1 : 0);
+        command.Parameters.AddWithValue("$listCount", configuration.FilterListCount);
+        command.Parameters.AddWithValue("$updateHours", configuration.FilterListUpdateIntervalHours);
 
         command.ExecuteNonQuery();
     }

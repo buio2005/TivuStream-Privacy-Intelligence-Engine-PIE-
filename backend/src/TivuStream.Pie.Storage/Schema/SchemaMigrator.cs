@@ -13,6 +13,8 @@ public sealed class SchemaMigrator
         new Migration0001Foundation(),
         new Migration0002Acquisitions(),
         new Migration0003DomainActivity(),
+        new Migration0004SourceConfiguration(),
+        new Migration0005Score(),
     ];
 
     private readonly SqliteConnectionFactory _connectionFactory;

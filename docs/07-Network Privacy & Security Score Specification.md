@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy & Security Score (NPSS) Specification
 
-**Version:** 1.3.0
+**Version:** 1.3.1
 
 **Status:** Approved
 
@@ -277,6 +277,10 @@ punti = 5 × ( periodi osservati / periodi attesi )
 L'intervallo di riferimento predefinito è di ventiquattro ore.
 
 Un periodo mancante indica che il sistema non ha potuto osservare la rete in quel lasso di tempo, e quindi che l'analisi presenta una lacuna.
+
+**Nulla viene atteso prima della prima osservazione.** I periodi attesi decorrono dalla prima osservazione registrata, mai da prima.
+
+Un'installazione recente verrebbe altrimenti penalizzata per non avere osservato la rete prima di esistere, il che non dice nulla sulla rete e attribuirebbe all'utente una lacuna che non gli appartiene.
 
 Dato: periodi conservati.
 

@@ -21,6 +21,11 @@ internal static partial class AcquisitionLog
         int activities);
 
     [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Score evaluated: {Score} out of 100, coverage {Coverage}.")]
+    internal static partial void Scored(ILogger logger, int score, decimal coverage);
+
+    [LoggerMessage(
         Level = LogLevel.Warning,
         Message = "Acquisition failed: {Reason}")]
     internal static partial void Failed(ILogger logger, string reason);
