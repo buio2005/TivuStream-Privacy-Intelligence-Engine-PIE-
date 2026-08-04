@@ -234,6 +234,46 @@ Ogni componente dell'ecosistema dovrà contribuire a questo obiettivo mantenendo
 
 ---
 
+# Recorded Decisions Not Yet Implemented
+
+Decisioni assunte dal proprietario del progetto, da attuare nei milestone indicati.
+
+---
+
+## Bilingual Interface
+
+Il Frontend dovrà offrire l'interfaccia in **italiano e inglese**.
+
+Il vincolo si estende a ogni pagina pubblica del progetto: landing, presentazione, documentazione d'uso.
+
+L'internazionalizzazione va prevista **dalla prima riga del Frontend**. Aggiungerla a interfaccia costruita comporta la riscrittura di ogni testo già scritto.
+
+Attuazione: milestone del Frontend, come requisito e non come aggiunta successiva.
+
+---
+
+## Documentation In English
+
+La documentazione pubblicata su GitHub, `README.md` compreso, sarà **in inglese**.
+
+La ragione è l'accesso a utenti non italiani, coerente con una piattaforma pubblica.
+
+La traduzione riguarda diciassette documenti versionati e va svolta come milestone dedicato, non in modo incrementale: documenti in due lingue diverse nello stesso rilascio renderebbero incerto quale sia la fonte autoritativa.
+
+Il momento opportuno è **prima della pubblicazione del repository**, non prima della fine del Backend.
+
+La comunicazione con il proprietario del progetto resta in italiano.
+
+---
+
+## Licence
+
+Da scegliere. Le opzioni considerate sono GPL-3.0 e MIT.
+
+La decisione è registrata come aperta perché il progetto esclude fonti NonCommercial in nome di ciò che l'utente non ha scelto: è coerente che dichiari a sua volta cosa concede.
+
+---
+
 # References
 
 Prima di iniziare qualsiasi attività di sviluppo consultare:
