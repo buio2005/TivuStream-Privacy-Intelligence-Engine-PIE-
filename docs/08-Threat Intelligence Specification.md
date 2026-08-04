@@ -4,7 +4,7 @@
 
 **Document:** Threat Intelligence Specification
 
-**Version:** 1.2.1
+**Version:** 1.3.0
 
 **Status:** Approved
 
@@ -215,11 +215,39 @@ La licenza è **obbligatoria**. Una lista priva di licenza dichiarata non viene 
 
 ## Default Lists
 
-L'insieme delle liste predefinite **non è definito da questa specifica**.
+Il progetto adotta esclusivamente liste la cui licenza ne consenta il download da parte dell'utente.
 
-La scelta richiede la verifica della licenza, della manutenzione attiva e della qualità della categorizzazione di ciascuna fonte, e costituisce una decisione da assumere esplicitamente prima del rilascio pubblico.
+Le liste predefinite provengono dal **Block List Project**, distribuito in pubblico dominio con licenza Unlicense, nel formato a un dominio per riga.
 
-Il progetto adotta esclusivamente liste la cui licenza ne consenta la distribuzione o il download da parte dell'utente.
+| Lista            | Categoria      |
+| ---------------- | -------------- |
+| `ads`            | `Advertising`  |
+| `tracking`       | `Tracking`     |
+| `malware`        | `Malware`      |
+| `phishing`       | `Phishing`     |
+| `crypto`         | `Cryptomining` |
+| `scam`           | `Suspicious`   |
+| `abuse`          | `Suspicious`   |
+
+La ricerca che ha portato a questa scelta, comprese le fonti esaminate e scartate, è documentata separatamente.
+
+### Single Source
+
+Le liste predefinite provengono da **una sola fonte**.
+
+I suoi errori diventano i nostri, e i suoi silenzi diventano `Unknown`.
+
+La condizione non deriva da una preferenza. Fra le fonti liberamente utilizzabili, poche sono segmentate per categoria, e le poche che lo sono si alimentano a vicenda: adottarne due darebbe l'aspetto di pareri indipendenti senza esserlo, e un accordo apparente è peggio di una dipendenza dichiarata.
+
+L'utente può aggiungere fonti proprie in qualunque momento.
+
+### Categories Without A Source
+
+Le categorie `Analytics`, `Social`, `Streaming`, `Cloud` e `AI Services` non hanno alcuna lista predefinita.
+
+I domini che vi apparterrebbero restano `Unknown`.
+
+Nessuna categoria viene attribuita per riempire un vuoto.
 
 ---
 
@@ -247,7 +275,7 @@ tracker.ads.example.com
             example.com
 ```
 
-La ricerca si arresta alla prima corrispondenza.
+La ricerca si arresta al primo livello che produce una corrispondenza. Se a quel livello corrispondono più liste, l'esito è determinato dalla sezione Competing Classifications.
 
 Un dominio elencato in una lista si intende comprensivo dei propri sottodomini: è la convenzione adottata dalle liste stesse, e ignorarla renderebbe inefficace la classificazione.
 
@@ -265,6 +293,64 @@ Il livello di confidenza dipende da **come** la corrispondenza è stata ottenuta
 Il secondo caso è un'inferenza: la lista afferma qualcosa sul dominio padre, e il sistema estende l'affermazione al sottodominio osservato.
 
 L'inferenza è ragionevole e resta un'inferenza. Dichiararla con confidenza inferiore permette all'utente di distinguerla da un'affermazione diretta.
+
+---
+
+## Competing Classifications
+
+Un dominio può comparire in **più liste con categorie diverse**. Un dominio pubblicitario che traccia anche l'utente appartiene legittimamente a entrambe.
+
+La corrispondenza si risolve in tre passaggi, applicati in quest'ordine.
+
+### 1. Vince il nome più vicino
+
+Una corrispondenza sul nome completo prevale su una corrispondenza ottenuta risalendo, **qualunque sia la categoria**.
+
+La specificità è un segnale più forte della gravità: una lista che nomina `analytics.example.com` sta dicendo qualcosa su quel nome, mentre una lista che nomina `example.com` sta dicendo qualcosa sul dominio padre. Lasciare che la seconda prevalga significherebbe sostituire un'affermazione diretta con un'inferenza.
+
+### 2. A parità di distanza, vince la categoria più grave
+
+L'ordine di gravità è il seguente.
+
+| Ordine | Categoria      | Natura                      |
+| ------ | -------------- | --------------------------- |
+| 1      | `Malware`      | Sicurezza                    |
+| 2      | `Phishing`     | Sicurezza                    |
+| 3      | `Cryptomining` | Sicurezza                    |
+| 4      | `Suspicious`   | Sicurezza, non confermata    |
+| 5      | `Tracking`     | Privacy                      |
+| 6      | `Analytics`    | Privacy                      |
+| 7      | `Advertising`  | Privacy                      |
+| 8      | `Social`       | Descrittiva                  |
+| 9      | `Streaming`    | Descrittiva                  |
+| 10     | `Cloud`        | Descrittiva                  |
+| 11     | `AI Services`  | Descrittiva                  |
+| 12     | `Unknown`      | Assenza di classificazione   |
+
+L'ordine è un **giudizio editoriale dichiarato**, come i pesi del Network Privacy & Security Score. Non deriva da una misura e non pretende di derivarne.
+
+Le ragioni.
+
+* La sicurezza precede la privacy. Un dominio che traccia e distribuisce malware va presentato come minaccia, non come fastidio.
+* `Suspicious` precede le categorie di privacy perché segnala un pericolo possibile, sul quale l'utente può agire, mentre `Tracking` segnala un comportamento certo ma di gravità inferiore.
+* Fra le categorie di privacy, `Tracking` precede `Analytics`, che precede `Advertising`: la prima riguarda la persona, l'ultima il contenuto.
+* Le categorie descrittive non esprimono un giudizio e cedono a qualunque categoria che ne esprima uno.
+
+### 3. A parità di gravità, vince la lista più recente
+
+Quando due liste della stessa categoria rivendicano lo stesso nome, prevale quella aggiornata più di recente.
+
+Una lista mai aggiornata cede a qualunque lista aggiornata. Fra due liste equivalenti anche su questo, prevale quella il cui nome viene prima in ordine alfabetico, affinché lo stesso insieme di liste produca sempre lo stesso risultato.
+
+### What Is Lost
+
+Il sistema mostra **una sola categoria**.
+
+Le altre categorie nelle quali il dominio compare non vengono presentate.
+
+La perdita è reale e viene dichiarata. La classificazione mostrata è quella più grave fra quelle trovate, non l'unica trovata, e l'interfaccia non deve suggerire il contrario.
+
+Rappresentare tutte le categorie di un dominio richiede una modifica del Unified Data Model e resta una possibilità aperta, non una decisione presa.
 
 ---
 

@@ -33,7 +33,7 @@ La roadmap ha i seguenti obiettivi.
 
 # Current Status
 
-**Documentation Release:** 1.2.0
+**Documentation Release:** 1.3.0
 
 **Project Status:** Documentation Completed
 

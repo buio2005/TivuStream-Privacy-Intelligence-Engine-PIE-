@@ -8,6 +8,66 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Documentation Release 1.3.0 — Fonti e conflitti — 2026-08-04
+
+Le liste predefinite sono scelte, e la regola che decide fra liste in disaccordo è dichiarata.
+
+### Added
+
+**Ricerca sulle fonti — documento 17, stato Analysis**
+
+Licenze lette dai file di licenza delle fonti, non da riassunti. Una prima ricerca riportava il Block List Project come licenziato MIT; il file `LICENSE` dichiara Unlicense.
+
+Fonti esaminate: Block List Project, HaGeZi, oisd, StevenBlack, Disconnect, Peter Lowe, ShadowWhisperer, lightswitch05, Phishing Army, DuckDuckGo Tracker Blocklists.
+
+Due esclusioni derivano dalle nostre regole. Peter Lowe non dichiara licenza, e la Specification 08 la rende obbligatoria. Disconnect, Phishing Army e DuckDuckGo sono NonCommercial: indicarle come predefinite imporrebbe all'utente una condizione che non ha scelto.
+
+**Liste predefinite — Specification 08 alla 1.3.0**
+
+Sette liste del Block List Project: `ads`, `tracking`, `malware`, `phishing`, `crypto`, `scam`, `abuse`.
+
+Escluse deliberatamente le liste `facebook`, `twitter`, `tiktok` e `whatsapp`: elencano domini di servizi che l'utente può usare di proposito, e classificarli come minaccia è un giudizio editoriale che non ci spetta. Escluse anche le liste di contenuto, fuori dallo scopo del progetto.
+
+**Regola sui conflitti fra liste**
+
+Un dominio può comparire in più liste con categorie diverse. La specifica stabiliva l'arresto alla prima corrispondenza senza stabilire in quale ordine le liste venissero consultate: un dettaglio implementativo decideva quale categoria l'utente vede.
+
+La risoluzione avviene ora in tre passaggi.
+
+1. Vince il nome più vicino, qualunque sia la categoria. La specificità è un segnale più forte della gravità: lasciare che una categoria grave trovata sul padre prevalga su una corrispondenza diretta significherebbe sostituire un'affermazione con un'inferenza.
+2. A parità di distanza vince la categoria più grave, secondo un ordine dichiarato che pone la sicurezza prima della privacy e le categorie descrittive per ultime.
+3. A parità di gravità vince la lista aggiornata più di recente, poi il nome in ordine alfabetico, affinché lo stesso insieme di liste produca sempre lo stesso risultato.
+
+L'ordine di gravità è un giudizio editoriale dichiarato, come i pesi del punteggio. Non deriva da una misura e non pretende di derivarne.
+
+### Changed
+
+**Classification Engine allineato**
+
+Le liste vengono ordinate una sola volta, alla costruzione del motore, per gravità e poi per freschezza.
+
+Cinque nuove prove, fra cui quella che verifica che due ordinamenti della stessa installazione affermino la stessa cosa.
+
+### Known Impact
+
+**Il sistema mostra una sola categoria.**
+
+Le altre categorie nelle quali il dominio compare non vengono presentate. La perdita è dichiarata nella specifica: la classificazione mostrata è la più grave fra quelle trovate, non l'unica trovata.
+
+Rappresentarle tutte richiede una modifica del Unified Data Model e resta una possibilità aperta.
+
+**Una sola fonte predefinita.**
+
+I suoi errori diventano i nostri e i suoi silenzi diventano `Unknown`.
+
+La ricerca di una seconda fonte non ha risolto il rischio: l'unica compatibile e liberamente licenziata è a monte della prima, che la ingerisce quotidianamente. Adottarle entrambe avrebbe dato l'aspetto di pareri indipendenti senza esserlo, e un accordo apparente è peggio di una dipendenza dichiarata.
+
+**Categorie senza fonte.**
+
+`Analytics`, `Social`, `Streaming`, `Cloud` e `AI Services` non hanno alcuna lista predefinita. I domini che vi apparterrebbero restano `Unknown`.
+
+---
+
 ## Milestone M4.3 — Classificazione dei domini — 2026-08-04
 
 Il sistema sa attribuire una categoria a un dominio, dichiarando da quale lista proviene e quanto è recente.

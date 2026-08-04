@@ -52,6 +52,85 @@ public sealed class ClassificationEngineTests
     }
 
     // ------------------------------------------------------------------
+    // When several lists claim the same name
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void The_gravest_category_wins_at_the_same_distance()
+    {
+        // The same name is listed as advertising and as malware. Presenting
+        // it as a nuisance would hide the threat.
+        ClassificationEngine engine = new(
+        [
+            List("Advertising", ThreatCategory.Advertising, ListUpdatedAt, "both.example.com"),
+            List("Malware", ThreatCategory.Malware, ListUpdatedAt, "both.example.com"),
+        ]);
+
+        DomainClassification result = engine.Classify("both.example.com");
+
+        Assert.Equal(ThreatCategory.Malware, result.Category);
+        Assert.Equal("Malware", result.SourceName);
+    }
+
+    [Fact]
+    public void The_order_the_lists_arrive_in_does_not_change_the_answer()
+    {
+        LoadedClassificationList advertising =
+            List("Advertising", ThreatCategory.Advertising, ListUpdatedAt, "both.example.com");
+        LoadedClassificationList malware =
+            List("Malware", ThreatCategory.Malware, ListUpdatedAt, "both.example.com");
+
+        // Two orderings of the same installation must state the same thing.
+        // An implementation detail deciding what the person is told would be
+        // a judgement nobody made.
+        Assert.Equal(
+            new ClassificationEngine([advertising, malware]).Classify("both.example.com").Category,
+            new ClassificationEngine([malware, advertising]).Classify("both.example.com").Category);
+    }
+
+    [Fact]
+    public void A_direct_match_wins_over_a_graver_category_found_on_the_parent()
+    {
+        // "example.net" is listed as malware; "safe.example.net" is listed as
+        // advertising by name. The list that names it directly is asserting;
+        // the other is being extended by inference.
+        ClassificationEngine engine = new(
+        [
+            List("Malware", ThreatCategory.Malware, ListUpdatedAt, "example.net"),
+            List("Advertising", ThreatCategory.Advertising, ListUpdatedAt, "safe.example.net"),
+        ]);
+
+        DomainClassification result = engine.Classify("safe.example.net");
+
+        Assert.Equal(ThreatCategory.Advertising, result.Category);
+        Assert.Equal(ConfidenceLevel.High, result.Confidence);
+    }
+
+    [Fact]
+    public void At_equal_severity_the_more_recently_updated_list_wins()
+    {
+        ClassificationEngine engine = new(
+        [
+            List("Stale", ThreatCategory.Tracking, ListUpdatedAt, "both.example.com"),
+            List("Fresh", ThreatCategory.Tracking, ListUpdatedAt.AddDays(3), "both.example.com"),
+        ]);
+
+        Assert.Equal("Fresh", engine.Classify("both.example.com").SourceName);
+    }
+
+    [Fact]
+    public void A_list_never_updated_yields_to_one_that_was()
+    {
+        ClassificationEngine engine = new(
+        [
+            List("Never", ThreatCategory.Tracking, updatedAt: null, "both.example.com"),
+            List("Once", ThreatCategory.Tracking, ListUpdatedAt, "both.example.com"),
+        ]);
+
+        Assert.Equal("Once", engine.Classify("both.example.com").SourceName);
+    }
+
+    // ------------------------------------------------------------------
     // Unknown means not classified, never harmless
     // ------------------------------------------------------------------
 
