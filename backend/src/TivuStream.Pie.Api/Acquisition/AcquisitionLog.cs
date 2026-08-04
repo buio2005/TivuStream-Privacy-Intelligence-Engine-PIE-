@@ -26,6 +26,11 @@ internal static partial class AcquisitionLog
     internal static partial void Scored(ILogger logger, int score, decimal coverage);
 
     [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "No overall score produced: coverage {Coverage} is below the minimum required. The breakdown was recorded.")]
+    internal static partial void ScoreWithheld(ILogger logger, decimal coverage);
+
+    [LoggerMessage(
         Level = LogLevel.Warning,
         Message = "Acquisition failed: {Reason}")]
     internal static partial void Failed(ILogger logger, string reason);

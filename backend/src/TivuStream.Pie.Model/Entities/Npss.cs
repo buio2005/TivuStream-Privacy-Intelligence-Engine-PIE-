@@ -17,12 +17,25 @@ public sealed record Npss
     /// <summary>
     /// Overall score, on a scale from 0 to 100.
     /// </summary>
-    public required int OverallScore { get; init; }
+    /// <remarks>
+    /// Absent when the coverage falls below the minimum the specification
+    /// requires. Below that level a synthetic judgement would rest on too
+    /// little of the evaluation system, and a single figure would suggest a
+    /// completeness that does not exist.
+    /// <para>
+    /// Its absence is a decision of the system, not a failure. The breakdown
+    /// is present in any case.
+    /// </para>
+    /// </remarks>
+    public int? OverallScore { get; init; }
 
     /// <summary>
     /// Qualitative status corresponding to the overall score.
     /// </summary>
-    public required ScoreStatus Status { get; init; }
+    /// <remarks>
+    /// Absent whenever the overall score is absent.
+    /// </remarks>
+    public ScoreStatus? Status { get; init; }
 
     /// <summary>
     /// Direction of change compared with the previous score, when a

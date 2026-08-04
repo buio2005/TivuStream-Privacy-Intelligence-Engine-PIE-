@@ -37,9 +37,9 @@ public sealed record NpssEvaluationInput
     public required int ExpectedPeriods { get; init; }
 
     /// <summary>
-    /// Score of the previous evaluation, when one exists.
+    /// Score of the previous evaluation, when one exists and was produced.
     /// </summary>
-    public decimal? PreviousOverallScore { get; init; }
+    public int? PreviousOverallScore { get; init; }
 
     /// <summary>
     /// Coverage of the previous evaluation, when one exists.

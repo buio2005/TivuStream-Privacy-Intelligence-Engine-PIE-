@@ -8,6 +8,151 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M4.2 — Allineamento alla 1.1.0 e primi test — 2026-08-04
+
+Il codice recepisce la revisione documentale, e per la prima volta le regole del progetto sono verificate automaticamente.
+
+### Added
+
+**Misure qualificate**
+
+`MeasurementQuality` e `DeviceIdentityBasis` nel modello.
+
+I domini univoci sono dichiarati **limite inferiore**. Gli istanti di osservazione derivati da statistiche su finestra sono dichiarati **vincolati al periodo** anziché presentati come osservazioni.
+
+**Identità dei dispositivi da indirizzo hardware**
+
+L'Adapter legge le assegnazioni DHCP quando la sorgente le fornisce, e ne ricava un'identità stabile fra cambi di indirizzo.
+
+L'acquisizione non fallisce mai: se la sorgente non svolge quel ruolo, o se l'account non può leggere quella sezione, l'identità resta fondata sull'indirizzo di rete e i dispositivi lo dichiarano.
+
+**Progetto di test**
+
+Prima verifica automatica del progetto. Quattordici prove sul motore NPSS, tutte riferite a impegni presi nelle Specification e non a dettagli implementativi.
+
+Fra le proprietà verificate.
+
+* Ciò che non è osservato ha zero punti **ottenibili**, non zero punti.
+* Un'area non misurabile conserva il **peso nominale**, altrimenti sparirebbe la traccia di ciò che manca.
+* **Togliere dati non può alzare il risultato**: è la proprietà che rende il punteggio non manipolabile per omissione.
+* Un'impostazione disattivata abbassa il punteggio ma non la misurabilità: è un fatto sulla rete, non una lacuna nell'osservazione.
+* Sotto la soglia non viene prodotto alcun riassunto, ma il breakdown esiste comunque.
+
+Dipendenze approvate, referenziate soltanto dai progetti di test e mai dal prodotto distribuito.
+
+| Nome | Scopo | Licenza |
+| --- | --- | --- |
+| `xunit` | Verifica automatica | Apache-2.0 |
+| `xunit.runner.visualstudio` | Esecuzione delle prove | Apache-2.0 |
+| `Microsoft.NET.Test.Sdk` | Piattaforma di test | MIT |
+
+### Changed
+
+**Soglia di copertura applicata**
+
+`Npss.OverallScore` e `Npss.Status` sono ora assenti quando la copertura è inferiore a 60.
+
+Anche il registro operativo lo dichiara: nessun punteggio prodotto, breakdown registrato.
+
+**Algoritmo alla versione 2.0.0**
+
+La migrazione 0006 rimuove i punteggi calcolati con la versione precedente anziché conservarli. Non sono confrontabili con i successivi, e mantenerli produrrebbe uno storico apparentemente continuo. Nessuna misura va perduta: i punteggi derivano dalle acquisizioni, che restano.
+
+### Found
+
+**Un ramo del motore non è raggiungibile**
+
+Scrivendo le prove sul trend è emerso che quel calcolo **non viene mai eseguito**.
+
+Il trend richiede un punteggio complessivo, che richiede copertura 60. Ma le aree dipendenti dalla classificazione dei domini e dal Device Engine valgono sessanta punti su cento, e nessuno dei due esiste: nessun input possibile raggiunge la soglia.
+
+Abbassare la soglia nelle prove avrebbe verificato una regola che il prodotto non applica. La condizione è annotata nel file di test e resterà tale finché il Threat Engine non sarà disponibile.
+
+I test non hanno trovato un difetto: hanno trovato una parte di sistema che nessuno stava esercitando.
+
+---
+
+## Documentation Release 1.1.0 — 2026-08-04
+
+Revisione nata da una valutazione critica del progetto, non da un requisito nuovo.
+
+Tre difetti erano stati rilevati: il punteggio complessivo presentava un giudizio come se fosse una misura, i valori approssimati non venivano dichiarati tali nonostante la specifica lo imponesse, e due proprietà temporali erano valorizzate con dati plausibili anziché osservati.
+
+Nessun codice è stato prodotto in questa release.
+
+### Root Cause
+
+I tre difetti avevano un'unica origine.
+
+Il punteggio trattava già la conoscenza come **graduata**: area misurata, parzialmente misurata, non misurabile.
+
+Il singolo valore era invece trattato in modo **binario**: noto oppure vuoto.
+
+Quella asimmetria costringeva a scegliere fra due errori ogni volta che un dato era noto con precisione ridotta: inventare un valore plausibile, oppure scartare un'informazione realmente posseduta. In due casi era stata scelta la prima strada.
+
+### Added
+
+**Measurement Quality**
+
+Ogni valore può dichiarare come è conosciuto: `Exact`, `LowerBound`, `PeriodBounded`, `Estimated`.
+
+> Un valore conosciuto con minore precisione viene qualificato, non cancellato e non arrotondato al plausibile.
+
+Applicazioni immediate.
+
+* Il numero di domini univoci diventa un **limite inferiore dichiarato**, che è un'affermazione più precisa di "approssimato" e più onesta di un conteggio.
+* Gli istanti di prima e ultima osservazione derivati da statistiche su finestra sono dichiarati **vincolati al periodo**. Quando la stessa proprietà arriva dai log delle interrogazioni diventa esatta, e la differenza è visibile all'utente.
+
+Non è una regola aggiuntiva: è la regola del punteggio, estesa al livello che ne era rimasto escluso.
+
+**Identity Basis**
+
+`Device` dichiara se la propria identità si fonda sull'indirizzo hardware, stabile, oppure sull'indirizzo di rete, che cambia.
+
+Attribuire un comportamento a un dispositivo è l'affermazione più forte che il sistema produce, e la sua solidità va resa visibile.
+
+**Acquisizione delle assegnazioni DHCP**
+
+Quando la Data Source svolge anche il ruolo di server DHCP, l'Adapter ne ricava la corrispondenza fra indirizzo hardware e indirizzo di rete.
+
+È un guadagno di accuratezza reale, non una qualifica: l'identità del dispositivo sopravvive ai cambi di indirizzo.
+
+### Changed
+
+**Il punteggio complessivo è dichiarato come giudizio**
+
+Il breakdown è misura: chiunque disponga degli stessi dati ottiene gli stessi valori.
+
+Il numero complessivo richiede di stabilire quanto ciascuna area conti, e quella scelta non discende dai dati.
+
+I pesi diventano una **posizione editoriale dichiarata del progetto**, motivata voce per voce, versionata insieme all'algoritmo e rivedibile. Non derivano da uno standard di settore, perché non ne esiste uno.
+
+Un giudizio presentato come misura è una misura falsa.
+
+**Soglia minima di copertura**
+
+Sotto una copertura di **60** il punteggio complessivo **non viene prodotto**.
+
+`Npss.overallScore` e `Npss.status` diventano opzionali.
+
+Il sistema presenta il solo breakdown e dichiara di non disporre di elementi sufficienti per un giudizio complessivo, pur avendo misure valide da mostrare.
+
+La Specification 09 vieta di sostituirlo con un numero provvisorio, una barra vuota o un segnaposto che suggerisca un valore in arrivo.
+
+È la scelta che distingue maggiormente il progetto: uno strumento che rifiuta di dare un voto quando non ha elementi sufficienti.
+
+**09 - Network Privacy**
+
+L'interfaccia non presenta mai come esatto un valore qualificato diversamente, dichiara la base dell'identità dei dispositivi e comunica il punteggio trattenuto come scelta del sistema, non come guasto.
+
+### Consequence
+
+Con la copertura attuale di 35, il sistema **non produrrà più un punteggio complessivo** finché il Threat Engine non sarà disponibile.
+
+È il comportamento voluto. Il 69 mostrato ieri poggiava su un terzo del sistema di valutazione.
+
+---
+
 ## Milestone M4.1 — Configurazione e primo motore del Core — 2026-08-03
 
 Il progetto Core, vuoto dall'inizio, contiene il primo motore. PIE produce un punteggio.

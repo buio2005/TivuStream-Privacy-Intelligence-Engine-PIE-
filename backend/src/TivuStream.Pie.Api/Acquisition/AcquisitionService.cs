@@ -181,7 +181,14 @@ internal sealed class AcquisitionService : BackgroundService
 
             _scoreRepository.Save(dataSource.Id, period, score);
 
-            AcquisitionLog.Scored(_logger, score.OverallScore, score.Coverage);
+            if (score.OverallScore is int overallScore)
+            {
+                AcquisitionLog.Scored(_logger, overallScore, score.Coverage);
+            }
+            else
+            {
+                AcquisitionLog.ScoreWithheld(_logger, score.Coverage);
+            }
 
             AcquisitionLog.Completed(
                 _logger,

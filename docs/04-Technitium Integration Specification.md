@@ -4,7 +4,7 @@
 
 **Document:** Technitium Integration Specification
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 
 **Status:** Approved
 
@@ -418,7 +418,24 @@ Ne discende un limite da dichiarare all'utente.
 * Un dispositivo che cambia indirizzo compare come dispositivo differente.
 * Un indirizzo riassegnato a un altro dispositivo fonde le due identità.
 
-Il limite è inerente all'identificazione per indirizzo. Si attenua utilizzando prenotazioni DHCP, e si supera soltanto disponendo dell'indirizzo hardware, che Technitium espone unicamente quando svolge anche il ruolo di server DHCP.
+---
+
+## Hardware Address When Available
+
+Quando Technitium svolge anche il ruolo di **server DHCP**, espone le assegnazioni in corso, che associano indirizzo hardware e indirizzo di rete.
+
+L'Adapter le acquisisce quando disponibili e ne ricava un'identità del dispositivo **stabile fra cambi di indirizzo**.
+
+Il campo `identityBasis` del dispositivo dichiara quale base è stata utilizzata.
+
+| Condizione                          | Base dichiarata   |
+| ----------------------------------- | ----------------- |
+| Assegnazione DHCP corrispondente     | `HardwareAddress` |
+| Nessuna assegnazione corrispondente  | `NetworkAddress`  |
+
+Le due basi possono coesistere nella stessa acquisizione: un dispositivo con indirizzo statico convive con altri gestiti dal DHCP, e ciascuno dichiara la propria.
+
+Attribuire un comportamento a un dispositivo è un'affermazione forte. Il sistema rende esplicito quanto sia solida invece di lasciarlo intendere.
 
 ---
 

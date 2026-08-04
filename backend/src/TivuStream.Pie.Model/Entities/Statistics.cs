@@ -1,3 +1,5 @@
+using TivuStream.Pie.Model.Enums;
+
 namespace TivuStream.Pie.Model.Entities;
 
 /// <summary>
@@ -31,7 +33,16 @@ public sealed record Statistics
     /// <summary>
     /// Number of distinct domains observed.
     /// </summary>
+    /// <remarks>
+    /// Typically a lower bound: sources return truncated lists, so the
+    /// distinct domains observed are at least this many.
+    /// </remarks>
     public required int UniqueDomains { get; init; }
+
+    /// <summary>
+    /// How <see cref="UniqueDomains"/> is known.
+    /// </summary>
+    public MeasurementQuality UniqueDomainsQuality { get; init; } = MeasurementQuality.Exact;
 
     /// <summary>
     /// Number of devices considered active.

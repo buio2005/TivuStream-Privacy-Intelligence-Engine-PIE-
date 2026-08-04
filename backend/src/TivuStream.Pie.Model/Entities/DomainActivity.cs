@@ -1,3 +1,5 @@
+using TivuStream.Pie.Model.Enums;
+
 namespace TivuStream.Pie.Model.Entities;
 
 /// <summary>
@@ -45,4 +47,13 @@ public sealed record DomainActivity
     /// Moment the activity was observed most recently.
     /// </summary>
     public required DateTimeOffset LastSeen { get; init; }
+
+    /// <summary>
+    /// How <see cref="FirstSeen"/> and <see cref="LastSeen"/> are known.
+    /// </summary>
+    /// <remarks>
+    /// Exact when derived from query logs, which carry the instant of each
+    /// query.
+    /// </remarks>
+    public MeasurementQuality ObservationQuality { get; init; } = MeasurementQuality.Exact;
 }

@@ -98,9 +98,11 @@ public sealed class TechnitiumAdapter
             // service, and is therefore left out of this counter.
             FailedQueries = counters.TotalServerFailure + counters.TotalRefused + counters.TotalDropped,
 
-            // The source exposes only the most frequent domains, so this
-            // value is an approximation and must be presented as such.
+            // The source exposes only the most frequent domains. What was
+            // counted is certain, what was left out is not: the value is a
+            // lower bound and says so.
             UniqueDomains = stats.TopDomains?.Count ?? 0,
+            UniqueDomainsQuality = MeasurementQuality.LowerBound,
 
             ActiveDevices = counters.TotalClients,
             EncryptedQueries = SumEncryptedQueries(stats.ProtocolTypeChartData),
@@ -115,6 +117,8 @@ public sealed class TechnitiumAdapter
             .GetAsync<TopClientsResponse>(BuildTopUrl(window, "TopClients"), cancellationToken)
             .ConfigureAwait(false);
 
+        Dictionary<string, DhcpLease> leases = await ReadLeasesAsync(cancellationToken).ConfigureAwait(false);
+
         List<Device> devices = [];
 
         foreach (TopClient client in response.TopClients ?? [])
@@ -124,28 +128,88 @@ public sealed class TechnitiumAdapter
                 continue;
             }
 
+            leases.TryGetValue(client.Name, out DhcpLease? lease);
+
+            bool hasHardwareAddress = !string.IsNullOrWhiteSpace(lease?.HardwareAddress);
+
             devices.Add(new Device
             {
-                DeviceId = DeviceIdentity.FromAddress(client.Name),
-                Hostname = string.IsNullOrWhiteSpace(client.Domain) ? null : client.Domain,
+                // An identity founded on the hardware address survives a
+                // change of network address. One founded on the network
+                // address does not, and says so.
+                DeviceId = hasHardwareAddress
+                    ? DeviceIdentity.FromHardwareAddress(lease!.HardwareAddress!)
+                    : DeviceIdentity.FromAddress(client.Name),
+
+                IdentityBasis = hasHardwareAddress
+                    ? DeviceIdentityBasis.HardwareAddress
+                    : DeviceIdentityBasis.NetworkAddress,
+
+                Hostname = FirstNonEmpty(client.Domain, lease?.HostName),
                 IpAddress = client.Name,
+                MacAddress = hasHardwareAddress ? lease!.HardwareAddress : null,
 
                 // Not exposed by the source. The Device Engine may enrich them.
-                MacAddress = null,
                 Vendor = null,
                 OperatingSystem = null,
 
                 // The source reports activity over an interval, not the
                 // instants of first and last observation. The bounds of the
-                // acquired interval are therefore used.
+                // period are used and declared as such.
                 FirstSeen = window.Start,
                 LastSeen = window.End,
+                ObservationQuality = MeasurementQuality.PeriodBounded,
 
                 Status = DeviceStatus.Active,
             });
         }
 
         return devices;
+    }
+
+    /// <summary>
+    /// Reads the address assignments, when the source provides them.
+    /// </summary>
+    /// <remarks>
+    /// The source may not act as a DHCP server, or the account may not be
+    /// allowed to read that section. Neither is a failure of the acquisition:
+    /// the identity of devices simply rests on a weaker basis, which the
+    /// devices themselves declare.
+    /// </remarks>
+    private async Task<Dictionary<string, DhcpLease>> ReadLeasesAsync(CancellationToken cancellationToken)
+    {
+        Dictionary<string, DhcpLease> leases = new(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            DhcpLeasesResponse response = await _client
+                .GetAsync<DhcpLeasesResponse>("/api/dhcp/leases/list", cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (DhcpLease lease in response.Leases ?? [])
+            {
+                if (!string.IsNullOrWhiteSpace(lease.Address))
+                {
+                    leases[lease.Address] = lease;
+                }
+            }
+        }
+        catch (AdapterException)
+        {
+            // Left empty on purpose.
+        }
+
+        return leases;
+    }
+
+    private static string? FirstNonEmpty(string? preferred, string? fallback)
+    {
+        if (!string.IsNullOrWhiteSpace(preferred))
+        {
+            return preferred;
+        }
+
+        return string.IsNullOrWhiteSpace(fallback) ? null : fallback;
     }
 
     /// <inheritdoc />
@@ -181,8 +245,14 @@ public sealed class TechnitiumAdapter
                 Category = ThreatCategory.Unknown,
                 Reputation = null,
 
+                // The source reports activity over an interval, not the
+                // instants of individual events. The bounds of the period are
+                // used and declared as such rather than passed off as
+                // observations.
                 FirstSeen = window.Start,
                 LastSeen = window.End,
+                ObservationQuality = MeasurementQuality.PeriodBounded,
+
                 Occurrences = hits,
             });
         }

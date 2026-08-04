@@ -53,6 +53,11 @@ public sealed record Domain
     public required DateTimeOffset LastSeen { get; init; }
 
     /// <summary>
+    /// How <see cref="FirstSeen"/> and <see cref="LastSeen"/> are known.
+    /// </summary>
+    public MeasurementQuality ObservationQuality { get; init; } = MeasurementQuality.Exact;
+
+    /// <summary>
     /// Number of times the domain was observed.
     /// </summary>
     public required long Occurrences { get; init; }

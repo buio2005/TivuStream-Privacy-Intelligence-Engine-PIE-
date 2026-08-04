@@ -4,7 +4,7 @@
 
 **Document:** Glossary Specification
 
-**Version:** 1.3.0
+**Version:** 1.4.0
 
 **Status:** Approved
 
@@ -132,6 +132,24 @@ Intervallo temporale fisso al quale sono allineate le acquisizioni.
 Un'acquisizione non è un insieme di eventi ma l'osservazione di un intervallo: due osservazioni di intervalli sovrapposti non sono sommabili.
 
 Una nuova osservazione dello stesso periodo sostituisce la precedente. Un periodo concluso è immutabile.
+
+---
+
+# Measurement Quality
+
+Dichiarazione di **come** un valore è conosciuto.
+
+Un valore può essere esatto, un limite inferiore, vincolato a un periodo oppure dedotto.
+
+Un valore conosciuto con minore precisione viene qualificato, non cancellato e non arrotondato al plausibile.
+
+---
+
+# Identity Basis
+
+Fondamento sul quale è stata stabilita l'identità di un dispositivo.
+
+L'identità basata sull'indirizzo hardware è stabile; quella basata sull'indirizzo di rete cambia quando cambia l'indirizzo.
 
 ---
 

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Verification of the rules stated in the Specifications.
+
+    The rules this project checks are not implementation details: they are
+    commitments made to the person using the tool. Without an automatic check
+    they survive only as long as whoever touches the code remembers them.
+  -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+
+    <!--
+      Test names are written as sentences, which reads better than the
+      alternative and is the convention of the framework.
+    -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TivuStream.Pie.Core\TivuStream.Pie.Core.csproj" />
+  </ItemGroup>
+
+</Project>

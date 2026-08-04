@@ -4,7 +4,7 @@
 
 **Document:** Data Model Specification
 
-**Version:** 1.5.0
+**Version:** 2.0.0
 
 **Status:** Approved
 
@@ -150,9 +150,14 @@ Contiene le statistiche aggregate della rete.
 * cachedQueries
 * failedQueries
 * uniqueDomains
+* uniqueDomainsQuality
 * activeDevices
 * encryptedQueries
 * dnssecEnabled
+
+Il campo `uniqueDomains` è tipicamente un **limite inferiore**: le sorgenti restituiscono elenchi troncati, quindi i domini distinti osservati sono almeno quel numero.
+
+La qualità è dichiarata da `uniqueDomainsQuality`.
 
 ---
 
@@ -194,6 +199,8 @@ Rappresenta un dispositivo identificato dal sistema.
 * operatingSystem
 * firstSeen
 * lastSeen
+* observationQuality
+* identityBasis
 * status
 
 ---
@@ -220,6 +227,7 @@ Rappresenta un dominio osservato durante l'analisi.
 * reputation
 * firstSeen
 * lastSeen
+* observationQuality
 * occurrences
 
 Il campo `reputation` è **opzionale**.
@@ -243,6 +251,7 @@ Rappresenta l'interazione tra un Device e un Domain.
 * protocol
 * firstSeen
 * lastSeen
+* observationQuality
 
 ---
 
@@ -339,6 +348,10 @@ Rappresenta il punteggio sintetico dello stato della rete.
 * algorithmVersion
 * generatedAt
 * breakdown
+
+I campi `overallScore` e `status` sono **opzionali**.
+
+Sono assenti quando la copertura è inferiore alla soglia minima definita dalla NPSS Specification: sotto quel livello un giudizio sintetico non è sostenibile, e viene presentato il solo dettaglio.
 
 Il campo `coverage` indica la somma dei `maxScore` di tutte le aree, su un massimo di 100.
 
@@ -502,6 +515,76 @@ Un valore pari a zero appartiene alla seconda condizione e costituisce un'afferm
 La terza condizione è invece un'affermazione sul sistema, e va rappresentata attraverso l'assenza della relativa capability, mai attraverso un valore.
 
 Questa distinzione discende direttamente dal principio di Transparency.
+
+---
+
+# Measurement Quality
+
+La disponibilità di un dato non esaurisce ciò che occorre dichiarare.
+
+Un valore può essere conosciuto **con precisione differente**, e trattare la conoscenza come binaria costringe a una scelta fra due errori: inventare un valore plausibile, oppure scartare un'informazione realmente posseduta.
+
+Il punteggio distingue già fra area misurata, parzialmente misurata e non misurabile. Il medesimo criterio si applica al singolo valore.
+
+---
+
+## Quality Levels
+
+| Qualità         | Significato                                                        |
+| --------------- | ------------------------------------------------------------------ |
+| `Exact`         | Misurato direttamente                                               |
+| `LowerBound`    | Il valore reale è almeno quello indicato, possibilmente superiore    |
+| `PeriodBounded` | L'evento è avvenuto entro il periodo di osservazione, istante ignoto |
+| `Estimated`     | Dedotto con un metodo che va dichiarato                             |
+
+---
+
+## Principle
+
+> Un valore conosciuto con minore precisione viene **qualificato**, non cancellato e non arrotondato al plausibile.
+
+Due esempi mostrano la differenza rispetto al trattamento binario.
+
+**Domini univoci.** La sorgente restituisce elenchi troncati. Il numero di domini distinti non è "approssimato" in senso vago: è un **limite inferiore**, ossia un'affermazione precisa. Presentarlo come conteggio esatto è falso; ometterlo scarta un dato utile.
+
+**Istante di prima osservazione.** Quando il dato deriva da statistiche su finestra, il sistema sa che l'evento è avvenuto **entro quel periodo**, non a quale minuto. Scrivere l'inizio del periodo come se fosse l'istante osservato è un'invenzione; lasciare vuoto perde una conoscenza reale.
+
+Quando la stessa proprietà diventa disponibile con precisione maggiore, ad esempio dai log delle interrogazioni, la qualità dichiarata cambia di conseguenza e **l'utente vede la differenza**.
+
+---
+
+## Application
+
+| Entità           | Proprietà                  | Qualità dichiarata da        |
+| ---------------- | -------------------------- | ---------------------------- |
+| `Statistics`     | `uniqueDomains`            | `uniqueDomainsQuality`       |
+| `Device`         | `firstSeen`, `lastSeen`    | `observationQuality`         |
+| `Domain`         | `firstSeen`, `lastSeen`    | `observationQuality`         |
+| `DomainActivity` | `firstSeen`, `lastSeen`    | `observationQuality`         |
+
+Una proprietà priva di qualifica dichiarata è da intendersi `Exact`.
+
+L'interfaccia non presenta mai un valore qualificato come se fosse esatto.
+
+---
+
+# Device Identity
+
+L'identità di un dispositivo può fondarsi su basi di solidità differente.
+
+| Base              | Significato                                              |
+| ----------------- | -------------------------------------------------------- |
+| `HardwareAddress` | Identità stabile, indipendente dall'indirizzo di rete     |
+| `NetworkAddress`  | Identità derivata dall'indirizzo di rete                  |
+
+L'identità basata sull'indirizzo di rete comporta due conseguenze che l'utente deve conoscere.
+
+* Un dispositivo che cambia indirizzo appare come un dispositivo differente.
+* Un indirizzo riassegnato ad altro dispositivo fonde due identità distinte.
+
+Il campo `identityBasis` di `Device` dichiara su quale base l'identità è stata stabilita.
+
+Attribuire un comportamento a un dispositivo è un'affermazione forte. Il sistema deve rendere evidente quanto sia solida.
 
 ---
 

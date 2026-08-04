@@ -25,7 +25,9 @@ namespace TivuStream.Pie.Adapters.Technitium;
 /// </remarks>
 internal static class DeviceIdentity
 {
-    private const string Namespace = "TivuStream.Pie.Adapters.Technitium.Device";
+    private const string NetworkNamespace = "TivuStream.Pie.Adapters.Technitium.Device";
+
+    private const string HardwareNamespace = "TivuStream.Pie.Adapters.Technitium.Device.Hardware";
 
     /// <summary>
     /// Derives the identifier of a device from its network address.
@@ -33,9 +35,27 @@ internal static class DeviceIdentity
     /// <param name="ipAddress">Network address of the device.</param>
     internal static Guid FromAddress(string ipAddress)
     {
+        return Derive(NetworkNamespace, ipAddress);
+    }
+
+    /// <summary>
+    /// Derives the identifier of a device from its hardware address.
+    /// </summary>
+    /// <remarks>
+    /// Kept in a separate namespace from the network address, so that the two
+    /// bases can never produce the same identifier for different devices.
+    /// </remarks>
+    /// <param name="hardwareAddress">Hardware address of the device.</param>
+    internal static Guid FromHardwareAddress(string hardwareAddress)
+    {
+        return Derive(HardwareNamespace, hardwareAddress.ToUpperInvariant());
+    }
+
+    private static Guid Derive(string identityNamespace, string value)
+    {
         string seed = string.Create(
             CultureInfo.InvariantCulture,
-            $"{Namespace}:{ipAddress}");
+            $"{identityNamespace}:{value}");
 
         byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(seed));
 

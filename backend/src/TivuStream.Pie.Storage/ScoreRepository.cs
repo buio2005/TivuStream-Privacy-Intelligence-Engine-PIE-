@@ -106,8 +106,8 @@ public sealed class ScoreRepository
 
         Npss score = new()
         {
-            OverallScore = reader.GetInt32(0),
-            Status = Enum.Parse<ScoreStatus>(reader.GetString(1)),
+            OverallScore = reader.IsDBNull(0) ? null : reader.GetInt32(0),
+            Status = reader.IsDBNull(1) ? null : Enum.Parse<ScoreStatus>(reader.GetString(1)),
             Trend = reader.IsDBNull(2) ? null : Enum.Parse<ScoreTrend>(reader.GetString(2)),
             Coverage = ReadDecimal(reader, 3),
             AlgorithmVersion = reader.GetString(4),
@@ -237,8 +237,8 @@ public sealed class ScoreRepository
             """;
 
         command.Parameters.AddWithValue("$periodId", periodId);
-        command.Parameters.AddWithValue("$overall", score.OverallScore);
-        command.Parameters.AddWithValue("$status", score.Status.ToString());
+        command.Parameters.AddWithValue("$overall", (object?)score.OverallScore ?? DBNull.Value);
+        command.Parameters.AddWithValue("$status", (object?)score.Status?.ToString() ?? DBNull.Value);
         command.Parameters.AddWithValue("$trend", (object?)score.Trend?.ToString() ?? DBNull.Value);
         command.Parameters.AddWithValue("$coverage", Format(score.Coverage));
         command.Parameters.AddWithValue("$algorithmVersion", score.AlgorithmVersion);

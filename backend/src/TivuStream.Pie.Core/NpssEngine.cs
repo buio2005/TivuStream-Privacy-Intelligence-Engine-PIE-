@@ -24,7 +24,21 @@ public sealed class NpssEngine
     /// Independent of the version of the project, as the specification
     /// requires. Scores produced by different versions are not comparable.
     /// </remarks>
-    public const string AlgorithmVersion = "1.0.0";
+    public const string AlgorithmVersion = "2.0.0";
+
+    /// <summary>
+    /// Coverage below which no overall score is produced.
+    /// </summary>
+    /// <remarks>
+    /// Below this level the judgement would rest on less than three fifths of
+    /// the evaluation system, and a single figure would communicate a
+    /// completeness that does not exist.
+    /// <para>
+    /// The breakdown is produced in any case: the system holds valid
+    /// measurements and is declining only the summary.
+    /// </para>
+    /// </remarks>
+    public const decimal MinimumCoverageForOverallScore = 60;
 
     private readonly TimeProvider _timeProvider;
 
@@ -74,15 +88,19 @@ public sealed class NpssEngine
         decimal coverage = breakdown.Sum(component => component.MaxScore);
         decimal obtained = breakdown.Sum(component => component.Score);
 
-        decimal overall = coverage > 0
+        // Below the minimum coverage the summary is not produced. Nothing
+        // takes its place: no provisional figure, no zero, no placeholder.
+        bool summaryIsSupportable = coverage >= MinimumCoverageForOverallScore;
+
+        decimal? overall = summaryIsSupportable
             ? Math.Round(obtained / coverage * 100, MidpointRounding.AwayFromZero)
-            : 0;
+            : null;
 
         return new Npss
         {
-            OverallScore = (int)overall,
-            Status = ResolveStatus(overall),
-            Trend = ResolveTrend(input, overall, coverage),
+            OverallScore = overall is null ? null : (int)overall.Value,
+            Status = overall is null ? null : ResolveStatus(overall.Value),
+            Trend = overall is null ? null : ResolveTrend(input, overall.Value, coverage),
             Coverage = coverage,
             AlgorithmVersion = AlgorithmVersion,
             GeneratedAt = _timeProvider.GetUtcNow(),

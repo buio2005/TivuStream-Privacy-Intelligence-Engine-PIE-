@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
@@ -271,11 +271,41 @@ L'utente deve poter rifiutare una proposta e continuare a utilizzare il sistema 
 
 ---
 
-## Approximate Values
+## Qualified Values
 
-I valori che dipendono da elenchi tronchi restituiti dalla Data Source sono presentati come approssimati.
+Un valore che dichiara una qualità diversa da esatta **non viene mai presentato come esatto**.
+
+| Qualità dichiarata | Presentazione richiesta                                     |
+| ------------------ | ------------------------------------------------------------ |
+| `LowerBound`       | Indicare che il valore reale è almeno quello mostrato         |
+| `PeriodBounded`    | Indicare il periodo, non un istante preciso                   |
+| `Estimated`        | Indicare che si tratta di una deduzione                       |
+
+Presentare un limite inferiore come un conteggio, o l'inizio di un periodo come l'istante di un evento, è un'affermazione falsa anche quando il numero mostrato è corretto.
 
 L'interfaccia non arrotonda un valore incerto presentandolo come esatto.
+
+---
+
+## Device Identity
+
+L'interfaccia dichiara su quale base è stata stabilita l'identità di un dispositivo.
+
+Quando l'identità deriva dall'indirizzo di rete, l'utente viene informato che il dispositivo potrebbe cambiare identità al cambiare dell'indirizzo.
+
+Attribuire un comportamento a un dispositivo è l'affermazione più forte che il sistema produce. La sua solidità va resa visibile, non lasciata intendere.
+
+---
+
+## Withheld Score
+
+Quando la copertura è inferiore alla soglia minima, il punteggio complessivo non esiste e l'interfaccia **non lo sostituisce con altro**.
+
+Viene presentato il dettaglio delle aree, con quelle misurate, quelle parziali e quelle non misurabili con il relativo motivo.
+
+La condizione va comunicata come una scelta del sistema, non come un guasto o un caricamento in corso: il sistema dispone di misure valide e sta dichiarando di non avere elementi sufficienti per un giudizio complessivo.
+
+Nessun numero provvisorio, nessuna barra vuota, nessun segnaposto che suggerisca un valore in arrivo.
 
 ---
 

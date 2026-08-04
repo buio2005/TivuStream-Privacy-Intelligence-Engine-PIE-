@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy & Security Score (NPSS) Specification
 
-**Version:** 1.3.1
+**Version:** 2.0.0
 
 **Status:** Approved
 
@@ -64,6 +64,22 @@ Network Privacy & Security Score
 
 ---
 
+# Measurement and Judgement
+
+Il NPSS è composto da due elementi di natura differente, e la distinzione non è formale.
+
+**Il breakdown è misura.** Ogni area riporta ciò che è stato osservato, con i fattori che lo hanno determinato. È verificabile: chiunque disponga degli stessi dati ottiene gli stessi valori.
+
+**Il punteggio complessivo è giudizio.** Aggregare aree diverse in un unico numero richiede di stabilire quanto ciascuna conti, e quella scelta non discende dai dati.
+
+I pesi definiti in questa specifica costituiscono una **posizione editoriale dichiarata del progetto**, non una verità misurata.
+
+Sono motivati, versionati insieme all'algoritmo e rivedibili. Non derivano da uno standard di settore, perché non ne esiste uno per questo tipo di valutazione.
+
+Dichiararlo è parte del principio di Transparency: un giudizio presentato come misura è una misura falsa.
+
+---
+
 # Score Weights
 
 Ogni area contribuisce al punteggio complessivo con un peso definito.
@@ -80,9 +96,20 @@ La somma dei pesi è sempre pari a **100**.
 | Network Integrity  | 10     |
 | **Total**          | **100**|
 
-Threat Protection possiede il peso maggiore in quanto la presenza di minacce classificate come Critical rappresenta la condizione più rilevante per lo stato della rete.
+Motivazione di ciascun peso.
+
+| Area                | Motivazione della posizione adottata                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| Threat Protection   | Una minaccia attiva produce un danno immediato e concreto, superiore a qualunque difetto di configurazione |
+| DNS Security        | Determina la qualità di tutto ciò che transita, indipendentemente da quali minacce siano presenti      |
+| Privacy Protection  | Oggetto dichiarato del progetto, ma di impatto graduale anziché immediato                               |
+| Device Health       | Attribuisce i problemi ai dispositivi, informazione preziosa ma successiva alla loro rilevazione        |
+| Configuration       | Presupposto delle altre aree più che valore autonomo                                                    |
+| Network Integrity   | Riguarda l'affidabilità dell'osservazione, non lo stato della rete osservata                            |
 
 I pesi appartengono all'algoritmo NPSS e seguono il versionamento dell'algoritmo.
+
+Una loro modifica costituisce un cambiamento sostanziale e incrementa la Major Version dell'algoritmo, poiché rende i punteggi precedenti non confrontabili.
 
 ---
 
@@ -400,6 +427,20 @@ overallScore = ( somma dei punteggi ottenuti
 ```
 
 Il valore risultante mantiene la scala da 0 a 100 e la corrispondenza con la tabella Score Range.
+
+---
+
+## Minimum Coverage
+
+Il punteggio complessivo **non viene prodotto** quando la copertura è inferiore a **60**.
+
+Al di sotto di quel livello il giudizio sintetico poggerebbe su meno di tre quinti del sistema di valutazione, e un numero unico comunicherebbe una completezza che non esiste.
+
+In tale condizione il sistema presenta il **solo breakdown**, con le aree misurate, quelle parziali e quelle non misurabili con il relativo motivo.
+
+Non si tratta di un malfunzionamento e non va presentato come tale: il sistema sta dichiarando di non disporre di elementi sufficienti per un giudizio complessivo, pur avendo misure valide da mostrare.
+
+La soglia appartiene all'algoritmo e ne segue il versionamento.
 
 ---
 

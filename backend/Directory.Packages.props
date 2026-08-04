@@ -57,6 +57,18 @@
     <PackageVersion Include="SQLitePCLRaw.core" Version="2.1.12" />
     <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" />
     <PackageVersion Include="SQLitePCLRaw.provider.e_sqlite3" Version="2.1.12" />
+
+    <!--
+      Test infrastructure
+      Purpose : automated verification of the rules stated in the Specifications
+      Licence : Apache-2.0 for xUnit, MIT for the test platform
+      Approved: Documentation Release 1.1.0
+
+      Referenced only by the projects under tests, never by the product.
+    -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.0" />
   </ItemGroup>
 
 </Project>

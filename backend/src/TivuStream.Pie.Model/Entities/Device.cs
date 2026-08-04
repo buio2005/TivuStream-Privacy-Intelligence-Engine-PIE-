@@ -52,6 +52,16 @@ public sealed record Device
     public required DateTimeOffset LastSeen { get; init; }
 
     /// <summary>
+    /// How <see cref="FirstSeen"/> and <see cref="LastSeen"/> are known.
+    /// </summary>
+    public MeasurementQuality ObservationQuality { get; init; } = MeasurementQuality.Exact;
+
+    /// <summary>
+    /// What the identity of this device rests upon.
+    /// </summary>
+    public DeviceIdentityBasis IdentityBasis { get; init; } = DeviceIdentityBasis.NetworkAddress;
+
+    /// <summary>
     /// Activity status of the device within the observed interval.
     /// </summary>
     public required DeviceStatus Status { get; init; }

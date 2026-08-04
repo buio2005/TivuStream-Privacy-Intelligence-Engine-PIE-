@@ -117,6 +117,7 @@ public sealed class AcquisitionRepository
                     s.active_devices,
                     s.encrypted_queries,
                     s.dnssec_enabled,
+                    s.unique_domains_quality,
                     c.dnssec_validation_enabled,
                     c.encrypted_transports,
                     c.query_minimisation_enabled,
@@ -165,21 +166,22 @@ public sealed class AcquisitionRepository
                 ActiveDevices = reader.GetInt32(15),
                 EncryptedQueries = reader.GetInt64(16),
                 DnssecEnabled = reader.GetInt64(17) != 0,
+                UniqueDomainsQuality = Enum.Parse<MeasurementQuality>(reader.GetString(18)),
             },
 
             // Absent when the source did not provide the capability during
             // that period, which is not the same as a configuration of zeros.
-            Configuration = reader.IsDBNull(18)
+            Configuration = reader.IsDBNull(19)
                 ? null
                 : new SourceConfiguration
                 {
-                    DnssecValidationEnabled = reader.GetInt64(18) != 0,
-                    EncryptedTransports = SplitCapabilities(reader.GetString(19)),
-                    QueryMinimisationEnabled = reader.GetInt64(20) != 0,
-                    ClientSubnetForwardingEnabled = reader.GetInt64(21) != 0,
-                    FilteringEnabled = reader.GetInt64(22) != 0,
-                    FilterListCount = reader.GetInt32(23),
-                    FilterListUpdateIntervalHours = reader.GetInt32(24),
+                    DnssecValidationEnabled = reader.GetInt64(19) != 0,
+                    EncryptedTransports = SplitCapabilities(reader.GetString(20)),
+                    QueryMinimisationEnabled = reader.GetInt64(21) != 0,
+                    ClientSubnetForwardingEnabled = reader.GetInt64(22) != 0,
+                    FilteringEnabled = reader.GetInt64(23) != 0,
+                    FilterListCount = reader.GetInt32(24),
+                    FilterListUpdateIntervalHours = reader.GetInt32(25),
                 },
         };
     }
@@ -196,7 +198,8 @@ public sealed class AcquisitionRepository
         command.CommandText =
             """
             SELECT  d.device_id, d.hostname, d.ip_address, d.mac_address,
-                    d.vendor, d.operating_system, d.first_seen, d.last_seen, d.status
+                    d.vendor, d.operating_system, d.first_seen, d.last_seen, d.status,
+                    d.observation_quality, d.identity_basis
             FROM    device d
             WHERE   d.observation_period_id = (SELECT id FROM observation_period ORDER BY period_start DESC LIMIT 1)
             ORDER BY d.ip_address;
@@ -219,6 +222,8 @@ public sealed class AcquisitionRepository
                 FirstSeen = ReadInstant(reader, 6),
                 LastSeen = ReadInstant(reader, 7),
                 Status = Enum.Parse<DeviceStatus>(reader.GetString(8)),
+                ObservationQuality = Enum.Parse<MeasurementQuality>(reader.GetString(9)),
+                IdentityBasis = Enum.Parse<DeviceIdentityBasis>(reader.GetString(10)),
             });
         }
 
@@ -236,7 +241,8 @@ public sealed class AcquisitionRepository
 
         command.CommandText =
             """
-            SELECT  d.name, d.category, d.reputation, d.first_seen, d.last_seen, d.occurrences
+            SELECT  d.name, d.category, d.reputation, d.first_seen, d.last_seen,
+                    d.occurrences, d.observation_quality
             FROM    domain d
             WHERE   d.observation_period_id = (SELECT id FROM observation_period ORDER BY period_start DESC LIMIT 1)
             ORDER BY d.occurrences DESC, d.name;
@@ -256,6 +262,7 @@ public sealed class AcquisitionRepository
                 FirstSeen = ReadInstant(reader, 3),
                 LastSeen = ReadInstant(reader, 4),
                 Occurrences = reader.GetInt64(5),
+                ObservationQuality = Enum.Parse<MeasurementQuality>(reader.GetString(6)),
             });
         }
 
@@ -276,7 +283,7 @@ public sealed class AcquisitionRepository
         command.CommandText =
             """
             SELECT  a.device_id, a.domain, a.query_count, a.blocked,
-                    a.protocol, a.first_seen, a.last_seen
+                    a.protocol, a.first_seen, a.last_seen, a.observation_quality
             FROM    domain_activity a
             WHERE   a.observation_period_id = (SELECT id FROM observation_period ORDER BY period_start DESC LIMIT 1)
               AND   a.domain = $domain
@@ -300,6 +307,7 @@ public sealed class AcquisitionRepository
                 Protocol = reader.GetString(4),
                 FirstSeen = ReadInstant(reader, 5),
                 LastSeen = ReadInstant(reader, 6),
+                ObservationQuality = Enum.Parse<MeasurementQuality>(reader.GetString(7)),
             });
         }
 
@@ -468,10 +476,12 @@ public sealed class AcquisitionRepository
             """
             INSERT INTO statistics (
                 observation_period_id, total_queries, blocked_queries, cached_queries,
-                failed_queries, unique_domains, active_devices, encrypted_queries, dnssec_enabled)
+                failed_queries, unique_domains, active_devices, encrypted_queries, dnssec_enabled,
+                unique_domains_quality)
             VALUES (
                 $periodId, $totalQueries, $blockedQueries, $cachedQueries,
-                $failedQueries, $uniqueDomains, $activeDevices, $encryptedQueries, $dnssecEnabled);
+                $failedQueries, $uniqueDomains, $activeDevices, $encryptedQueries, $dnssecEnabled,
+                $uniqueDomainsQuality);
             """;
 
         command.Parameters.AddWithValue("$periodId", periodId);
@@ -483,6 +493,7 @@ public sealed class AcquisitionRepository
         command.Parameters.AddWithValue("$activeDevices", statistics.ActiveDevices);
         command.Parameters.AddWithValue("$encryptedQueries", statistics.EncryptedQueries);
         command.Parameters.AddWithValue("$dnssecEnabled", statistics.DnssecEnabled ? 1 : 0);
+        command.Parameters.AddWithValue("$uniqueDomainsQuality", statistics.UniqueDomainsQuality.ToString());
 
         command.ExecuteNonQuery();
     }
@@ -533,10 +544,12 @@ public sealed class AcquisitionRepository
             """
             INSERT INTO device (
                 observation_period_id, device_id, hostname, ip_address, mac_address,
-                vendor, operating_system, first_seen, last_seen, status)
+                vendor, operating_system, first_seen, last_seen, status,
+                observation_quality, identity_basis)
             VALUES (
                 $periodId, $deviceId, $hostname, $ipAddress, $macAddress,
-                $vendor, $operatingSystem, $firstSeen, $lastSeen, $status);
+                $vendor, $operatingSystem, $firstSeen, $lastSeen, $status,
+                $observationQuality, $identityBasis);
             """;
 
         command.Parameters.AddWithValue("$periodId", periodId);
@@ -549,6 +562,8 @@ public sealed class AcquisitionRepository
         command.Parameters.AddWithValue("$firstSeen", Format(device.FirstSeen));
         command.Parameters.AddWithValue("$lastSeen", Format(device.LastSeen));
         command.Parameters.AddWithValue("$status", device.Status.ToString());
+        command.Parameters.AddWithValue("$observationQuality", device.ObservationQuality.ToString());
+        command.Parameters.AddWithValue("$identityBasis", device.IdentityBasis.ToString());
 
         command.ExecuteNonQuery();
     }
@@ -566,10 +581,10 @@ public sealed class AcquisitionRepository
             """
             INSERT INTO domain (
                 observation_period_id, name, category, reputation,
-                first_seen, last_seen, occurrences)
+                first_seen, last_seen, occurrences, observation_quality)
             VALUES (
                 $periodId, $name, $category, $reputation,
-                $firstSeen, $lastSeen, $occurrences);
+                $firstSeen, $lastSeen, $occurrences, $observationQuality);
             """;
 
         command.Parameters.AddWithValue("$periodId", periodId);
@@ -579,6 +594,7 @@ public sealed class AcquisitionRepository
         command.Parameters.AddWithValue("$firstSeen", Format(domain.FirstSeen));
         command.Parameters.AddWithValue("$lastSeen", Format(domain.LastSeen));
         command.Parameters.AddWithValue("$occurrences", domain.Occurrences);
+        command.Parameters.AddWithValue("$observationQuality", domain.ObservationQuality.ToString());
 
         command.ExecuteNonQuery();
     }
@@ -596,10 +612,10 @@ public sealed class AcquisitionRepository
             """
             INSERT INTO domain_activity (
                 observation_period_id, device_id, domain, blocked, protocol,
-                query_count, first_seen, last_seen)
+                query_count, first_seen, last_seen, observation_quality)
             VALUES (
                 $periodId, $deviceId, $domain, $blocked, $protocol,
-                $queryCount, $firstSeen, $lastSeen);
+                $queryCount, $firstSeen, $lastSeen, $observationQuality);
             """;
 
         command.Parameters.AddWithValue("$periodId", periodId);
@@ -610,6 +626,7 @@ public sealed class AcquisitionRepository
         command.Parameters.AddWithValue("$queryCount", activity.QueryCount);
         command.Parameters.AddWithValue("$firstSeen", Format(activity.FirstSeen));
         command.Parameters.AddWithValue("$lastSeen", Format(activity.LastSeen));
+        command.Parameters.AddWithValue("$observationQuality", activity.ObservationQuality.ToString());
 
         command.ExecuteNonQuery();
     }
