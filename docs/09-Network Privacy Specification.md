@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy Specification
 
-**Version:** 1.3.0
+**Version:** 1.4.0
 
 **Status:** Approved
 
@@ -294,6 +294,22 @@ L'interfaccia dichiara su quale base è stata stabilita l'identità di un dispos
 Quando l'identità deriva dall'indirizzo di rete, l'utente viene informato che il dispositivo potrebbe cambiare identità al cambiare dell'indirizzo.
 
 Attribuire un comportamento a un dispositivo è l'affermazione più forte che il sistema produce. La sua solidità va resa visibile, non lasciata intendere.
+
+---
+
+## Domain Classification
+
+Ogni classificazione mostrata dichiara **da dove proviene e quanto è recente**.
+
+| Elemento             | Presentazione richiesta                                       |
+| -------------------- | ------------------------------------------------------------- |
+| Lista di provenienza  | Nome della lista che ha prodotto la classificazione            |
+| Età della lista       | Data dell'ultimo aggiornamento riuscito di quella lista        |
+| Confidenza            | Distinzione fra corrispondenza diretta e inferenza sul dominio superiore |
+
+Un dominio con categoria `Unknown` viene presentato come **non classificato**, mai come sicuro.
+
+È la differenza fra dire che non si sa e dire che non c'è nulla. Solo la prima è vera.
 
 ---
 

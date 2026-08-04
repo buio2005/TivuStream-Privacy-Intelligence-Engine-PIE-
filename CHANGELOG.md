@@ -8,6 +8,81 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Documentation Release 1.2.0 — 2026-08-04
+
+Definisce il meccanismo di classificazione dei domini, che resta interamente locale e dichiara la propria età.
+
+È la revisione che precede il Threat Engine: nessuna riga di codice viene scritta prima che la regola sia scritta.
+
+### Added
+
+**Liste di classificazione — Specification 08 alla 1.2.0**
+
+Struttura di una lista: nome, indirizzo di origine, categoria, **licenza**, ultimo aggiornamento riuscito, numero di voci, stato di attivazione.
+
+La licenza è obbligatoria. Una lista priva di licenza dichiarata non viene distribuita con il progetto.
+
+**L'insieme delle liste predefinite non è definito da questa specifica.** La scelta richiede la verifica della licenza, della manutenzione e della qualità di ciascuna fonte, ed è una decisione da assumere esplicitamente prima del rilascio pubblico. Definire il meccanismo non autorizza a inventare le fonti.
+
+**Regola di corrispondenza**
+
+Il confronto risale dal nome completo verso il dominio superiore, una etichetta alla volta, e si arresta alla prima corrispondenza.
+
+La confidenza dipende da come la corrispondenza è stata ottenuta.
+
+| Corrispondenza                        | Confidenza |
+| ------------------------------------- | ---------- |
+| Nome completo presente in lista        | `High`     |
+| Corrispondenza su un dominio superiore | `Medium`   |
+
+Il secondo caso è un'inferenza. Resta ragionevole e resta un'inferenza, e viene dichiarata come tale.
+
+**Freschezza dichiarata**
+
+Ogni classificazione dichiara l'età della lista dalla quale proviene.
+
+La classificazione locale comporta un ritardo nel riconoscimento delle minacce recenti. Il ritardo non viene nascosto: viene misurato e dichiarato, come la copertura del punteggio e la qualità delle misure.
+
+**Comportamento in caso di aggiornamento fallito e in assenza di rete**
+
+Un aggiornamento non riuscito non invalida la lista esistente: il sistema continua a usarla e ne dichiara l'età crescente.
+
+Nessuna funzione di analisi dipende dalla disponibilità della rete.
+
+**Entità ClassificationList — Specification 05 alla 2.1.0**
+
+Il modello acquisisce l'entità che descrive una lista, e `Domain` acquisisce `categoryConfidence`, `categorySource` e `categorySourceUpdatedAt`.
+
+Queste proprietà sono assenti quando la categoria è `Unknown`.
+
+**Presentazione — Specification 09 alla 1.4.0**
+
+L'interfaccia dichiara per ogni classificazione la lista di provenienza, la sua età e la confidenza.
+
+Un dominio non classificato viene presentato come **non classificato**, mai come sicuro: è la differenza fra dire che non si sa e dire che non c'è nulla.
+
+**Glossario alla 1.5.0**
+
+Voci `Classification List` e `Classification Freshness`.
+
+### Rationale
+
+La classificazione locale è stata confermata dopo aver considerato l'alternativa.
+
+Consultare un servizio di reputazione esterno migliorerebbe l'accuratezza sulle minacce recenti, e comunicherebbe a quel servizio i domini contattati dalla rete dell'utente. Anche le tecniche che trasmettono soltanto un prefisso del dominio richiedono la rete al momento della classificazione, rivelano quando e quanto una rete è attiva, e restringono l'insieme dei candidati con il ripetersi delle interrogazioni.
+
+Il costo non è tecnico: trasformerebbe una promessa verificabile in una promessa da valutare.
+
+La rigidità viene quindi mantenuta dove protegge qualcosa di concreto, la cronologia di navigazione, e il ritardo che ne deriva viene dichiarato anziché subito in silenzio.
+
+### Known Impact
+
+Le euristiche per i domini non classificati non fanno parte di questa release.
+
+Restano un milestone successivo, e fino ad allora un dominio assente da ogni lista resta `Unknown`.
+
+---
+
 ## Milestone M4.2 — Allineamento alla 1.1.0 e primi test — 2026-08-04
 
 Il codice recepisce la revisione documentale, e per la prima volta le regole del progetto sono verificate automaticamente.

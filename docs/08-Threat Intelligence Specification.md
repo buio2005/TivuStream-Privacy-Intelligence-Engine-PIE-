@@ -4,7 +4,7 @@
 
 **Document:** Threat Intelligence Specification
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
@@ -186,6 +186,137 @@ Conseguenze accettate.
 * Il sistema funziona anche in assenza di connessione verso l'esterno.
 
 Le liste vengono scaricate periodicamente. Il download riguarda le liste, mai i domini osservati: nessuna informazione sulla rete dell'utente lascia il dispositivo in quell'occasione.
+
+---
+
+# Classification Lists
+
+Una lista di classificazione associa domini a una categoria.
+
+---
+
+## List Properties
+
+Ogni lista dichiara.
+
+| Proprietà       | Significato                                            |
+| --------------- | ------------------------------------------------------ |
+| `name`          | Nome della lista                                        |
+| `sourceUrl`     | Indirizzo dal quale viene scaricata                     |
+| `category`      | Categoria attribuita ai domini che contiene             |
+| `licence`       | Licenza della lista                                     |
+| `updatedAt`     | Momento dell'ultimo aggiornamento riuscito              |
+| `entryCount`    | Numero di domini contenuti                              |
+| `enabled`       | Se la lista partecipa alla classificazione              |
+
+La licenza è **obbligatoria**. Una lista priva di licenza dichiarata non viene distribuita con il progetto.
+
+---
+
+## Default Lists
+
+L'insieme delle liste predefinite **non è definito da questa specifica**.
+
+La scelta richiede la verifica della licenza, della manutenzione attiva e della qualità della categorizzazione di ciascuna fonte, e costituisce una decisione da assumere esplicitamente prima del rilascio pubblico.
+
+Il progetto adotta esclusivamente liste la cui licenza ne consenta la distribuzione o il download da parte dell'utente.
+
+---
+
+## User Lists
+
+L'utente può aggiungere, disattivare e rimuovere liste.
+
+Trattandosi di software self-hosted, la scelta delle fonti appartiene a chi lo utilizza.
+
+---
+
+# Matching
+
+La corrispondenza avviene **esclusivamente sul dispositivo**, confrontando i domini osservati con le liste conservate localmente.
+
+---
+
+## Matching Rule
+
+Il confronto procede dal nome completo verso l'alto, rimuovendo una etichetta alla volta.
+
+```text
+tracker.ads.example.com
+        ads.example.com
+            example.com
+```
+
+La ricerca si arresta alla prima corrispondenza.
+
+Un dominio elencato in una lista si intende comprensivo dei propri sottodomini: è la convenzione adottata dalle liste stesse, e ignorarla renderebbe inefficace la classificazione.
+
+---
+
+## Confidence
+
+Il livello di confidenza dipende da **come** la corrispondenza è stata ottenuta.
+
+| Corrispondenza                        | Confidenza |
+| ------------------------------------- | ---------- |
+| Nome completo presente in lista        | `High`     |
+| Corrispondenza su un dominio superiore | `Medium`   |
+
+Il secondo caso è un'inferenza: la lista afferma qualcosa sul dominio padre, e il sistema estende l'affermazione al sottodominio osservato.
+
+L'inferenza è ragionevole e resta un'inferenza. Dichiararla con confidenza inferiore permette all'utente di distinguerla da un'affermazione diretta.
+
+---
+
+## Unknown Domains
+
+Un dominio che non compare in alcuna lista riceve la categoria `Unknown`.
+
+`Unknown` significa **non classificato**, non innocuo.
+
+L'interfaccia non presenta mai un dominio non classificato come sicuro: sarebbe un'affermazione che il sistema non ha verificato.
+
+---
+
+# Freshness
+
+Ogni classificazione dichiara **l'età della lista dalla quale proviene**.
+
+La classificazione locale comporta un ritardo nel riconoscimento delle minacce comparse di recente. Il ritardo non viene nascosto: viene misurato e dichiarato, come la copertura del punteggio e la qualità delle misure.
+
+Una classificazione prodotta da una lista aggiornata sei giorni prima è un'informazione diversa da una prodotta il giorno stesso, e il sistema le distingue.
+
+---
+
+# Update Policy
+
+Le liste vengono aggiornate a intervallo configurabile.
+
+---
+
+## Failure Handling
+
+Un aggiornamento non riuscito **non invalida la lista esistente**.
+
+Il sistema continua a utilizzare la versione conservata e ne dichiara l'età crescente.
+
+Una lista non aggiornabile è meno utile di una recente e più utile di nessuna lista.
+
+---
+
+## Offline Operation
+
+In assenza di connettività il sistema continua a classificare con le liste conservate.
+
+Nessuna funzione di analisi dipende dalla disponibilità della rete: l'unica conseguenza dell'assenza di connessione è l'invecchiamento delle liste, dichiarato all'utente.
+
+---
+
+## Storage
+
+Le liste sono conservate localmente in forma ispezionabile.
+
+L'utente può verificare quali domini il sistema considera appartenenti a ciascuna categoria, e quindi comprendere il motivo di una classificazione anziché doverla accettare.
 
 ---
 

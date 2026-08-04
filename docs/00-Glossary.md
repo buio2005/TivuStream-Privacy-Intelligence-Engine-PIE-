@@ -4,7 +4,7 @@
 
 **Document:** Glossary Specification
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 
 **Status:** Approved
 
@@ -162,6 +162,22 @@ Si esprime come somma dei punteggi ottenibili di tutte le aree, su un massimo di
 Un'area può essere misurata per intero, in parte, o non essere misurabile. La porzione non osservata è esclusa dal calcolo e non può migliorare il punteggio.
 
 Punteggi con copertura differente non sono confrontabili.
+
+---
+
+# Classification List
+
+Elenco di domini associati a una categoria, conservato localmente.
+
+Ogni lista dichiara la propria provenienza, la propria licenza e il momento dell'ultimo aggiornamento riuscito.
+
+---
+
+# Classification Freshness
+
+Età della lista dalla quale proviene una classificazione.
+
+Una classificazione locale invecchia. Il sistema ne dichiara l'età anziché presentarla come attuale.
 
 ---
 

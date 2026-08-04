@@ -4,7 +4,7 @@
 
 **Document:** Data Model Specification
 
-**Version:** 2.0.0
+**Version:** 2.1.0
 
 **Status:** Approved
 
@@ -68,6 +68,7 @@ Il modello dati è composto dalle seguenti entità principali.
 * DomainActivity
 * Threat
 * SourceConfiguration
+* ClassificationList
 * Alert
 * Recommendation
 * Network Privacy & Security Score (NPSS)
@@ -224,11 +225,26 @@ Rappresenta un dominio osservato durante l'analisi.
 
 * domain
 * category
+* categoryConfidence
+* categorySource
+* categorySourceUpdatedAt
 * reputation
 * firstSeen
 * lastSeen
 * observationQuality
 * occurrences
+
+Le proprietà relative alla categoria descrivono **come** la classificazione è stata ottenuta.
+
+| Proprietà                 | Significato                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| `categoryConfidence`      | Affidabilità della classificazione                            |
+| `categorySource`          | Lista dalla quale proviene                                    |
+| `categorySourceUpdatedAt` | Ultimo aggiornamento riuscito di quella lista                 |
+
+Sono assenti quando la categoria è `Unknown`, ossia quando il dominio non è stato classificato.
+
+La data di aggiornamento della lista consente all'utente di valutare quanto sia recente il giudizio, non solo quale esso sia.
 
 Il campo `reputation` è **opzionale**.
 
@@ -286,6 +302,28 @@ Un dispositivo che ha raggiunto lo stesso dominio sia normalmente sia venendo bl
 Accorparli in un unico oggetto costringerebbe a scegliere un esito prevalente, affermando qualcosa che non è avvenuto.
 
 Le proprietà `queryCount`, `firstSeen` e `lastSeen` si riferiscono alla combinazione così definita.
+
+---
+
+# ClassificationList
+
+Rappresenta una lista utilizzata per classificare i domini.
+
+## Properties
+
+* name
+* sourceUrl
+* category
+* licence
+* updatedAt
+* entryCount
+* enabled
+
+La proprietà `licence` è obbligatoria: una lista priva di licenza dichiarata non viene distribuita con il progetto.
+
+La proprietà `updatedAt` indica l'ultimo aggiornamento **riuscito**. Un tentativo fallito non la modifica: la lista conservata resta valida e semplicemente invecchia.
+
+Il funzionamento è descritto nella Threat Intelligence Specification.
 
 ---
 
