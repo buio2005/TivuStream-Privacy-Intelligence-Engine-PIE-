@@ -8,6 +8,74 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M4.3 — Classificazione dei domini — 2026-08-04
+
+Il sistema sa attribuire una categoria a un dominio, dichiarando da quale lista proviene e quanto è recente.
+
+### Added
+
+**Modello**
+
+`ClassificationList`, e su `Domain` le proprietà `CategoryConfidence`, `CategorySource`, `CategorySourceUpdatedAt`.
+
+Sono assenti quando la categoria è `Unknown`: non esiste una lista a cui attribuire l'affermazione, e inventarne una sarebbe un registro falso.
+
+**Persistenza**
+
+Migrazione `0007`, `ClassificationListRepository` per la descrizione delle liste, `ClassificationListStore` per i file.
+
+La tabella delle liste non è legata ad alcun Observation Period. Se lo fosse finirebbe sotto ritenzione, e applicare la ritenzione rimuoverebbe lo strumento con cui si classifica anziché un'osservazione invecchiata.
+
+**Classification Engine**
+
+Corrispondenza risalente dal nome completo verso il dominio superiore, arresto alla prima corrispondenza, confidenza dipendente da come la corrispondenza è stata ottenuta.
+
+Il motore riceve le liste già caricate e non apre alcun file: il Core continua a non sapere dove i dati risiedono.
+
+**Progetto di test della persistenza**
+
+`TivuStream.Pie.Storage.Tests`, riferito al lettore dei file.
+
+Il lettore è il punto in cui un file di formato non controllato diventa qualcosa su cui il Core agisce. Un errore lì non interrompe nulla: produce una lista vuota, e lo strumento riferisce una rete in cui non è stato trovato niente perché niente è stato guardato.
+
+È un guasto che assomiglia a una buona notizia, ed è la ragione per cui questo progetto esiste.
+
+Quarantasette prove complessive, tutte riuscite.
+
+### Changed
+
+**Specification 11 alla 1.3.0**
+
+Il documento non elencava `TivuStream.Pie.Storage`, assente dall'albero dei progetti e dalla tabella delle responsabilità fin dal milestone M5.1.
+
+Incoerenza segnalata e corretta, insieme all'aggiunta dei due progetti di test e dei riferimenti fra progetti.
+
+**Specification 16 alla 1.1.0, Specification 08 alla 1.2.1**
+
+I domini contenuti nelle liste risiedono su file, in `data/lists/`, nel formato originale. Il database conserva la descrizione della lista.
+
+Una lista può contenere centinaia di migliaia di nomi, e un file di testo si apre con un editor qualsiasi mentre una tabella richiede uno strumento SQL. La Specification 08 chiede che l'utente possa verificare perché un dominio è classificato, e una verifica che richiede competenze tecniche non è disponibile a chi dovrebbe usarla.
+
+### Known Impact
+
+**Il motore non è ancora collegato al flusso di acquisizione.**
+
+I domini acquisiti continuano ad arrivare con categoria `Unknown`. Il codice che classifica esiste, è verificato, e nessuno lo chiama.
+
+Il collegamento è il milestone successivo, e fino ad allora la copertura del NPSS resta sotto la soglia minima.
+
+**Il lettore comprende due formati.**
+
+Un dominio per riga, e il formato hosts. Il formato adblock non è supportato.
+
+Le righe non comprese vengono contate, mai indovinate. Una lista compresa a metà non viene riferita come compresa per intero.
+
+**Nessuna lista predefinita è ancora definita.**
+
+La scelta delle fonti richiede la verifica delle licenze e resta una decisione da assumere esplicitamente.
+
+---
+
 ## Documentation Release 1.2.0 — 2026-08-04
 
 Definisce il meccanismo di classificazione dei domini, che resta interamente locale e dichiara la propria età.

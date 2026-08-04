@@ -16,6 +16,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TivuStream.Pie.Api", "src\T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TivuStream.Pie.Core.Tests", "tests\TivuStream.Pie.Core.Tests\TivuStream.Pie.Core.Tests.csproj", "{A47C1E58-63B9-4D02-8F35-1C90E7B4D216}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TivuStream.Pie.Storage.Tests", "tests\TivuStream.Pie.Storage.Tests\TivuStream.Pie.Storage.Tests.csproj", "{B58D2F91-4C7A-4E31-9A62-8D3F1C05E7B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,6 +52,10 @@ Global
 		{A47C1E58-63B9-4D02-8F35-1C90E7B4D216}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A47C1E58-63B9-4D02-8F35-1C90E7B4D216}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A47C1E58-63B9-4D02-8F35-1C90E7B4D216}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B58D2F91-4C7A-4E31-9A62-8D3F1C05E7B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B58D2F91-4C7A-4E31-9A62-8D3F1C05E7B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B58D2F91-4C7A-4E31-9A62-8D3F1C05E7B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B58D2F91-4C7A-4E31-9A62-8D3F1C05E7B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

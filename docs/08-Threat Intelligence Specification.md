@@ -4,7 +4,7 @@
 
 **Document:** Threat Intelligence Specification
 
-**Version:** 1.2.0
+**Version:** 1.2.1
 
 **Status:** Approved
 
@@ -316,7 +316,11 @@ Nessuna funzione di analisi dipende dalla disponibilità della rete: l'unica con
 
 Le liste sono conservate localmente in forma ispezionabile.
 
-L'utente può verificare quali domini il sistema considera appartenenti a ciascuna categoria, e quindi comprendere il motivo di una classificazione anziché doverla accettare.
+Il contenuto di ogni lista risiede in un **file di testo**, nel formato in cui è stato scaricato. La descrizione della lista risiede nel database.
+
+L'utente può quindi aprire una lista con un editor qualsiasi, verificare quali domini il sistema considera appartenenti a una categoria, e comprendere il motivo di una classificazione anziché doverla accettare.
+
+La collocazione dei file è definita dalla Persistence Specification.
 
 ---
 

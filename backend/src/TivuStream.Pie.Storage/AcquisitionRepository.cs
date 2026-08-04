@@ -242,7 +242,8 @@ public sealed class AcquisitionRepository
         command.CommandText =
             """
             SELECT  d.name, d.category, d.reputation, d.first_seen, d.last_seen,
-                    d.occurrences, d.observation_quality
+                    d.occurrences, d.observation_quality, d.category_confidence,
+                    d.category_source, d.category_source_updated_at
             FROM    domain d
             WHERE   d.observation_period_id = (SELECT id FROM observation_period ORDER BY period_start DESC LIMIT 1)
             ORDER BY d.occurrences DESC, d.name;
@@ -263,6 +264,11 @@ public sealed class AcquisitionRepository
                 LastSeen = ReadInstant(reader, 4),
                 Occurrences = reader.GetInt64(5),
                 ObservationQuality = Enum.Parse<MeasurementQuality>(reader.GetString(6)),
+                CategoryConfidence = reader.IsDBNull(7)
+                    ? null
+                    : Enum.Parse<ConfidenceLevel>(reader.GetString(7)),
+                CategorySource = reader.IsDBNull(8) ? null : reader.GetString(8),
+                CategorySourceUpdatedAt = reader.IsDBNull(9) ? null : ReadInstant(reader, 9),
             });
         }
 
@@ -581,10 +587,12 @@ public sealed class AcquisitionRepository
             """
             INSERT INTO domain (
                 observation_period_id, name, category, reputation,
-                first_seen, last_seen, occurrences, observation_quality)
+                first_seen, last_seen, occurrences, observation_quality,
+                category_confidence, category_source, category_source_updated_at)
             VALUES (
                 $periodId, $name, $category, $reputation,
-                $firstSeen, $lastSeen, $occurrences, $observationQuality);
+                $firstSeen, $lastSeen, $occurrences, $observationQuality,
+                $categoryConfidence, $categorySource, $categorySourceUpdatedAt);
             """;
 
         command.Parameters.AddWithValue("$periodId", periodId);
@@ -595,6 +603,17 @@ public sealed class AcquisitionRepository
         command.Parameters.AddWithValue("$lastSeen", Format(domain.LastSeen));
         command.Parameters.AddWithValue("$occurrences", domain.Occurrences);
         command.Parameters.AddWithValue("$observationQuality", domain.ObservationQuality.ToString());
+        command.Parameters.AddWithValue(
+            "$categoryConfidence",
+            (object?)domain.CategoryConfidence?.ToString() ?? DBNull.Value);
+        command.Parameters.AddWithValue(
+            "$categorySource",
+            (object?)domain.CategorySource ?? DBNull.Value);
+        command.Parameters.AddWithValue(
+            "$categorySourceUpdatedAt",
+            domain.CategorySourceUpdatedAt is { } updatedAt
+                ? Format(updatedAt)
+                : DBNull.Value);
 
         command.ExecuteNonQuery();
     }

@@ -4,7 +4,7 @@
 
 **Document:** Persistence Specification
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 
 **Status:** Approved
 
@@ -55,6 +55,16 @@ I risultati prodotti dal Core.
 Comprendono `NetworkSnapshot`, `Npss`, `Threat`, `Alert` e `Recommendation`.
 
 Conservarli evita di ricalcolare l'intera analisi a ogni richiesta, requisito rilevante su hardware modesto.
+
+---
+
+## Reference Data
+
+I dati di riferimento che l'installazione possiede, non ciò che la rete ha fatto.
+
+Comprendono `ClassificationList`.
+
+Non appartengono ad alcun Observation Period e **non sono soggetti a ritenzione**: applicare la ritenzione a una lista significherebbe rimuovere lo strumento con cui si classifica anziché un'osservazione invecchiata.
 
 ---
 
@@ -144,6 +154,8 @@ I valori predefiniti sono configurabili.
 
 Il consolidamento è **irreversibile**: l'utente deve poterlo comprendere prima di ridurre la ritenzione del dettaglio.
 
+I dati di riferimento sono esclusi dalla ritenzione. Non descrivono un momento e non invecchiano insieme alle osservazioni.
+
 ---
 
 # Architectural Placement
@@ -185,6 +197,27 @@ Valgono i seguenti vincoli.
 La scelta è coerente con i principi Local First e Self Hosted: nessun servizio aggiuntivo da installare, nessuna porta da esporre, nessun processo separato da gestire.
 
 Il file risiede in una posizione determinata dalla configurazione, insieme agli altri dati applicativi.
+
+---
+
+## List Files
+
+I domini contenuti nelle liste di classificazione sono conservati **su file**, non nel database.
+
+Ogni lista è un file nella cartella `data/lists/`, accanto al database.
+
+Il file conserva il **formato originale** della lista scaricata. Nessuna conversione, nessuna normalizzazione preventiva.
+
+Le ragioni della separazione.
+
+* Una lista può contenere centinaia di migliaia di domini, che farebbero crescere il database di ordini di grandezza rispetto alle osservazioni.
+* Un file di testo è ispezionabile con un editor qualsiasi, mentre una tabella richiede uno strumento SQL. La Specification 08 richiede che l'utente possa verificare perché un dominio è stato classificato.
+* Un aggiornamento sostituisce un file, operazione atomica, anziché riscrivere centinaia di migliaia di righe.
+* I domini di una lista non sono osservazioni e non hanno un periodo: tenerli fuori dal database evita che la ritenzione li sfiori.
+
+Il database conserva la **descrizione** della lista. Il file conserva il **contenuto**.
+
+Una descrizione priva del file corrispondente indica una lista mai scaricata, e viene dichiarata come tale.
 
 ---
 
@@ -235,9 +268,11 @@ Le migrazioni sono **esplicite e ordinate**. Non viene generata alcuna migrazion
 
 La Installation Specification prevede una copia di sicurezza prima di ogni aggiornamento.
 
-La copia comprende il database e la configurazione.
+La copia comprende il database, la configurazione e la cartella delle liste.
 
-Trattandosi di un unico file, la copia consiste nella sua duplicazione a servizio fermo.
+Trattandosi di file locali, la copia consiste nella loro duplicazione a servizio fermo.
+
+Le liste sono comunque riscaricabili: la loro assenza da una copia di sicurezza non comporta perdita di osservazioni.
 
 ---
 

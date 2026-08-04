@@ -27,6 +27,41 @@ public sealed record Domain
     public required ThreatCategory Category { get; init; }
 
     /// <summary>
+    /// Reliability of the classification.
+    /// </summary>
+    /// <remarks>
+    /// A domain found under its full name is stated with high confidence. A
+    /// domain classified through a parent present in a list is an inference,
+    /// and is stated with medium confidence.
+    /// <para>
+    /// Absent when the category is <see cref="ThreatCategory.Unknown"/>, which
+    /// means the domain was not classified rather than found harmless.
+    /// </para>
+    /// </remarks>
+    public ConfidenceLevel? CategoryConfidence { get; init; }
+
+    /// <summary>
+    /// Name of the list the classification comes from.
+    /// </summary>
+    /// <remarks>
+    /// Absent when the category is <see cref="ThreatCategory.Unknown"/>.
+    /// </remarks>
+    public string? CategorySource { get; init; }
+
+    /// <summary>
+    /// Last successful update of the list the classification comes from.
+    /// </summary>
+    /// <remarks>
+    /// A classification produced from a list updated six days earlier is a
+    /// different piece of information from one produced the same day, and the
+    /// system tells them apart instead of presenting both as current.
+    /// <para>
+    /// Absent when the category is <see cref="ThreatCategory.Unknown"/>.
+    /// </para>
+    /// </remarks>
+    public DateTimeOffset? CategorySourceUpdatedAt { get; init; }
+
+    /// <summary>
     /// Reputation index of the domain, when it has been assessed.
     /// </summary>
     /// <remarks>

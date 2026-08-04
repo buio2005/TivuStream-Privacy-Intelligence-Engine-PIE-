@@ -4,7 +4,7 @@
 
 **Document:** Backend Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
@@ -335,8 +335,11 @@ backend/
 │   ├── TivuStream.Pie.Core/
 │   ├── TivuStream.Pie.Adapters/
 │   ├── TivuStream.Pie.Adapters.Technitium/
+│   ├── TivuStream.Pie.Storage/
 │   └── TivuStream.Pie.Api/
 └── tests/
+    ├── TivuStream.Pie.Core.Tests/
+    └── TivuStream.Pie.Storage.Tests/
 ```
 
 ---
@@ -349,7 +352,14 @@ backend/
 | `TivuStream.Pie.Core`                | Core e relativi Engine                               |
 | `TivuStream.Pie.Adapters`            | Contratti degli Adapter e Adapter Manager            |
 | `TivuStream.Pie.Adapters.Technitium` | Technitium Adapter                                   |
+| `TivuStream.Pie.Storage`             | Persistenza, schema e migrazioni                     |
 | `TivuStream.Pie.Api`                 | Host applicativo, REST API e composition root        |
+| `TivuStream.Pie.Core.Tests`          | Verifica delle regole di analisi                     |
+| `TivuStream.Pie.Storage.Tests`       | Verifica di ciò che viene letto e scritto            |
+
+Un progetto di test verifica **una regola dichiarata nelle Specification**, non un dettaglio implementativo.
+
+La separazione dei progetti di test segue quella dei progetti verificati: un progetto di test referenzia soltanto ciò che verifica.
 
 ---
 
@@ -364,7 +374,13 @@ Adapters         → Model
 
 Adapters.Technitium → Adapters
 
-Api              → Core, Adapters, Adapters.Technitium
+Storage          → Model
+
+Api              → Core, Adapters, Adapters.Technitium, Storage
+
+Core.Tests       → Core
+
+Storage.Tests    → Storage
 ```
 
 Le seguenti regole costituiscono vincoli architetturali.

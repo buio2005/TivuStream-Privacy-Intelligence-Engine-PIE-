@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Verification of what Storage reads and writes.
+
+    The reader of the classification lists is the point where a file whose
+    shape we do not control becomes something the Core acts upon. An error
+    there does not stop anything: it produces an empty list, and the tool
+    reports a network where nothing was found because nothing was looked at.
+
+    That failure looks like good news, which is why it is checked here.
+  -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+
+    <!--
+      Test names are written as sentences, which reads better than the
+      alternative and is the convention of the framework.
+    -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TivuStream.Pie.Storage\TivuStream.Pie.Storage.csproj" />
+  </ItemGroup>
+
+</Project>
