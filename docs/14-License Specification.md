@@ -4,7 +4,7 @@
 
 **Document:** License Specification
 
-**Version:** 1.0.0
+**Version:** 2.0.0
 
 **Status:** Approved
 
@@ -31,11 +31,47 @@ La politica di licenza ha i seguenti obiettivi.
 
 ---
 
-# Current Status
+# Project Licence
 
-Alla data della presente specifica, la licenza definitiva del progetto non è ancora stata scelta.
+Il progetto è distribuito sotto **GNU General Public License, versione 3**.
 
-La decisione verrà presa prima della prima Beta pubblica.
+Il testo integrale risiede in `LICENSE.md`, nella radice del repository, riprodotto senza modifiche.
+
+---
+
+## Why Copyleft
+
+La promessa centrale di PIE non è bloccare i tracciatori. È che **l'utente possa verificare che cosa il programma fa**.
+
+Ogni scelta del progetto serve quella promessa: la classificazione che avviene solo sul dispositivo, l'età dichiarata delle liste, la copertura resa esplicita, il punteggio negato quando non c'è abbastanza da misurare.
+
+Una licenza permissiva consentirebbe di distribuire una versione modificata e chiusa, con le stesse schermate che dichiarano che i domini non lasciano il dispositivo, **senza che nessuno possa verificarlo**. La promessa sopravvivrebbe come testo e sparirebbe come fatto.
+
+Il copyleft impone a chi distribuisce una versione modificata di pubblicarne il codice. La licenza diventa così la garanzia tecnica di ciò che le Specification dichiarano a parole.
+
+Il costo è accettato: parte del codice non verrà riusata in prodotti proprietari. È esattamente ciò che la scelta intende ottenere.
+
+---
+
+## Why Version 3 And Not 2
+
+Due ragioni.
+
+La dipendenza `SQLitePCLRaw` è distribuita sotto Apache-2.0, compatibile con GPLv3 e **non** con GPLv2. Adottare la versione 2 renderebbe il progetto non distribuibile con le proprie dipendenze.
+
+La versione 3 disciplina inoltre i brevetti e le misure tecnologiche che impediscono all'utente di eseguire una versione modificata sul proprio dispositivo, condizione rilevante per un programma destinato all'auto-installazione.
+
+---
+
+## Why Not AGPL
+
+La AGPL estende l'obbligo di pubblicazione a chi offre il programma modificato come servizio in rete, senza distribuirlo.
+
+PIE è progettato per essere installato, non offerto come servizio: la fattispecie che la AGPL chiude contraddice il principio Local First del progetto stesso.
+
+La AGPL comporta inoltre un attrito di adozione presso organizzazioni che ne vietano l'uso per policy interna.
+
+La scelta è registrata come consapevole: se in futuro emergesse un'offerta ospitata di PIE, la lacuna esisterebbe.
 
 ---
 
@@ -81,9 +117,11 @@ Le modifiche apportate al progetto non devono alterare il codice dei software es
 
 # Copyright
 
-Ogni file sorgente sviluppato per PIE dovrà contenere le informazioni di copyright definite dal progetto.
+Il copyright dei file sorgente appartiene agli autori del progetto.
 
-Le modalità definitive verranno stabilite prima del rilascio pubblico.
+La GPL raccomanda che ogni file sorgente porti in testa una nota di copyright e di licenza. La nota **non è ancora presente** nei file esistenti: la sua aggiunta costituisce un intervento su tutto il codice e va svolta come attività dedicata, prima della pubblicazione del repository.
+
+L'assenza della nota non incide sulla validità della licenza, che è dichiarata dal file `LICENSE.md` e da questa specifica.
 
 ---
 

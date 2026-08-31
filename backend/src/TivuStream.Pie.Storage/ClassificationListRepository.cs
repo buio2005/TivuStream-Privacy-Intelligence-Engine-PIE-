@@ -121,6 +121,52 @@ public sealed class ClassificationListRepository
     }
 
     /// <summary>
+    /// Records a list only if no list is held under that name.
+    /// </summary>
+    /// <remarks>
+    /// This is how the lists the project ships with are put in place on first
+    /// start. It must never overwrite: a list the person disabled, or whose
+    /// address they changed, is a decision of theirs, and restarting the
+    /// program is not an occasion to undo it.
+    /// </remarks>
+    /// <param name="list">List to record when absent.</param>
+    /// <returns><c>true</c> when the list was added.</returns>
+    public bool AddIfAbsent(ClassificationList list)
+    {
+        ArgumentNullException.ThrowIfNull(list);
+
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText =
+            """
+            INSERT INTO classification_list (
+                name, source_url, category, licence, updated_at,
+                entry_count, enabled)
+            VALUES (
+                $name, $sourceUrl, $category, $licence, NULL,
+                0, $enabled)
+            ON CONFLICT (name) DO NOTHING;
+            """;
+
+        command.Parameters.AddWithValue("$name", list.Name);
+        command.Parameters.AddWithValue("$sourceUrl", list.SourceUrl.ToString());
+        command.Parameters.AddWithValue("$category", list.Category.ToString());
+        command.Parameters.AddWithValue("$licence", list.Licence);
+        command.Parameters.AddWithValue("$enabled", list.Enabled);
+
+        try
+        {
+            return command.ExecuteNonQuery() > 0;
+        }
+        catch (SqliteException exception)
+        {
+            throw new StorageException("The classification list could not be recorded.", exception);
+        }
+    }
+
+    /// <summary>
     /// Removes a list.
     /// </summary>
     /// <remarks>

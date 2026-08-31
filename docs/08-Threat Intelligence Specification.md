@@ -376,7 +376,9 @@ Una classificazione prodotta da una lista aggiornata sei giorni prima è un'info
 
 # Update Policy
 
-Le liste vengono aggiornate a intervallo configurabile.
+Le liste vengono aggiornate a intervallo configurabile, **ventiquattro ore** in via predefinita.
+
+Una lista viene scaricata quando non è mai stata scaricata, oppure quando quella conservata è più vecchia dell'intervallo. Scaricare a ogni avvio graverebbe sulla fonte senza dire nulla di nuovo all'utente.
 
 ---
 

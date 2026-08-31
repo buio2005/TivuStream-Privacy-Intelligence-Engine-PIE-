@@ -13,6 +13,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using TivuStream.Pie.Adapters.Technitium;
 using TivuStream.Pie.Api.Acquisition;
+using TivuStream.Pie.Api.Classification;
 using TivuStream.Pie.Api.Contracts;
 using TivuStream.Pie.Api.Storage;
 using TivuStream.Pie.Core;
@@ -28,6 +29,7 @@ builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, relo
 builder.Services.Configure<TechnitiumOptions>(builder.Configuration.GetSection("Technitium"));
 builder.Services.Configure<AcquisitionOptions>(builder.Configuration.GetSection("Acquisition"));
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Storage"));
+builder.Services.Configure<ClassificationOptions>(builder.Configuration.GetSection("Classification"));
 
 builder.Services.AddSingleton(
     serviceProvider => serviceProvider.GetRequiredService<IOptions<TechnitiumOptions>>().Value);
@@ -41,11 +43,27 @@ builder.Services.AddSingleton<SqliteConnectionFactory>();
 builder.Services.AddSingleton<SchemaMigrator>();
 builder.Services.AddSingleton<AcquisitionRepository>();
 builder.Services.AddSingleton<ScoreRepository>();
+builder.Services.AddSingleton<ClassificationListRepository>();
+builder.Services.AddSingleton<ClassificationListStore>();
+builder.Services.AddSingleton<ClassificationProvider>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<NpssEngine>();
 
 builder.Services.AddSingleton<AcquisitionState>();
 builder.Services.AddHostedService<AcquisitionService>();
+
+// Reaching a list is the only request PIE makes outside its own Data Source.
+// It carries nothing about the network being observed.
+builder.Services
+    .AddHttpClient(
+        nameof(ClassificationUpdateService),
+        client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(2);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("TivuStream-PIE");
+        });
+
+builder.Services.AddHostedService<ClassificationUpdateService>();
 
 // Enumerations travel as names rather than as numbers: a number would be
 // meaningless to anyone reading the answer.
@@ -71,6 +89,14 @@ else
 {
     SchemaLog.Unchanged(app.Logger, migration.FinalVersion);
 }
+
+// The lists are put in place and read once the schema is ready. Reading them
+// means opening files holding hundreds of thousands of names, which is done
+// when the lists change and not when a domain is classified.
+ClassificationProvider classification = app.Services.GetRequiredService<ClassificationProvider>();
+
+classification.EnsureDefaults();
+classification.Reload();
 
 // The state reports what has just happened, including failures. The
 // repository reports what is known. The two answer different questions and

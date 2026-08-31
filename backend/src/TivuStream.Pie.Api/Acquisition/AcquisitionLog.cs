@@ -22,6 +22,15 @@ internal static partial class AcquisitionLog
 
     [LoggerMessage(
         Level = LogLevel.Information,
+        Message = "Classified {Classified} of {Total} domains. {Unclassified} remain unclassified.")]
+    internal static partial void Classified(
+        ILogger logger,
+        int classified,
+        int total,
+        int unclassified);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
         Message = "Score evaluated: {Score} out of 100, coverage {Coverage}.")]
     internal static partial void Scored(ILogger logger, int score, decimal coverage);
 

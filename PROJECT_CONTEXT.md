@@ -266,11 +266,13 @@ La comunicazione con il proprietario del progetto resta in italiano.
 
 ---
 
-## Licence
+## Licence Notices
 
-Da scegliere. Le opzioni considerate sono GPL-3.0 e MIT.
+La licenza è stata scelta: **GPL-3.0**. Restano due adempimenti.
 
-La decisione è registrata come aperta perché il progetto esclude fonti NonCommercial in nome di ciò che l'utente non ha scelto: è coerente che dichiari a sua volta cosa concede.
+**Note nei file sorgente.** La GPL raccomanda una nota di copyright e licenza in testa a ogni file. Va aggiunta come attività dedicata prima della pubblicazione del repository.
+
+**Avviso nell'interfaccia.** La GPL prevede che un'interfaccia interattiva mostri copyright, assenza di garanzia e modo di consultare la licenza. È un requisito del Frontend, da prevedere insieme al bilinguismo.
 
 ---
 

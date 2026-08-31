@@ -8,6 +8,78 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M4.4 — La classificazione entra in funzione — 2026-08-31
+
+Per la prima volta un dominio osservato riceve una categoria, e la categoria dichiara da dove viene e quanto è recente.
+
+### Added
+
+**Licenza del progetto**
+
+**GPL-3.0**. Testo integrale in `LICENSE.md`, Specification 14 alla 2.0.0.
+
+La promessa del progetto non è bloccare i tracciatori: è che l'utente possa verificare che cosa il programma fa. Una licenza permissiva consentirebbe di distribuire una versione chiusa con le stesse schermate che dichiarano che i domini non lasciano il dispositivo, senza che nessuno possa verificarlo.
+
+La versione 3 e non la 2 anche per una ragione concreta: `SQLitePCLRaw` è Apache-2.0, compatibile con GPLv3 e non con GPLv2.
+
+**Liste predefinite in essere — M4.4a**
+
+Sette liste del Block List Project inserite al primo avvio tramite `AddIfAbsent`, mai `Save`.
+
+Una lista disattivata dall'utente, o con l'indirizzo modificato, è una sua decisione: riavviare il programma non è un'occasione per disfarla.
+
+Nascono senza età e senza voci. Sono descrizioni, e una descrizione senza file è una lista che non esiste ancora.
+
+**Classificazione durante l'acquisizione — M4.4b**
+
+I domini vengono classificati **prima** di essere scritti.
+
+Classificare in lettura produrrebbe uno storico in cui ogni dominio appare come se fosse sempre stato ciò che le liste dicono oggi. Classificando in scrittura, ogni periodo conserva il giudizio che era possibile dare in quel momento.
+
+La conseguenza è dichiarata: i periodi osservati prima che le liste esistessero restano `Unknown` per sempre.
+
+**Scaricamento periodico — M4.4c**
+
+Intervallo predefinito di ventiquattro ore. Una lista viene scaricata quando non è mai stata scaricata o quando quella conservata è più vecchia dell'intervallo.
+
+`UpdatedAt` viene registrato soltanto dopo che il file è arrivato ed è stato riletto: scriverlo prima dichiarerebbe una freschezza che la lista non ha.
+
+Un aggiornamento fallito non invalida nulla. Il log distingue i due casi, perché sono situazioni diverse: `the copy from {UpdatedAt} stays in use and keeps ageing` quando una copia esiste, `it classifies nothing` quando non esiste.
+
+Limite di 64 MB per lista: gli indirizzi li sceglie l'utente, e un indirizzo sbagliato non deve poter riempire il disco.
+
+### Verified
+
+Verifica sull'installazione reale.
+
+```
+"name": "google-analytics.com"
+"category": "Tracking"
+"categoryConfidence": "High"
+"categorySource": "Block List Project - Tracking"
+"categorySourceUpdatedAt": "2026-08-31T09:15:55Z"
+```
+
+Categoria, confidenza, fonte ed età: la catena dal DNS al giudizio è completa e ogni affermazione dichiara su cosa si fonda.
+
+### Known Impact
+
+**La copertura resta 27.**
+
+Il NPSS non riceve i domini: `NpssEvaluationInput` non li contiene. Classificare non incide sul punteggio.
+
+Le aree Privacy Protection e Threat Protection elencano i propri indicatori come **soli titoli**, mentre la stessa Specification 07 stabilisce che un indicatore descritto soltanto da un titolo non è utilizzabile. La contraddizione non emergeva finché quelle aree erano non misurabili.
+
+Definirli in forma calcolabile è il milestone successivo, e va svolto in documentazione prima che in codice.
+
+**Osservazione sulla sorgente, da confermare.**
+
+Technitium non elenca fra i domini quelli le cui interrogazioni sono fallite. Osservato su tredici query, di cui cinque fallite, con quattro domini registrati.
+
+Se si conferma, va registrato nella Specification 04.
+
+---
+
 ## Documentation Release 1.3.0 — Fonti e conflitti — 2026-08-04
 
 Le liste predefinite sono scelte, e la regola che decide fra liste in disaccordo è dichiarata.

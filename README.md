@@ -227,9 +227,9 @@ Le modifiche alla documentazione sono registrate in `CHANGELOG.md`.
 
 # Licenza
 
-La licenza definitiva del progetto non è ancora stata scelta.
+Il progetto è distribuito sotto **GNU General Public License, versione 3**. Il testo integrale risiede in `LICENSE.md`.
 
-La decisione verrà presa prima della prima Beta pubblica.
+La scelta del copyleft discende dalla promessa del progetto: l'utente deve poter verificare che cosa il programma fa. Una licenza permissiva consentirebbe di distribuire una versione chiusa, con le stesse schermate che dichiarano che i domini non lasciano il dispositivo, senza che nessuno possa verificarlo.
 
 Le componenti open source integrate mantengono le rispettive licenze originali.
 

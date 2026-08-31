@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using TivuStream.Pie.Adapters;
 using TivuStream.Pie.Adapters.Technitium;
+using TivuStream.Pie.Api.Classification;
 using TivuStream.Pie.Core;
 using TivuStream.Pie.Model;
 using TivuStream.Pie.Model.Entities;
@@ -27,6 +28,7 @@ internal sealed class AcquisitionService : BackgroundService
     private readonly AcquisitionRepository _repository;
     private readonly ScoreRepository _scoreRepository;
     private readonly NpssEngine _engine;
+    private readonly ClassificationProvider _classification;
     private readonly AcquisitionOptions _options;
     private readonly ILogger<AcquisitionService> _logger;
 
@@ -36,6 +38,7 @@ internal sealed class AcquisitionService : BackgroundService
         AcquisitionRepository repository,
         ScoreRepository scoreRepository,
         NpssEngine engine,
+        ClassificationProvider classification,
         IOptions<AcquisitionOptions> options,
         ILogger<AcquisitionService> logger)
     {
@@ -46,6 +49,7 @@ internal sealed class AcquisitionService : BackgroundService
         _repository = repository;
         _scoreRepository = scoreRepository;
         _engine = engine;
+        _classification = classification;
         _options = options.Value;
         _logger = logger;
     }
@@ -122,9 +126,31 @@ internal sealed class AcquisitionService : BackgroundService
                 .GetDevicesAsync(window, cancellationToken)
                 .ConfigureAwait(false);
 
-            IReadOnlyList<Domain> domains = await adapter
+            IReadOnlyList<Domain> observed = await adapter
                 .GetDomainsAsync(window, cancellationToken)
                 .ConfigureAwait(false);
+
+            // The judgement is applied before the observation is recorded, so
+            // that what is stored carries the category together with the list
+            // it came from and the age of that list.
+            //
+            // Reclassifying later would produce a history in which a domain
+            // appears to have always been what the lists say about it today.
+            ClassificationEngine classifier = _classification.Engine;
+
+            IReadOnlyList<Domain> domains = [.. observed.Select(classifier.Classify)];
+
+            if (domains.Count > 0)
+            {
+                int unclassified = domains.Count(
+                    domain => domain.Category == ThreatCategory.Unknown);
+
+                AcquisitionLog.Classified(
+                    _logger,
+                    domains.Count - unclassified,
+                    domains.Count,
+                    unclassified);
+            }
 
             // Asked for only when the Data Source declares it can provide it.
             // This is what makes the declared capability load bearing rather
