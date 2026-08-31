@@ -8,6 +8,73 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M6.2 — Domini su una giornata mobile — 2026-08-31
+
+La sezione Domini smette di mostrare l'ora corrente e mostra le ultime ventiquattro ore, dichiarando quante ne esistono davvero.
+
+### Changed
+
+**Specification 06 alla 1.2.0**
+
+Le risposte che descrivono ciò che è stato osservato dichiarano l'intervallo a cui si riferiscono.
+
+Un elenco vuoto senza il proprio periodo è ambiguo: chi legge non distingue «la rete non ha contattato nulla» da «l'ora in corso è appena cominciata». La prima è un'affermazione sulla rete, la seconda sul momento in cui si guarda.
+
+**L'ora corrente non era tempo reale**
+
+Un periodo orario fisso si azzera allo scoccare dell'ora: alle 21:03 la pagina era quasi vuota, alle 21:58 piena, a parità di rete. Sessanta volte al giorno.
+
+La finestra mobile risponde alla domanda che l'utente si pone davvero, e non si svuota mai di colpo.
+
+**Aggregazione**
+
+I periodi sono fissi e non si sovrappongono, quindi le occorrenze si sommano senza contare due volte lo stesso traffico.
+
+È la scelta compiuta nella Persistence Specification a rendere lecita questa somma: con finestre mobili di acquisizione sarebbe stata impossibile. Una rinuncia di allora paga adesso.
+
+| Proprietà | Regola |
+| --- | --- |
+| `occurrences` | Somma dei periodi inclusi |
+| `firstSeen` / `lastSeen` | Il più antico e il più recente |
+| `observationQuality` | La meno precisa fra quelle aggregate |
+| Classificazione | Quella del periodo più recente in cui il dominio compare |
+
+L'ultima riga è una scelta dichiarata. Ogni periodo conserva ciò che era possibile affermare allora; la più recente è ciò che si sa adesso, e l'età della lista dice quanto recente sia. Una media delle classificazioni ricevute produrrebbe un'affermazione che nessun periodo ha mai fatto.
+
+**Ore osservate contro ore richieste**
+
+`periodsObserved` e `periodsRequested` sono entrambi dichiarati.
+
+Un'installazione accesa da cinque ore che scrivesse «ultime 24 ore» direbbe il falso.
+
+### Fixed
+
+**«Osservato fra le 10:00 e le 21:00» suggeriva una presenza continua**
+
+Con la finestra di un'ora la formulazione era quasi vera, perché i due istanti distavano sessanta minuti. Allargata la finestra ha cominciato a promettere qualcosa che non sappiamo: il dominio può essere stato contattato in due di quelle ore e in nessuna delle altre.
+
+Sostituita con due fatti distinti: prima osservazione e ultima.
+
+Il difetto non è nuovo. È l'aggregazione ad averlo reso visibile, e nessun test lo avrebbe preso.
+
+### Added
+
+**Note in lingua corrente per i nostri termini**
+
+`TermNote` presenta un termine tecnico con la sua spiegazione breve, dove il termine compare.
+
+La spiegazione **si aggiunge** alla formulazione precisa, non la sostituisce: una frase semplificata che perdesse la qualificazione romperebbe la promessa che quella frase esiste per mantenere.
+
+Cinque termini scritti: copertura, limite inferiore, non misurabile, non classificato, osservazione per periodo.
+
+Le note compaiono soltanto quando qualcosa in pagina vi si appoggia davvero. La stessa spiegazione ripetuta su ogni riga diventa arredamento che nessuno legge, come si era visto con la nota sui domini non classificati stampata undici volte.
+
+### Known Impact
+
+`/devices` e `/statistics` presentano la stessa ambiguità corretta su `/domains`: restituiscono ciò che è stato osservato senza dichiarare quando. Erano già così, e nessuno ci era ancora inciampato.
+
+---
+
 ## Milestone M6.1 — Prima schermata — 2026-08-31
 
 Il Frontend esiste, ed è bilingue dalla prima riga.
