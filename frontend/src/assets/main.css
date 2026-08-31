@@ -1,0 +1,18 @@
+/* Deliberately plain. The interface has rules about what it may claim, and
+   none yet about how it should look. */
+
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+body {
+  margin: 0;
+}
+
+#app {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}

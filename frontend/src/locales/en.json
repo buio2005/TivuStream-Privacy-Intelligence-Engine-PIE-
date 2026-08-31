@@ -1,0 +1,70 @@
+{
+  "app": {
+    "name": "Network Privacy",
+    "language": "Language"
+  },
+  "dashboard": {
+    "title": "Network status",
+    "loading": "Reading",
+    "unavailable": "No score available",
+    "unavailableReason": "The engine has not produced an evaluation yet."
+  },
+  "score": {
+    "coverage": "Coverage",
+    "coverageValue": "{value} points out of 100 observable",
+    "algorithm": "Algorithm {version}",
+    "withheld": "No overall score produced",
+    "withheldReason": "Coverage is {coverage} out of 100, below the minimum required. The areas that were measured are still reported.",
+    "weight": "weight {weight}"
+  },
+  "component": {
+    "DnsSecurity": "DNS security",
+    "PrivacyProtection": "Privacy protection",
+    "ThreatProtection": "Threat protection",
+    "DeviceHealth": "Device health",
+    "Configuration": "Configuration",
+    "NetworkIntegrity": "Observation integrity"
+  },
+  "state": {
+    "Measured": "Measured",
+    "PartiallyMeasured": "Partly measured",
+    "NotMeasurable": "Not measurable"
+  },
+  "factor": {
+    "unknown": "Factor this interface does not recognise: {code}",
+    "ConfigurationUnavailable": "The source does not provide its configuration: DNSSEC validation, encrypted transports and resolver settings cannot be assessed.",
+    "ClassificationUnavailable": "No classification list is available. Without lists every domain is unclassified, which does not mean there is no tracking.",
+    "ObservationInsufficient": "Too few queries observed: {queries} out of the {minimum} required. A network barely observed is not a network protected.",
+    "DomainActivityUnavailable": "The source does not report activity per domain: the blocked share cannot be assessed.",
+    "DnssecValidationEnabled": "DNSSEC validation is on.",
+    "DnssecValidationDisabled": "DNSSEC validation is off: answers are not checked against tampering.",
+    "EncryptedTransportsAvailable": "Encrypted transports available: {transports}.",
+    "EncryptedTransportsAbsent": "No encrypted transport is enabled: devices query the server in the clear.",
+    "QueryMinimisationEnabled": "Query name minimisation is on.",
+    "QueryMinimisationDisabled": "Query name minimisation is off: authoritative servers are told more than they need.",
+    "ClientSubnetForwardingEnabled": "Client subnet forwarding is on: external servers are told which part of the network a query came from.",
+    "ClientSubnetForwardingDisabled": "Client subnet forwarding is off.",
+    "EncryptedQueryShare": "Queries received over an encrypted transport: {share}.",
+    "FailedQueryShare": "Queries the service could not satisfy: {share}.",
+    "NoTrafficObserved": "No traffic observed in the period: use of encrypted transports and errors cannot be assessed.",
+    "TrackingExposureNone": "No known tracking observed. Domains absent from every list stay unclassified, so the figure is a lower bound.",
+    "TrackingExposureMeasured": "Queries towards domains known for tracking, advertising or analytics: {share} of the total. The figure is a lower bound.",
+    "TrackingBlockingMeasured": "Queries towards those domains that were blocked: {share} out of {queries}.",
+    "TrackingBlockingUntested": "No query towards a known tracking domain: the filter was not put to the test.",
+    "ThreatExposureNone": "No known threat and no suspicious domain observed. The lists assert what they recognise, so the figure is a lower bound.",
+    "ThreatExposureSuspiciousOnly": "No confirmed threat. Domains reported as suspicious: {suspicious}. The report is not confirmed.",
+    "ThreatExposureMeasured": "Confirmed threat domains observed: {confirmed}. Suspicious domains: {suspicious}.",
+    "ThreatBlockingMeasured": "Queries towards domains at risk that were blocked: {share} out of {queries}.",
+    "ThreatBlockingUntested": "No query towards a known threat domain: the filter was not put to the test.",
+    "EnginesNotImplemented": "Requires the Device Engine and the Alert Engine, not built yet.",
+    "SourceReachable": "The source answered.",
+    "SourceUnreachable": "The source could not be reached.",
+    "FilteringEnabled": "Domain filtering is on.",
+    "FilteringDisabled": "Domain filtering is off.",
+    "FilterListsConfigured": "Filter lists configured: {count}.",
+    "FilterListsAbsent": "No filter list configured: filtering has no effect.",
+    "ObservationContinuity": "Periods observed: {observed} out of the {expected} expected.",
+    "ObservationContinuityUnknown": "No period was expected, so continuity cannot be judged.",
+    "AcquisitionReliabilityUnknown": "Reliability of the acquisition cannot be assessed: attempts are not recorded yet."
+  }
+}

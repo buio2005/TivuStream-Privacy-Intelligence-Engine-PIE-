@@ -1,0 +1,70 @@
+{
+  "app": {
+    "name": "Network Privacy",
+    "language": "Lingua"
+  },
+  "dashboard": {
+    "title": "Stato della rete",
+    "loading": "Lettura in corso",
+    "unavailable": "Nessun punteggio disponibile",
+    "unavailableReason": "Il motore non ha ancora prodotto una valutazione."
+  },
+  "score": {
+    "coverage": "Copertura",
+    "coverageValue": "{value} punti su 100 osservabili",
+    "algorithm": "Algoritmo {version}",
+    "withheld": "Punteggio complessivo non prodotto",
+    "withheldReason": "La copertura è {coverage} su 100, sotto il minimo richiesto. Le aree misurate sono comunque riportate.",
+    "weight": "peso {weight}"
+  },
+  "component": {
+    "DnsSecurity": "Sicurezza DNS",
+    "PrivacyProtection": "Protezione della privacy",
+    "ThreatProtection": "Protezione dalle minacce",
+    "DeviceHealth": "Salute dei dispositivi",
+    "Configuration": "Configurazione",
+    "NetworkIntegrity": "Integrità dell'osservazione"
+  },
+  "state": {
+    "Measured": "Misurata",
+    "PartiallyMeasured": "Misurata in parte",
+    "NotMeasurable": "Non misurabile"
+  },
+  "factor": {
+    "unknown": "Fattore non riconosciuto da questa interfaccia: {code}",
+    "ConfigurationUnavailable": "La sorgente non fornisce la propria configurazione: validazione DNSSEC, trasporti cifrati e impostazioni del resolver non sono valutabili.",
+    "ClassificationUnavailable": "Nessuna lista di classificazione disponibile. Senza liste ogni dominio risulta non classificato, il che non significa che non vi sia tracciamento.",
+    "ObservationInsufficient": "Interrogazioni osservate insufficienti: {queries} su {minimum} richieste. Una rete poco osservata non è una rete protetta.",
+    "DomainActivityUnavailable": "La sorgente non riporta l'attività per singolo dominio: la quota bloccata non è valutabile.",
+    "DnssecValidationEnabled": "Validazione DNSSEC attiva.",
+    "DnssecValidationDisabled": "Validazione DNSSEC non attiva: le risposte non vengono verificate contro la manomissione.",
+    "EncryptedTransportsAvailable": "Trasporti cifrati disponibili: {transports}.",
+    "EncryptedTransportsAbsent": "Nessun trasporto cifrato abilitato: i dispositivi interrogano il server in chiaro.",
+    "QueryMinimisationEnabled": "Minimizzazione del nome interrogato attiva.",
+    "QueryMinimisationDisabled": "Minimizzazione del nome interrogato non attiva: ai server autoritativi viene comunicato più del necessario.",
+    "ClientSubnetForwardingEnabled": "Inoltro della sottorete del client attivo: ai server esterni viene comunicata la porzione di rete da cui proviene l'interrogazione.",
+    "ClientSubnetForwardingDisabled": "Inoltro della sottorete del client disattivato.",
+    "EncryptedQueryShare": "Interrogazioni ricevute su trasporto cifrato: {share}.",
+    "FailedQueryShare": "Interrogazioni non soddisfatte: {share}.",
+    "NoTrafficObserved": "Nessun traffico osservato nel periodo: l'uso dei trasporti cifrati e gli errori non sono valutabili.",
+    "TrackingExposureNone": "Nessun tracciamento noto osservato. I domini assenti da ogni lista restano non classificati, quindi il valore è un limite inferiore.",
+    "TrackingExposureMeasured": "Interrogazioni verso domini noti di tracciamento, pubblicità o analisi: {share} del totale. Il valore è un limite inferiore.",
+    "TrackingBlockingMeasured": "Interrogazioni verso quei domini che sono state bloccate: {share} su {queries}.",
+    "TrackingBlockingUntested": "Nessuna interrogazione verso domini di tracciamento noti: il filtro non è stato messo alla prova.",
+    "ThreatExposureNone": "Nessuna minaccia nota e nessun dominio sospetto osservato. Le liste affermano ciò che riconoscono, quindi il valore è un limite inferiore.",
+    "ThreatExposureSuspiciousOnly": "Nessuna minaccia confermata. Domini segnalati come sospetti: {suspicious}. La segnalazione non è confermata.",
+    "ThreatExposureMeasured": "Domini di minaccia confermata osservati: {confirmed}. Domini sospetti: {suspicious}.",
+    "ThreatBlockingMeasured": "Interrogazioni verso domini a rischio che sono state bloccate: {share} su {queries}.",
+    "ThreatBlockingUntested": "Nessuna interrogazione verso domini di minaccia noti: il filtro non è stato messo alla prova.",
+    "EnginesNotImplemented": "Richiede il Device Engine e l'Alert Engine, non ancora realizzati.",
+    "SourceReachable": "La sorgente ha risposto correttamente.",
+    "SourceUnreachable": "La sorgente non è raggiungibile.",
+    "FilteringEnabled": "Filtraggio dei domini attivo.",
+    "FilteringDisabled": "Filtraggio dei domini non attivo.",
+    "FilterListsConfigured": "Liste di filtro configurate: {count}.",
+    "FilterListsAbsent": "Nessuna lista di filtro configurata: il filtraggio non produce alcun effetto.",
+    "ObservationContinuity": "Periodi osservati: {observed} su {expected} attesi.",
+    "ObservationContinuityUnknown": "Nessun periodo atteso su cui valutare la continuità.",
+    "AcquisitionReliabilityUnknown": "Affidabilità dell'acquisizione non valutabile: i tentativi non vengono ancora registrati."
+  }
+}

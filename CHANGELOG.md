@@ -8,6 +8,56 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M6.1 — Prima schermata — 2026-08-31
+
+Il Frontend esiste, ed è bilingue dalla prima riga.
+
+### Added
+
+**Progetto Vue**
+
+Generato con `create-vue`, lo strumento ufficiale, e ripulito dei componenti dimostrativi.
+
+Il pacchetto di linting proposto dal template è stato escluso: `oxlint` e `eslint-plugin-oxlint` arrivavano con un conflitto di dipendenze fra pari, quindi il progetto generato non si sarebbe installato.
+
+Escluso anche `vite-plugin-vue-devtools`, un pannello di ispezione utile a chi scrive i componenti e inutile al prodotto.
+
+Dipendenze approvate e verificate: `vue`, `vue-router`, `pinia`, `vue-i18n`, `vite`, `typescript`, `vitest`, `@vue/test-utils`, più le nove che discendono tecnicamente da quella scelta. Tutte MIT tranne TypeScript, Apache-2.0, tutte compatibili con GPL-3.0. Nessuna vulnerabilità.
+
+**Dashboard**
+
+Punteggio, copertura, versione dell'algoritmo, le sei aree con stato, punti ottenuti, punti ottenibili e peso nominale.
+
+Il rifiuto di giudicare è uno **stato distinto** nel componente, separato dall'errore e dal caricamento. Quando il punteggio non esiste l'interfaccia non mostra zero e non mostra un guasto: dichiara che la copertura è sotto il minimo e riporta comunque le aree misurate.
+
+**Catalogo dei fattori**
+
+Trentaquattro codici in italiano e inglese, resi sotto l'area che li ha prodotti.
+
+Il catalogo è parte del prodotto e non decorazione: `ClassificationUnavailable` non dice «nessun dominio classificato» ma dichiara che senza liste ogni dominio risulta non classificato, **il che non significa che non vi sia tracciamento**. Il limite inferiore sopravvive alla traduzione in entrambe le lingue.
+
+Un codice che il catalogo non conosce viene mostrato con il proprio identificativo, mai omesso.
+
+**Proxy verso il Backend**
+
+`vite.config.ts` inoltra `/api` alla porta 5000. L'interfaccia parla al motore sulla stessa origine, quindi non è stato necessario introdurre regole CORS nel Backend: un debito evitato anziché aggiunto.
+
+### Fixed
+
+**Numeri formattati secondo la lingua**
+
+La prima versione mostrava `1.88` anche in italiano, usando l'interpolazione grezza di Vue.
+
+È esattamente il difetto che l'intera revisione dei fattori serviva a evitare, ricomparso un piano più su. Corretto con `$n()`, e le quote passano da `7,1%` a `7.1%` cambiando lingua, senza che il Backend sappia nulla della lingua.
+
+### Recorded
+
+**Glossario pubblico**
+
+Registrata la decisione di una pagina pubblica che spieghi i concetti dell'analisi, con tre vincoli: non è il Glossary per sviluppatori, non riscrive a mano spiegazioni che il catalogo contiene già, e le regole di onestà vi si applicano integralmente.
+
+---
+
 ## Documentation Release 1.5.0 e Milestone M4.6 — Fattori localizzabili — 2026-08-31
 
 Il Core smette di produrre frasi e produce fatti. È la condizione perché il Frontend possa nascere bilingue senza testi da riscrivere.
