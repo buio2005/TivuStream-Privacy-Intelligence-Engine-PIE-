@@ -4,7 +4,7 @@
 
 **Document:** API Specification
 
-**Version:** 1.0.1
+**Version:** 1.1.0
 
 **Status:** Approved
 
@@ -106,6 +106,27 @@ Ogni risposta utilizza una struttura comune.
   }
 }
 ```
+
+---
+
+# Observed Period
+
+Le risposte che descrivono ciò che è stato osservato dichiarano **a quale periodo si riferiscono**.
+
+```json
+{
+  "period": { "start": "...", "end": "..." },
+  "domains": []
+}
+```
+
+Il campo `period` è assente quando nessuna osservazione è stata ancora registrata.
+
+La ragione non è formale. Un elenco vuoto senza il proprio periodo è ambiguo: chi legge non distingue «la rete non ha contattato nulla» da «l'ora in corso è appena cominciata». La prima è un'affermazione sulla rete, la seconda sul momento in cui si guarda, e presentarle allo stesso modo è un'informazione falsa.
+
+Il requisito discende dalla regola Absent Versus Unmeasurable della Network Privacy Specification.
+
+**Endpoint interessati.** `/domains` lo dichiara. `/devices` e `/statistics` presentano la stessa ambiguità e verranno allineati.
 
 ---
 
@@ -237,7 +258,16 @@ Restituisce tutte le Recommendations prodotte dal sistema.
 /api/v1/domains
 ```
 
-Restituisce l'elenco dei domini osservati.
+Restituisce il periodo osservato e l'elenco dei domini che vi compaiono.
+
+```json
+{
+  "period": { "start": "2026-08-31T21:00:00+00:00", "end": "2026-08-31T22:00:00+00:00" },
+  "domains": []
+}
+```
+
+Un elenco vuoto accompagnato dal periodo significa che in quell'intervallo non è stato osservato alcun dominio. Senza il periodo la stessa risposta non direbbe nulla di verificabile.
 
 ---
 

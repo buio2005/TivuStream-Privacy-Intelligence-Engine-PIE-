@@ -66,5 +66,70 @@
     "ObservationContinuity": "Periodi osservati: {observed} su {expected} attesi.",
     "ObservationContinuityUnknown": "Nessun periodo atteso su cui valutare la continuità.",
     "AcquisitionReliabilityUnknown": "Affidabilità dell'acquisizione non valutabile: i tentativi non vengono ancora registrati."
+  },
+  "nav": {
+    "dashboard": "Stato della rete",
+    "domains": "Domini"
+  },
+  "domains": {
+    "title": "Domini osservati",
+    "empty": "Nessun dominio registrato nell'ultimo periodo osservato.",
+    "occurrences": "{count} interrogazione | {count} interrogazioni",
+    "period": "Osservato fra le {from} e le {to}",
+    "periodNote": "Il periodo, non un istante preciso.",
+    "unclassifiedTitle": "Non classificato",
+    "unclassifiedNote": "Questo dominio non compare in nessuna delle liste installate. Non significa che sia sicuro: significa che non lo abbiamo riconosciuto.",
+    "source": "Da {list}, aggiornata il {date}",
+    "sourceNever": "Da {list}, mai aggiornata",
+    "confidence": {
+      "High": "Nome presente in lista",
+      "Medium": "Dedotto dal dominio superiore",
+      "Low": "Confidenza bassa"
+    },
+    "confidenceNote": {
+      "High": "La lista nomina esattamente questo dominio.",
+      "Medium": "La lista nomina un dominio superiore, e la categoria è stata estesa a questo. È una deduzione ragionevole, non un'affermazione diretta.",
+      "Low": "La classificazione è incerta."
+    },
+    "observedPeriod": "Periodo osservato: dalle {from} alle {to}",
+    "emptyInPeriod": "Nessun dominio osservato fra le {from} e le {to}.",
+    "emptyEver": "Nessuna osservazione registrata finora.",
+    "hourly": "L'elenco riguarda l'ora in corso. A ogni ora la raccolta ricomincia, quindi poco dopo lo scoccare dell'ora è normale trovarlo vuoto."
+  },
+  "category": {
+    "Malware": "Malware",
+    "Phishing": "Phishing",
+    "Tracking": "Tracciamento",
+    "Advertising": "Pubblicità",
+    "Analytics": "Analisi",
+    "Cryptomining": "Estrazione di criptovalute",
+    "Suspicious": "Sospetto",
+    "Social": "Social",
+    "Streaming": "Streaming",
+    "Cloud": "Cloud",
+    "AiServices": "Servizi di IA",
+    "Unknown": "Non classificato"
+  },
+  "term": {
+    "unclassified": {
+      "label": "Che cosa significa «non classificato»",
+      "note": "Il dominio non compare in nessuna delle liste installate. Non significa che sia sicuro: significa che non lo abbiamo riconosciuto. Le liste dicono quali domini tracciano, non quali non lo fanno."
+    },
+    "periodBounded": {
+      "label": "Perché vedi un intervallo e non un orario",
+      "note": "La sorgente riporta i dati raggruppati per ora, quindi sappiamo in quale ora il dominio è stato contattato ma non in quale minuto. Mostrare un orario preciso sarebbe un'invenzione."
+    },
+    "coverage": {
+      "label": "Che cos'è la copertura",
+      "note": "Quanta parte della valutazione è stato possibile misurare davvero, su un massimo di 100. Ciò che non è stato osservato viene escluso dal calcolo invece di essere contato come zero, così un dato mancante non peggiora e non migliora il risultato."
+    },
+    "lowerBound": {
+      "label": "Che cos'è un limite inferiore",
+      "note": "Il valore reale è almeno quello mostrato, e può essere più alto. Riconosciamo i domini presenti nelle liste: quelli che nessuna lista conosce restano fuori dal conteggio."
+    },
+    "notMeasurable": {
+      "label": "Che cosa significa «non misurabile»",
+      "note": "Non abbiamo potuto osservare quell'area: manca il dato, non il risultato. È diverso da un risultato negativo, ed è il motivo per cui quei punti non entrano nel totale né in positivo né in negativo."
+    }
   }
 }

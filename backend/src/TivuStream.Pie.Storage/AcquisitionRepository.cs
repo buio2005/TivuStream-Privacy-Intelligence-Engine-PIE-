@@ -345,6 +345,34 @@ public sealed class AcquisitionRepository
     }
 
     /// <summary>
+    /// Returns the most recent observation period, when one exists.
+    /// </summary>
+    /// <remarks>
+    /// Read so that a result can declare the interval it refers to. A list
+    /// without its period cannot be told apart from a period without a list.
+    /// </remarks>
+    public ObservationPeriod? GetLatestPeriod()
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText =
+            """
+            SELECT   period_start, period_end
+            FROM     observation_period
+            ORDER BY period_start DESC
+            LIMIT    1;
+            """;
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        return reader.Read()
+            ? new ObservationPeriod(ReadInstant(reader, 0), ReadInstant(reader, 1))
+            : null;
+    }
+
+    /// <summary>
     /// Returns how many observation periods were recorded since the given
     /// instant.
     /// </summary>

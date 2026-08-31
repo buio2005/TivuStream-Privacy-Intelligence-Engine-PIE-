@@ -159,9 +159,15 @@ app.MapGet("/api/v1/devices", (AcquisitionRepository repository) =>
     return Results.Ok(ApiResponse.Ok(repository.GetLatestDevices()));
 });
 
+// The period travels with the list. An empty list on its own cannot be told
+// apart from an hour that has only just begun.
 app.MapGet("/api/v1/domains", (AcquisitionRepository repository) =>
 {
-    return Results.Ok(ApiResponse.Ok(repository.GetLatestDomains()));
+    return Results.Ok(ApiResponse.Ok(new ObservedDomains
+    {
+        Period = repository.GetLatestPeriod(),
+        Domains = repository.GetLatestDomains(),
+    }));
 });
 
 app.MapGet("/api/v1/domains/{domain}", (string domain, AcquisitionRepository repository) =>

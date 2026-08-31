@@ -66,5 +66,70 @@
     "ObservationContinuity": "Periods observed: {observed} out of the {expected} expected.",
     "ObservationContinuityUnknown": "No period was expected, so continuity cannot be judged.",
     "AcquisitionReliabilityUnknown": "Reliability of the acquisition cannot be assessed: attempts are not recorded yet."
+  },
+  "nav": {
+    "dashboard": "Network status",
+    "domains": "Domains"
+  },
+  "domains": {
+    "title": "Observed domains",
+    "empty": "No domain was recorded in the last observed period.",
+    "occurrences": "{count} query | {count} queries",
+    "period": "Observed between {from} and {to}",
+    "periodNote": "The period, not a precise moment.",
+    "unclassifiedTitle": "Unclassified",
+    "unclassifiedNote": "This domain appears in none of the installed lists. That does not mean it is safe: it means we did not recognise it.",
+    "source": "From {list}, updated on {date}",
+    "sourceNever": "From {list}, never updated",
+    "confidence": {
+      "High": "Name present in a list",
+      "Medium": "Inferred from the parent domain",
+      "Low": "Low confidence"
+    },
+    "confidenceNote": {
+      "High": "The list names this exact domain.",
+      "Medium": "The list names a parent domain, and the category was extended to this one. A reasonable inference, not a direct statement.",
+      "Low": "The classification is uncertain."
+    },
+    "observedPeriod": "Observed period: from {from} to {to}",
+    "emptyInPeriod": "No domain observed between {from} and {to}.",
+    "emptyEver": "No observation recorded yet.",
+    "hourly": "The list covers the current hour. Collection restarts every hour, so shortly after the hour turns it is normal to find it empty."
+  },
+  "category": {
+    "Malware": "Malware",
+    "Phishing": "Phishing",
+    "Tracking": "Tracking",
+    "Advertising": "Advertising",
+    "Analytics": "Analytics",
+    "Cryptomining": "Cryptomining",
+    "Suspicious": "Suspicious",
+    "Social": "Social",
+    "Streaming": "Streaming",
+    "Cloud": "Cloud",
+    "AiServices": "AI services",
+    "Unknown": "Unclassified"
+  },
+  "term": {
+    "unclassified": {
+      "label": "What “unclassified” means",
+      "note": "The domain appears in none of the installed lists. That does not mean it is safe: it means we did not recognise it. Lists say which domains track you, not which ones do not."
+    },
+    "periodBounded": {
+      "label": "Why you see a span and not a time",
+      "note": "The source reports data grouped by the hour, so we know in which hour the domain was contacted but not in which minute. Showing a precise time would be an invention."
+    },
+    "coverage": {
+      "label": "What coverage is",
+      "note": "How much of the evaluation could actually be measured, out of 100. What was not observed is excluded from the calculation rather than counted as zero, so missing data neither worsens nor improves the result."
+    },
+    "lowerBound": {
+      "label": "What a lower bound is",
+      "note": "The real value is at least the one shown, and may be higher. We recognise the domains present in the lists: the ones no list knows about stay out of the count."
+    },
+    "notMeasurable": {
+      "label": "What “not measurable” means",
+      "note": "We could not observe that area: the data is missing, not the result. It is different from a bad result, and it is why those points count neither for nor against the total."
+    }
   }
 }

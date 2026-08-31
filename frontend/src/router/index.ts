@@ -9,6 +9,11 @@ export const router = createRouter({
       name: 'dashboard',
       component: DashboardView,
     },
+    {
+      path: '/domains',
+      name: 'domains',
+      component: () => import('@/views/DomainsView.vue'),
+    },
   ],
 })
 

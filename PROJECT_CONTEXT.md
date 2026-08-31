@@ -266,17 +266,44 @@ La comunicazione con il proprietario del progetto resta in italiano.
 
 ---
 
-## Public Glossary
+## Plain Language For Our Own Terms
 
-Il progetto avrà una **pagina pubblica di spiegazione**, raggiungibile dalla Home o dalla presentazione, che descriva i concetti su cui l'analisi si fonda: copertura, misura qualificata, limite inferiore, classificazione locale, freschezza delle liste.
+La maggior parte delle persone che useranno lo strumento non ha competenze tecniche.
 
-Tre vincoli, decisi insieme alla richiesta.
+Le spiegazioni che il prodotto già fornisce sono precise e, per quel pubblico, **opache**: «limite inferiore», «copertura», «minimizzazione del nome interrogato», «trasporto cifrato» sono termini esatti che non spiegano sé stessi.
 
-**Non è il Glossary di `docs/`.** Quel documento è scritto per chi sviluppa. Questo è per chi usa lo strumento: stessi concetti, lettore diverso.
+Serve quindi un livello in più: non una pagina che descrive il funzionamento del prodotto, ma un modo per **spiegare le nostre stesse spiegazioni**.
 
-**Non riscrive le spiegazioni a mano.** Il catalogo delle traduzioni contiene già trentaquattro frasi che spiegano i medesimi concetti nel punto in cui l'utente li incontra. Una pagina che le riscrivesse divergerebbe nel tempo senza che nessuno se ne accorga, e l'utente leggerebbe due versioni diverse della stessa affermazione.
+---
 
-**Le regole di onestà valgono soprattutto lì.** Una sezione che spiega il metodo è il punto in cui è più facile tradirlo: scritta per convincere anziché per informare, diventa la scena che il progetto rifiuta di fare. La Network Privacy Specification si applica integralmente a quella pagina, in entrambe le lingue.
+### The Tension To Resolve
+
+Onestà e semplicità qui tirano in direzioni opposte.
+
+«Non ti tracciano» è semplice ed è falso. «Il valore è un limite inferiore» è vero e non arriva a destinazione.
+
+La soluzione **non** è ammorbidire le frasi: le regole della Network Privacy Specification restano intatte, e una formulazione semplificata che perda la qualificazione violerebbe la specifica.
+
+La soluzione è rendere il significato **raggiungibile nel punto in cui il termine compare**, senza obbligare l'utente a cercarlo altrove.
+
+---
+
+### Requirements
+
+* Ogni termine tecnico usato nell'interfaccia possiede una spiegazione breve, in lingua corrente, consultabile dove il termine appare.
+* La spiegazione **si aggiunge** alla frase esatta, non la sostituisce.
+* Le spiegazioni vivono nel catalogo delle traduzioni, insieme alle frasi che chiariscono, in entrambe le lingue.
+* Non è il Glossary di `docs/`, che è scritto per chi sviluppa.
+
+Termini che ne hanno bisogno, elenco iniziale: copertura, limite inferiore, non misurabile, misurata in parte, confidenza, trasporto cifrato, DNSSEC, minimizzazione del nome interrogato, sottorete del client, dominio sospetto, freschezza della lista, dominio non classificato.
+
+---
+
+### What This Is Not
+
+Una sezione «come funziona» scritta per convincere è la scena che il progetto rifiuta di fare.
+
+Se una pagina divulgativa verrà scritta, le regole di onestà vi si applicano integralmente, e non deve riscrivere a mano spiegazioni che il catalogo contiene già: due versioni della stessa affermazione divergono nel tempo senza che nessuno se ne accorga.
 
 ---
 

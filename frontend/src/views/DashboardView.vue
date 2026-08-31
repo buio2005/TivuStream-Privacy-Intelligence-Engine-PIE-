@@ -1,8 +1,33 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useScoreStore } from '@/stores/score'
 import FactorList from '@/components/FactorList.vue'
+import TermNote from '@/components/TermNote.vue'
+
+/**
+ * Factors whose value is a lower bound, as the NPSS Specification states.
+ *
+ * The explanation is offered only when something on the page actually rests
+ * on it. Shown always it would become furniture nobody reads.
+ */
+const lowerBoundCodes = new Set([
+  'TrackingExposureNone',
+  'TrackingExposureMeasured',
+  'ThreatExposureNone',
+  'ThreatExposureSuspiciousOnly',
+  'ThreatExposureMeasured',
+])
+
+const hasUnmeasurable = computed(() =>
+  score.value?.breakdown.some((area) => area.state !== 'Measured') ?? false,
+)
+
+const hasLowerBound = computed(() =>
+  score.value?.breakdown.some((area) =>
+    area.factors.some((factor) => lowerBoundCodes.has(factor.code)),
+  ) ?? false,
+)
 
 const store = useScoreStore()
 const { score, loading, failure } = storeToRefs(store)
@@ -43,6 +68,12 @@ onMounted(store.load)
         {{ $t('score.algorithm', { version: score.algorithmVersion }) }}
       </p>
 
+      <nav class="terms">
+        <TermNote term="coverage" />
+        <TermNote v-if="hasUnmeasurable" term="notMeasurable" />
+        <TermNote v-if="hasLowerBound" term="lowerBound" />
+      </nav>
+
       <ul class="breakdown">
         <li v-for="area in score.breakdown" :key="area.component">
           <div class="heading">
@@ -70,6 +101,10 @@ onMounted(store.load)
 .overall .scale,
 .coverage {
   opacity: 0.7;
+}
+
+.terms {
+  margin: 1.2rem 0 0.5rem;
 }
 
 .breakdown {

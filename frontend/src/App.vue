@@ -15,6 +15,11 @@ function choose(next: string) {
   <header>
     <span class="name">{{ $t('app.name') }}</span>
 
+    <nav class="sections">
+      <RouterLink to="/">{{ $t('nav.dashboard') }}</RouterLink>
+      <RouterLink to="/domains">{{ $t('nav.domains') }}</RouterLink>
+    </nav>
+
     <nav aria-label="Language">
       <button
         v-for="option in supportedLocales"
@@ -44,6 +49,24 @@ header {
 }
 
 .name {
+  font-weight: 600;
+}
+
+.sections {
+  flex: 1;
+  margin-left: 2rem;
+  display: flex;
+  gap: 1.2rem;
+}
+
+.sections a {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+.sections a.router-link-exact-active {
+  opacity: 1;
   font-weight: 600;
 }
 

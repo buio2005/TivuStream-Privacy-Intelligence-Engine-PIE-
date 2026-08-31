@@ -43,3 +43,34 @@ export interface Npss {
   generatedAt: string
   breakdown: ScoreComponent[]
 }
+
+export type MeasurementQuality = 'Exact' | 'LowerBound' | 'PeriodBounded' | 'Estimated'
+
+export type ConfidenceLevel = 'Low' | 'Medium' | 'High'
+
+export interface Domain {
+  name: string
+  category: string
+
+  /** Absent when the category is Unknown: there is no list to attribute it to. */
+  categoryConfidence: ConfidenceLevel | null
+  categorySource: string | null
+  categorySourceUpdatedAt: string | null
+
+  reputation: string | null
+  firstSeen: string
+  lastSeen: string
+  observationQuality: MeasurementQuality
+  occurrences: number
+}
+
+export interface ObservationPeriod {
+  start: string
+  end: string
+}
+
+export interface ObservedDomains {
+  /** Absent when nothing was ever observed. */
+  period: ObservationPeriod | null
+  domains: Domain[]
+}
