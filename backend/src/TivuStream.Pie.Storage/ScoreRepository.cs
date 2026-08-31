@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using TivuStream.Pie.Model;
 using TivuStream.Pie.Model.Entities;
@@ -11,7 +12,10 @@ namespace TivuStream.Pie.Storage;
 /// </summary>
 public sealed class ScoreRepository
 {
-    private const string FactorSeparator = "\n";
+    // The factors are kept as JSON: a factor is a code with its values, and
+    // a flat separator could not represent it without inventing an encoding of
+    // our own.
+    private static readonly JsonSerializerOptions FactorFormat = new(JsonSerializerDefaults.Web);
 
     private readonly SqliteConnectionFactory _connectionFactory;
 
@@ -145,13 +149,36 @@ public sealed class ScoreRepository
                 Score = ReadDecimal(reader, 2),
                 MaxScore = ReadDecimal(reader, 3),
                 Weight = reader.GetInt32(4),
-                Factors = reader.GetString(5).Split(
-                    FactorSeparator,
-                    StringSplitOptions.RemoveEmptyEntries),
+                Factors = ReadFactors(reader.GetString(5)),
             });
         }
 
         return components;
+    }
+
+    /// <summary>
+    /// Reads the factors of a component.
+    /// </summary>
+    /// <remarks>
+    /// A row written by an earlier version holds text rather than factors. It
+    /// is returned empty rather than guessed at: inventing a code for a
+    /// sentence would attribute to the system a statement it never made.
+    /// </remarks>
+    private static List<ScoreFactor> ReadFactors(string stored)
+    {
+        if (string.IsNullOrWhiteSpace(stored))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<ScoreFactor>>(stored, FactorFormat) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 
     private static long? FindLatestScoredPeriod(SqliteConnection connection)
@@ -270,7 +297,9 @@ public sealed class ScoreRepository
         command.Parameters.AddWithValue("$score", Format(component.Score));
         command.Parameters.AddWithValue("$maxScore", Format(component.MaxScore));
         command.Parameters.AddWithValue("$weight", component.Weight);
-        command.Parameters.AddWithValue("$factors", string.Join(FactorSeparator, component.Factors));
+        command.Parameters.AddWithValue(
+            "$factors",
+            JsonSerializer.Serialize(component.Factors, FactorFormat));
 
         command.ExecuteNonQuery();
     }

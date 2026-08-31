@@ -100,7 +100,7 @@ public sealed class NpssEngine
             NotMeasurable(
                 ScoreComponentType.DeviceHealth,
                 weight: 15,
-                "Richiede il Device Engine e l'Alert Engine, non ancora implementati."),
+                ScoreFactor.Of(FactorCodes.EnginesNotImplemented)),
             EvaluateConfiguration(input),
             EvaluateNetworkIntegrity(input),
         ];
@@ -135,13 +135,13 @@ public sealed class NpssEngine
 
         decimal score = 0;
         decimal maxScore = 0;
-        List<string> factors = [];
+        List<ScoreFactor> factors = [];
 
         bool hasTraffic = statistics.TotalQueries > 0;
 
         if (configuration is null)
         {
-            factors.Add("Configurazione della sorgente non disponibile: validazione DNSSEC, trasporti cifrati e impostazioni del resolver non valutabili.");
+            factors.Add(ScoreFactor.Of(FactorCodes.ConfigurationUnavailable));
         }
         else
         {
@@ -151,11 +151,11 @@ public sealed class NpssEngine
             if (configuration.DnssecValidationEnabled)
             {
                 score += 5;
-                factors.Add("Validazione DNSSEC attiva.");
+                factors.Add(ScoreFactor.Of(FactorCodes.DnssecValidationEnabled));
             }
             else
             {
-                factors.Add("Validazione DNSSEC non attiva.");
+                factors.Add(ScoreFactor.Of(FactorCodes.DnssecValidationDisabled));
             }
 
             // Transport Encryption, 2 points for availability.
@@ -164,11 +164,14 @@ public sealed class NpssEngine
             if (configuration.EncryptedTransports.Count > 0)
             {
                 score += 2;
-                factors.Add($"Trasporti cifrati disponibili: {string.Join(", ", configuration.EncryptedTransports)}.");
+                factors.Add(ScoreFactor.Of(
+                    FactorCodes.EncryptedTransportsAvailable,
+                    "transports",
+                    configuration.EncryptedTransports));
             }
             else
             {
-                factors.Add("Nessun trasporto cifrato abilitato.");
+                factors.Add(ScoreFactor.Of(FactorCodes.EncryptedTransportsAbsent));
             }
 
             // Resolver Configuration, 2.5 points each.
@@ -177,21 +180,21 @@ public sealed class NpssEngine
             if (configuration.QueryMinimisationEnabled)
             {
                 score += 2.5m;
-                factors.Add("Minimizzazione del nome interrogato attiva.");
+                factors.Add(ScoreFactor.Of(FactorCodes.QueryMinimisationEnabled));
             }
             else
             {
-                factors.Add("Minimizzazione del nome interrogato non attiva.");
+                factors.Add(ScoreFactor.Of(FactorCodes.QueryMinimisationDisabled));
             }
 
             if (configuration.ClientSubnetForwardingEnabled)
             {
-                factors.Add("Inoltro della sottorete del client attivo: riduce la privacy verso i server esterni.");
+                factors.Add(ScoreFactor.Of(FactorCodes.ClientSubnetForwardingEnabled));
             }
             else
             {
                 score += 2.5m;
-                factors.Add("Inoltro della sottorete del client disattivato.");
+                factors.Add(ScoreFactor.Of(FactorCodes.ClientSubnetForwardingDisabled));
             }
         }
 
@@ -203,7 +206,7 @@ public sealed class NpssEngine
             decimal encryptedShare = (decimal)statistics.EncryptedQueries / statistics.TotalQueries;
             score += 3 * encryptedShare;
 
-            factors.Add($"Interrogazioni ricevute su trasporto cifrato: {Percent(encryptedShare)}.");
+            factors.Add(ScoreFactor.Of(FactorCodes.EncryptedQueryShare, "share", encryptedShare));
 
             // DNS Errors, 5 points.
             maxScore += 5;
@@ -211,11 +214,11 @@ public sealed class NpssEngine
             decimal failureShare = Math.Min(1, (decimal)statistics.FailedQueries / statistics.TotalQueries);
             score += 5 * (1 - failureShare);
 
-            factors.Add($"Interrogazioni non soddisfatte: {Percent(failureShare)}.");
+            factors.Add(ScoreFactor.Of(FactorCodes.FailedQueryShare, "share", failureShare));
         }
         else
         {
-            factors.Add("Nessun traffico osservato nel periodo: utilizzo dei trasporti cifrati ed errori non valutabili.");
+            factors.Add(ScoreFactor.Of(FactorCodes.NoTrafficObserved));
         }
 
         return Build(ScoreComponentType.DnsSecurity, weight: 20, score, maxScore, factors);
@@ -233,14 +236,14 @@ public sealed class NpssEngine
     {
         const int Weight = 20;
 
-        if (Unobservable(input) is string obstacle)
+        if (Unobservable(input) is ScoreFactor obstacle)
         {
             return NotMeasurable(ScoreComponentType.PrivacyProtection, Weight, obstacle);
         }
 
         decimal score = 0;
         decimal maxScore = 10;
-        List<string> factors = [];
+        List<ScoreFactor> factors = [];
 
         // Known Tracking Exposure, 10 points.
         //
@@ -263,8 +266,8 @@ public sealed class NpssEngine
         // The wording carries the asymmetry the specification states: the
         // lists assert that a domain tracks, never that it does not.
         factors.Add(trackingQueries == 0
-            ? "Nessun tracciamento noto osservato. I domini non presenti in alcuna lista restano non classificati, quindi il valore è un limite inferiore."
-            : $"Interrogazioni verso domini noti di tracciamento, pubblicità o analisi: {Percent(share)} del totale. Il valore è un limite inferiore.");
+            ? ScoreFactor.Of(FactorCodes.TrackingExposureNone)
+            : ScoreFactor.Of(FactorCodes.TrackingExposureMeasured, "share", share));
 
         // Tracking Blocking, 10 points.
         BlockingOutcome blocking = MeasureBlocking(
@@ -272,8 +275,8 @@ public sealed class NpssEngine
             PrivacyCategories,
             points: 10,
             thresholds: [(0.99m, 10), (0.90m, 8), (0.75m, 6), (0.50m, 4), (0.25m, 2)],
-            nothingToBlock: "Nessuna interrogazione verso domini di tracciamento noti: il filtro non è stato messo alla prova.",
-            subject: "tracciamento");
+            untested: FactorCodes.TrackingBlockingUntested,
+            measured: FactorCodes.TrackingBlockingMeasured);
 
         score += blocking.Score;
         maxScore += blocking.MaxScore;
@@ -295,14 +298,14 @@ public sealed class NpssEngine
     {
         const int Weight = 25;
 
-        if (Unobservable(input) is string obstacle)
+        if (Unobservable(input) is ScoreFactor obstacle)
         {
             return NotMeasurable(ScoreComponentType.ThreatProtection, Weight, obstacle);
         }
 
         decimal score = 0;
         decimal maxScore = 12;
-        List<string> factors = [];
+        List<ScoreFactor> factors = [];
 
         int confirmed = input.Domains.Count(
             domain => ConfirmedThreatCategories.Contains(domain.Category));
@@ -326,9 +329,17 @@ public sealed class NpssEngine
 
         factors.Add((confirmed, suspicious) switch
         {
-            (0, 0) => "Nessuna minaccia nota e nessun dominio sospetto osservato. Il valore è un limite inferiore: le liste affermano ciò che riconoscono.",
-            (0, _) => $"Nessuna minaccia confermata. Domini segnalati come sospetti: {suspicious}. La segnalazione non è confermata.",
-            _ => $"Domini di minaccia confermata osservati: {confirmed}. Domini sospetti: {suspicious}.",
+            (0, 0) => ScoreFactor.Of(FactorCodes.ThreatExposureNone),
+            (0, _) => ScoreFactor.Of(
+                FactorCodes.ThreatExposureSuspiciousOnly,
+                "suspicious",
+                suspicious),
+            _ => ScoreFactor.Of(
+                FactorCodes.ThreatExposureMeasured,
+                "confirmed",
+                confirmed,
+                "suspicious",
+                suspicious),
         });
 
         // Threat Blocking, 13 points. The bar is higher than for tracking: a
@@ -339,8 +350,8 @@ public sealed class NpssEngine
             [.. ConfirmedThreatCategories, ThreatCategory.Suspicious],
             points: 13,
             thresholds: [(1m, 13), (0.95m, 10), (0.80m, 6), (0.50m, 3)],
-            nothingToBlock: "Nessuna interrogazione verso domini di minaccia noti: il filtro non è stato messo alla prova.",
-            subject: "minaccia");
+            untested: FactorCodes.ThreatBlockingUntested,
+            measured: FactorCodes.ThreatBlockingMeasured);
 
         score += blocking.Score;
         maxScore += blocking.MaxScore;
@@ -353,16 +364,21 @@ public sealed class NpssEngine
     /// Returns why the areas based on classification cannot be measured, or
     /// null when they can.
     /// </summary>
-    private static string? Unobservable(NpssEvaluationInput input)
+    private static ScoreFactor? Unobservable(NpssEvaluationInput input)
     {
         if (!input.ClassificationAvailable)
         {
-            return "Nessuna lista di classificazione disponibile: senza liste ogni dominio risulta non classificato, e leggerlo come assenza di tracciamento trasformerebbe la mancanza di uno strumento in un buon risultato.";
+            return ScoreFactor.Of(FactorCodes.ClassificationUnavailable);
         }
 
         if (input.Statistics.TotalQueries < MinimumQueriesForClassification)
         {
-            return $"Interrogazioni osservate nel periodo insufficienti: {input.Statistics.TotalQueries} su {MinimumQueriesForClassification} richieste. Una rete poco osservata non è una rete protetta.";
+            return ScoreFactor.Of(
+                FactorCodes.ObservationInsufficient,
+                "queries",
+                input.Statistics.TotalQueries,
+                "minimum",
+                MinimumQueriesForClassification);
         }
 
         return null;
@@ -382,7 +398,7 @@ public sealed class NpssEngine
     /// <param name="MaxScore">Points that were obtainable, zero when the
     /// indicator could not be measured.</param>
     /// <param name="Factor">What to tell the person.</param>
-    private readonly record struct BlockingOutcome(decimal Score, decimal MaxScore, string Factor);
+    private readonly record struct BlockingOutcome(decimal Score, decimal MaxScore, ScoreFactor Factor);
 
     /// <summary>
     /// Measures how much of the traffic towards a set of categories was
@@ -393,15 +409,15 @@ public sealed class NpssEngine
         ThreatCategory[] categories,
         decimal points,
         (decimal Threshold, decimal Points)[] thresholds,
-        string nothingToBlock,
-        string subject)
+        string untested,
+        string measured)
     {
         if (!input.DomainActivityAvailable)
         {
             return new BlockingOutcome(
                 0,
                 0,
-                $"La sorgente non riporta l'attività per dominio: la quota di {subject} bloccata non è valutabile.");
+                ScoreFactor.Of(FactorCodes.DomainActivityUnavailable));
         }
 
         HashSet<string> names =
@@ -423,7 +439,7 @@ public sealed class NpssEngine
             // Excluded rather than scored: with nothing to block there is no
             // judgement to pass, and the full marks already came from the
             // exposure indicator.
-            return new BlockingOutcome(0, 0, nothingToBlock);
+            return new BlockingOutcome(0, 0, ScoreFactor.Of(untested));
         }
 
         long blocked = relevant.Where(activity => activity.Blocked).Sum(activity => activity.QueryCount);
@@ -443,30 +459,30 @@ public sealed class NpssEngine
         return new BlockingOutcome(
             obtained,
             points,
-            $"Interrogazioni verso domini di {subject} bloccate: {Percent(blockedShare)} su {total}.");
+            ScoreFactor.Of(measured, "share", blockedShare, "queries", total));
     }
 
     private static ScoreComponent EvaluateConfiguration(NpssEvaluationInput input)
     {
         decimal score = 0;
         decimal maxScore = 5;
-        List<string> factors = [];
+        List<ScoreFactor> factors = [];
 
         // Source Availability, 5 points.
         if (input.SourceReachable)
         {
             score += 5;
-            factors.Add("La sorgente ha risposto correttamente.");
+            factors.Add(ScoreFactor.Of(FactorCodes.SourceReachable));
         }
         else
         {
-            factors.Add("La sorgente non è raggiungibile.");
+            factors.Add(ScoreFactor.Of(FactorCodes.SourceUnreachable));
         }
 
         // Filtering Configuration, 2.5 points each.
         if (input.Configuration is null)
         {
-            factors.Add("Configurazione della sorgente non disponibile: filtraggio non valutabile.");
+            factors.Add(ScoreFactor.Of(FactorCodes.ConfigurationUnavailable));
         }
         else
         {
@@ -475,21 +491,24 @@ public sealed class NpssEngine
             if (input.Configuration.FilteringEnabled)
             {
                 score += 2.5m;
-                factors.Add("Filtraggio dei domini attivo.");
+                factors.Add(ScoreFactor.Of(FactorCodes.FilteringEnabled));
             }
             else
             {
-                factors.Add("Filtraggio dei domini non attivo.");
+                factors.Add(ScoreFactor.Of(FactorCodes.FilteringDisabled));
             }
 
             if (input.Configuration.FilterListCount > 0)
             {
                 score += 2.5m;
-                factors.Add($"Liste di filtro configurate: {input.Configuration.FilterListCount}.");
+                factors.Add(ScoreFactor.Of(
+                    FactorCodes.FilterListsConfigured,
+                    "count",
+                    input.Configuration.FilterListCount));
             }
             else
             {
-                factors.Add("Nessuna lista di filtro configurata: il filtraggio non ha effetto.");
+                factors.Add(ScoreFactor.Of(FactorCodes.FilterListsAbsent));
             }
         }
 
@@ -498,7 +517,7 @@ public sealed class NpssEngine
 
     private static ScoreComponent EvaluateNetworkIntegrity(NpssEvaluationInput input)
     {
-        List<string> factors = [];
+        List<ScoreFactor> factors = [];
 
         // Observation Continuity, 5 points.
         decimal maxScore = 5;
@@ -509,23 +528,31 @@ public sealed class NpssEngine
             decimal continuity = Math.Min(1, (decimal)input.ObservedPeriods / input.ExpectedPeriods);
             score = 5 * continuity;
 
-            factors.Add($"Periodi osservati: {input.ObservedPeriods} su {input.ExpectedPeriods} attesi.");
+            factors.Add(ScoreFactor.Of(
+                FactorCodes.ObservationContinuity,
+                "observed",
+                input.ObservedPeriods,
+                "expected",
+                input.ExpectedPeriods));
         }
         else
         {
             score = 0;
             maxScore = 0;
-            factors.Add("Nessun periodo atteso su cui valutare la continuità.");
+            factors.Add(ScoreFactor.Of(FactorCodes.ObservationContinuityUnknown));
         }
 
         // Acquisition Reliability is not measurable until acquisition
         // attempts, including the failed ones, are recorded.
-        factors.Add("Affidabilità dell'acquisizione non valutabile: i tentativi non vengono ancora registrati.");
+        factors.Add(ScoreFactor.Of(FactorCodes.AcquisitionReliabilityUnknown));
 
         return Build(ScoreComponentType.NetworkIntegrity, weight: 10, score, maxScore, factors);
     }
 
-    private static ScoreComponent NotMeasurable(ScoreComponentType component, int weight, string reason)
+    private static ScoreComponent NotMeasurable(
+        ScoreComponentType component,
+        int weight,
+        ScoreFactor reason)
     {
         return new ScoreComponent
         {
@@ -543,7 +570,7 @@ public sealed class NpssEngine
         int weight,
         decimal score,
         decimal maxScore,
-        List<string> factors)
+        List<ScoreFactor> factors)
     {
         ScoreComponentState state = maxScore switch
         {
@@ -594,8 +621,4 @@ public sealed class NpssEngine
         };
     }
 
-    private static string Percent(decimal share)
-    {
-        return $"{Math.Round(share * 100, 1, MidpointRounding.AwayFromZero)}%";
-    }
 }

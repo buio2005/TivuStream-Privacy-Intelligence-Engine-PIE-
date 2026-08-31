@@ -4,7 +4,7 @@
 
 **Document:** Frontend Specification
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 
 **Status:** Approved
 
@@ -182,6 +182,24 @@ Particolare attenzione viene dedicata a:
 L'architettura supporta la localizzazione dell'interfaccia.
 
 Le traduzioni vengono gestite separatamente dal codice.
+
+Le lingue offerte sono **italiano e inglese**.
+
+La localizzazione va prevista dalla prima riga del Frontend. Aggiungerla a interfaccia costruita comporta la riscrittura di ogni testo già scritto.
+
+---
+
+## Text Produced From The Backend
+
+Il Backend non trasmette frasi.
+
+I fattori che spiegano il punteggio arrivano come codici con i propri valori, elencati nella NPSS Specification. Il Frontend li rende in parole.
+
+Ne consegue che il catalogo delle traduzioni **contiene affermazioni sul risultato dell'analisi**, non soltanto etichette di interfaccia.
+
+I vincoli di onestà della Network Privacy Specification si applicano integralmente a quel catalogo, in ogni lingua.
+
+Un codice sconosciuto al catalogo viene mostrato come tale, con il proprio identificativo, e non omesso: un fattore che scompare toglierebbe all'utente una ragione del punteggio senza dichiararlo.
 
 ---
 

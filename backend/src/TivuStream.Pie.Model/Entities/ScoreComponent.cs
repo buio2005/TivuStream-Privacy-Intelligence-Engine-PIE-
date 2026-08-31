@@ -58,5 +58,5 @@ public sealed record ScoreComponent
     /// When the state is not <see cref="ScoreComponentState.Measured"/>, the
     /// factors state which indicators were assessed, which were not, and why.
     /// </remarks>
-    public IReadOnlyList<string> Factors { get; init; } = [];
+    public IReadOnlyList<ScoreFactor> Factors { get; init; } = [];
 }

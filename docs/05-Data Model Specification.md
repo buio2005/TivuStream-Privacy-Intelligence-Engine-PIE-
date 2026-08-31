@@ -4,7 +4,7 @@
 
 **Document:** Data Model Specification
 
-**Version:** 2.1.0
+**Version:** 2.2.0
 
 **Status:** Approved
 
@@ -68,6 +68,7 @@ Il modello dati è composto dalle seguenti entità principali.
 * DomainActivity
 * Threat
 * SourceConfiguration
+* ScoreFactor
 * ClassificationList
 * Alert
 * Recommendation
@@ -305,6 +306,27 @@ Le proprietà `queryCount`, `firstSeen` e `lastSeen` si riferiscono alla combina
 
 ---
 
+# ScoreFactor
+
+Rappresenta una ragione che ha determinato il punteggio di un'area.
+
+## Properties
+
+* code
+* values
+
+La proprietà `code` identifica l'affermazione. La proprietà `values` contiene i valori che la completano.
+
+Un fattore **non contiene testo**.
+
+Il Core produce risultati, non prosa. Una frase già scritta appartiene a una lingua sola, e renderebbe impossibile presentare lo stesso risultato in più lingue senza modificare il Core.
+
+I valori numerici viaggiano come numeri, non come testo già formattato: la convenzione con cui si scrive una percentuale appartiene alla lingua, non alla misura.
+
+L'elenco dei codici e il loro significato sono definiti nella NPSS Specification.
+
+---
+
 # ClassificationList
 
 Rappresenta una lista utilizzata per classificare i domini.
@@ -452,7 +474,7 @@ Non può quindi in alcun caso migliorare il risultato: ciò che non è stato oss
 
 Quando `state` è diverso da `Measured`, il campo `factors` deve indicare quali indicatori sono stati valutati e quali no, con il relativo motivo.
 
-Il campo `factors` contiene i fattori che hanno determinato il punteggio dell'area.
+Il campo `factors` contiene i fattori che hanno determinato il punteggio dell'area, sotto forma di `ScoreFactor`.
 
 La conservazione dei factors costituisce il requisito che rende ogni variazione del punteggio spiegabile.
 

@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy Specification
 
-**Version:** 1.5.0
+**Version:** 1.6.0
 
 **Status:** Approved
 
@@ -310,6 +310,18 @@ Ogni classificazione mostrata dichiara **da dove proviene e quanto è recente**.
 Un dominio con categoria `Unknown` viene presentato come **non classificato**, mai come sicuro.
 
 È la differenza fra dire che non si sa e dire che non c'è nulla. Solo la prima è vera.
+
+---
+
+## The Wording Belongs To The Interface
+
+Il Core non produce frasi. Ogni fattore arriva come **codice con i propri valori**, e l'interfaccia lo rende in parole.
+
+Ne discende che i vincoli di onestà di questo documento si applicano al **catalogo delle traduzioni**, non soltanto al codice sorgente.
+
+Il catalogo è parte del prodotto. Una traduzione che scrivesse «rete pulita» al posto di «nessun tracciamento noto» violerebbe la specifica esattamente quanto lo farebbe il motore.
+
+Le regole seguenti valgono quindi per ogni lingua offerta.
 
 ---
 

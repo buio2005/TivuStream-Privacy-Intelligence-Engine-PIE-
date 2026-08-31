@@ -267,12 +267,14 @@ public sealed class NpssEngineTests
         });
 
         // The person is told what is missing and how much, not merely that
-        // something is missing.
-        string reason = Assert.Single(
+        // something is missing. The words are the interface's; the figures are
+        // the engine's, and must be there for the words to be written.
+        ScoreFactor reason = Assert.Single(
             Component(score, ScoreComponentType.PrivacyProtection).Factors);
 
-        Assert.Contains("99", reason, StringComparison.Ordinal);
-        Assert.Contains("100", reason, StringComparison.Ordinal);
+        Assert.Equal(FactorCodes.ObservationInsufficient, reason.Code);
+        Assert.Equal(99L, reason.Values["queries"]);
+        Assert.Equal(NpssEngine.MinimumQueriesForClassification, reason.Values["minimum"]);
     }
 
     // ------------------------------------------------------------------
@@ -305,17 +307,21 @@ public sealed class NpssEngineTests
     }
 
     [Fact]
-    public void Full_marks_on_exposure_never_claim_an_absence()
+    public void Full_marks_on_exposure_are_reported_as_nothing_known()
     {
         ScoreComponent privacy = Component(
             Evaluate(Observed()),
             ScoreComponentType.PrivacyProtection);
 
-        // The lists assert that a domain tracks, never that it does not. The
-        // wording is part of the commitment, not decoration.
+        // The lists assert that a domain tracks, never that it does not.
+        //
+        // The code says "none known", and the Network Privacy Specification
+        // binds every translation of it to say the same. The engine cannot
+        // check the words; it can make sure the distinction survives as far as
+        // the interface.
         Assert.Contains(
             privacy.Factors,
-            factor => factor.Contains("limite inferiore", StringComparison.Ordinal));
+            factor => factor.Code == FactorCodes.TrackingExposureNone);
     }
 
     // ------------------------------------------------------------------

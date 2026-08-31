@@ -8,6 +8,84 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Documentation Release 1.5.0 e Milestone M4.6 — Fattori localizzabili — 2026-08-31
+
+Il Core smette di produrre frasi e produce fatti. È la condizione perché il Frontend possa nascere bilingue senza testi da riscrivere.
+
+### Changed
+
+**Il Core non trasmette più testo**
+
+Prima, dentro il motore:
+
+```csharp
+factors.Add("Nessuna lista di filtro configurata: il filtraggio non ha effetto.");
+```
+
+Adesso:
+
+```csharp
+factors.Add(ScoreFactor.Of(FactorCodes.FilterListsAbsent));
+```
+
+Una frase già scritta appartiene a una lingua sola. Presentare lo stesso risultato in inglese avrebbe richiesto di modificare il Core, che è esattamente ciò che l'architettura vieta.
+
+**I numeri viaggiano come numeri**
+
+`{ "share": 0.071 }`, non `"7,1%"`.
+
+La convenzione con cui si scrive una percentuale appartiene alla lingua: in inglese quel valore si scrive `7.1%`. Formattare nel Core avrebbe reso l'inglese impossibile senza toccarlo.
+
+**Specification 05 alla 2.2.0, 07 alla 3.1.0, 09 alla 1.6.0, 10 alla 1.1.0**
+
+L'entità `ScoreFactor` è codice più valori, mai testo. Il catalogo completo dei codici è nella NPSS Specification, area per area.
+
+Un codice pubblicato **non cambia significato**: alterarne il senso cambierebbe le frasi mostrate dalle interfacce già scritte, senza che nulla lo segnali. Un fattore che cambia significato riceve un codice nuovo.
+
+**Migrazione 0009**
+
+I punteggi con i fattori in forma di testo vengono rimossi.
+
+Il lettore li degraderebbe a elenco vuoto senza errori, ma un punteggio le cui ragioni sono andate perse è un numero che il sistema non sa più giustificare. Conservarlo lascerebbe nello storico proprio la cifra inspiegata contro cui il progetto esiste.
+
+### Rationale
+
+Il vincolo emerge da una conseguenza non ovvia della richiesta di interfaccia bilingue.
+
+I fattori sono la parte più importante del prodotto: sono il motivo per cui un punteggio non è un numero opaco. Erano anche l'unica parte scritta in una lingua sola, dentro il codice.
+
+Spostandoli fuori dal Core, gli impegni di onestà si spostano con loro: le regole della Network Privacy Specification valgono ora sul **catalogo delle traduzioni**, che è parte del prodotto. Una traduzione che scrivesse «rete pulita» invece di «nessun tracciamento noto» violerebbe la specifica quanto lo farebbe il motore.
+
+La Frontend Specification aggiunge una regola conseguente: un codice sconosciuto al catalogo viene mostrato con il proprio identificativo, mai omesso. Un fattore che sparisce toglierebbe all'utente una ragione del punteggio senza dichiararlo.
+
+### Changed
+
+**Due prove riscritte**
+
+`The_reason_for_not_judging_is_stated_in_full` verifica ora i valori invece delle parole: codice `ObservationInsufficient`, `queries` 99, `minimum` 100. Il testo lo scriverà l'interfaccia; i numeri devono esserci perché possa scriverlo.
+
+`Full_marks_on_exposure_are_reported_as_nothing_known` verifica il codice `TrackingExposureNone`. Il motore non può più sorvegliare le parole, e garantisce che la distinzione arrivi intatta fino all'interfaccia.
+
+Sessantaquattro prove, tutte riuscite.
+
+### Verified
+
+Forma restituita dall'API, dopo il giro completo attraverso il database.
+
+```json
+{ "code": "ObservationContinuity", "values": { "observed": 6, "expected": 24 } }
+```
+
+I valori tornano dalla persistenza come numeri, non come testo.
+
+### Known Impact
+
+**Terza occorrenza di CA1859.**
+
+L'analizzatore ha di nuovo segnalato un metodo privato che dichiara un'interfaccia invece del tipo concreto. Era stato annotato come da applicare in anticipo dopo la seconda volta, e non è stato fatto.
+
+---
+
 ## Milestone M4.5 — Il primo punteggio complessivo — 2026-08-31
 
 Per la prima volta il sistema si considera autorizzato a esprimere un giudizio d'insieme.

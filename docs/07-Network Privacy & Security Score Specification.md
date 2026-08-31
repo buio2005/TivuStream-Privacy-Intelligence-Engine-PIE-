@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy & Security Score (NPSS) Specification
 
-**Version:** 3.0.0
+**Version:** 3.1.0
 
 **Status:** Approved
 
@@ -110,6 +110,106 @@ Motivazione di ciascun peso.
 I pesi appartengono all'algoritmo NPSS e seguono il versionamento dell'algoritmo.
 
 Una loro modifica costituisce un cambiamento sostanziale e incrementa la Major Version dell'algoritmo, poiché rende i punteggi precedenti non confrontabili.
+
+---
+
+# Factor Codes
+
+Ogni area riporta i fattori che ne hanno determinato il punteggio.
+
+Un fattore è un **codice con i suoi valori**, non una frase.
+
+Il Core produce risultati, non prosa. La formulazione appartiene all'interfaccia, che la rende nella lingua scelta dall'utente secondo i vincoli della Network Privacy Specification.
+
+---
+
+## DNS Security
+
+| Codice                          | Valori                | Significato                                              |
+| ------------------------------- | --------------------- | -------------------------------------------------------- |
+| `ConfigurationUnavailable`      | —                     | La sorgente non fornisce la propria configurazione        |
+| `DnssecValidationEnabled`       | —                     | Validazione DNSSEC attiva                                 |
+| `DnssecValidationDisabled`      | —                     | Validazione DNSSEC non attiva                             |
+| `EncryptedTransportsAvailable`  | `transports`          | Trasporti cifrati abilitati                               |
+| `EncryptedTransportsAbsent`     | —                     | Nessun trasporto cifrato abilitato                        |
+| `QueryMinimisationEnabled`      | —                     | Minimizzazione del nome interrogato attiva                |
+| `QueryMinimisationDisabled`     | —                     | Minimizzazione non attiva                                 |
+| `ClientSubnetForwardingEnabled` | —                     | Inoltro della sottorete del client attivo                 |
+| `ClientSubnetForwardingDisabled`| —                     | Inoltro della sottorete del client disattivato            |
+| `EncryptedQueryShare`           | `share`               | Quota di interrogazioni ricevute su trasporto cifrato     |
+| `FailedQueryShare`              | `share`               | Quota di interrogazioni non soddisfatte                   |
+| `NoTrafficObserved`             | —                     | Nessun traffico nel periodo                               |
+
+---
+
+## Privacy Protection
+
+| Codice                            | Valori               | Significato                                        |
+| --------------------------------- | -------------------- | --------------------------------------------------- |
+| `ClassificationUnavailable`       | —                    | Nessuna lista disponibile                           |
+| `ObservationInsufficient`         | `queries`, `minimum` | Interrogazioni sotto la soglia minima               |
+| `TrackingExposureNone`            | —                    | Nessun tracciamento **noto** osservato              |
+| `TrackingExposureMeasured`        | `share`              | Quota di interrogazioni verso domini di privacy     |
+| `TrackingBlockingMeasured`        | `share`, `queries`   | Quota bloccata di quelle interrogazioni             |
+| `TrackingBlockingUntested`        | —                    | Nessuna interrogazione da bloccare                  |
+| `DomainActivityUnavailable`       | —                    | La sorgente non riporta l'attività per dominio      |
+
+---
+
+## Threat Protection
+
+| Codice                         | Valori                    | Significato                                  |
+| ------------------------------ | ------------------------- | --------------------------------------------- |
+| `ClassificationUnavailable`    | —                         | Nessuna lista disponibile                     |
+| `ObservationInsufficient`      | `queries`, `minimum`      | Interrogazioni sotto la soglia minima         |
+| `ThreatExposureNone`           | —                         | Nessuna minaccia **nota** e nessun sospetto   |
+| `ThreatExposureSuspiciousOnly` | `suspicious`              | Solo domini sospetti, nessuna conferma        |
+| `ThreatExposureMeasured`       | `confirmed`, `suspicious` | Minacce confermate e sospette osservate       |
+| `ThreatBlockingMeasured`       | `share`, `queries`        | Quota bloccata delle interrogazioni a rischio |
+| `ThreatBlockingUntested`       | —                         | Nessuna interrogazione da bloccare            |
+| `DomainActivityUnavailable`    | —                         | La sorgente non riporta l'attività per dominio |
+
+---
+
+## Device Health
+
+| Codice                  | Valori | Significato                               |
+| ----------------------- | ------ | ----------------------------------------- |
+| `EnginesNotImplemented` | —      | Device Engine e Alert Engine non esistono |
+
+---
+
+## Configuration
+
+| Codice                       | Valori  | Significato                                        |
+| ---------------------------- | ------- | --------------------------------------------------- |
+| `SourceReachable`            | —       | La sorgente ha risposto                             |
+| `SourceUnreachable`          | —       | La sorgente non è raggiungibile                     |
+| `ConfigurationUnavailable`   | —       | La sorgente non fornisce la propria configurazione  |
+| `FilteringEnabled`           | —       | Filtraggio dei domini attivo                        |
+| `FilteringDisabled`          | —       | Filtraggio dei domini non attivo                    |
+| `FilterListsConfigured`      | `count` | Liste di filtro configurate                         |
+| `FilterListsAbsent`          | —       | Nessuna lista: il filtraggio non ha effetto         |
+
+---
+
+## Network Integrity
+
+| Codice                          | Valori                  | Significato                                        |
+| ------------------------------- | ----------------------- | --------------------------------------------------- |
+| `ObservationContinuity`         | `observed`, `expected`  | Periodi osservati rispetto a quelli attesi          |
+| `ObservationContinuityUnknown`  | —                       | Nessun periodo atteso su cui giudicare              |
+| `AcquisitionReliabilityUnknown` | —                       | I tentativi di acquisizione non vengono registrati  |
+
+---
+
+## Stability
+
+Un codice, una volta pubblicato, **non cambia significato**.
+
+Modificare il senso di un codice esistente altererebbe le frasi mostrate dalle interfacce già scritte, senza che nulla lo segnali.
+
+Un fattore che cambia significato riceve un codice nuovo.
 
 ---
 
