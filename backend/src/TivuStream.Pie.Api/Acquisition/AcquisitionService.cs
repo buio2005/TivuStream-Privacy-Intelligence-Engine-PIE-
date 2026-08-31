@@ -199,6 +199,17 @@ internal sealed class AcquisitionService : BackgroundService
                 Statistics = statistics,
                 Configuration = configuration,
                 SourceReachable = dataSource.Status == DataSourceStatus.Online,
+                Domains = domains,
+                DomainActivities = activities,
+
+                // Declared rather than inferred from an empty result. Without
+                // lists every domain is unclassified, and reading that as an
+                // absence of tracking would turn a missing tool into a good
+                // result.
+                ClassificationAvailable = classifier.HasLists,
+                DomainActivityAvailable =
+                    dataSource.Capabilities.Contains(nameof(DomainActivity), StringComparer.Ordinal),
+
                 ObservedPeriods = observedPeriods,
                 ExpectedPeriods = expectedPeriods,
                 PreviousOverallScore = previous?.OverallScore,

@@ -24,7 +24,33 @@ public sealed class NpssEngine
     /// Independent of the version of the project, as the specification
     /// requires. Scores produced by different versions are not comparable.
     /// </remarks>
-    public const string AlgorithmVersion = "2.0.0";
+    public const string AlgorithmVersion = "3.0.0";
+
+    /// <summary>
+    /// Queries below which the areas based on classification are not
+    /// measurable.
+    /// </summary>
+    /// <remarks>
+    /// A network that contacted no tracker in three queries is not a protected
+    /// network: it is a network that was not observed. Without this condition
+    /// the least used network would obtain the best result, and the score
+    /// would be measuring silence.
+    /// </remarks>
+    public const long MinimumQueriesForClassification = 100;
+
+    private static readonly ThreatCategory[] PrivacyCategories =
+    [
+        ThreatCategory.Tracking,
+        ThreatCategory.Analytics,
+        ThreatCategory.Advertising,
+    ];
+
+    private static readonly ThreatCategory[] ConfirmedThreatCategories =
+    [
+        ThreatCategory.Malware,
+        ThreatCategory.Phishing,
+        ThreatCategory.Cryptomining,
+    ];
 
     /// <summary>
     /// Coverage below which no overall score is produced.
@@ -69,14 +95,8 @@ public sealed class NpssEngine
         List<ScoreComponent> breakdown =
         [
             EvaluateDnsSecurity(input),
-            NotMeasurable(
-                ScoreComponentType.PrivacyProtection,
-                weight: 20,
-                "Richiede la classificazione dei domini, non ancora disponibile."),
-            NotMeasurable(
-                ScoreComponentType.ThreatProtection,
-                weight: 25,
-                "Richiede la classificazione dei domini, non ancora disponibile."),
+            EvaluatePrivacyProtection(input),
+            EvaluateThreatProtection(input),
             NotMeasurable(
                 ScoreComponentType.DeviceHealth,
                 weight: 15,
@@ -199,6 +219,231 @@ public sealed class NpssEngine
         }
 
         return Build(ScoreComponentType.DnsSecurity, weight: 20, score, maxScore, factors);
+    }
+
+    /// <summary>
+    /// Evaluates how much the network is tracked and how much of it is stopped.
+    /// </summary>
+    /// <remarks>
+    /// The two indicators answer two questions the person asks separately.
+    /// Blocking alone would reward an effective filter on a besieged network;
+    /// exposure alone would ignore the work the filter does.
+    /// </remarks>
+    private static ScoreComponent EvaluatePrivacyProtection(NpssEvaluationInput input)
+    {
+        const int Weight = 20;
+
+        if (Unobservable(input) is string obstacle)
+        {
+            return NotMeasurable(ScoreComponentType.PrivacyProtection, Weight, obstacle);
+        }
+
+        decimal score = 0;
+        decimal maxScore = 10;
+        List<string> factors = [];
+
+        // Known Tracking Exposure, 10 points.
+        //
+        // Counted per query and not per domain: ten domains contacted once
+        // each and one domain contacted four hundred times describe different
+        // networks, and counting domains would make them look alike.
+        long trackingQueries = QueriesTowards(input, PrivacyCategories);
+        decimal share = (decimal)trackingQueries / input.Statistics.TotalQueries;
+
+        score += share switch
+        {
+            0 => 10,
+            <= 0.02m => 8,
+            <= 0.05m => 6,
+            <= 0.10m => 4,
+            <= 0.20m => 2,
+            _ => 0,
+        };
+
+        // The wording carries the asymmetry the specification states: the
+        // lists assert that a domain tracks, never that it does not.
+        factors.Add(trackingQueries == 0
+            ? "Nessun tracciamento noto osservato. I domini non presenti in alcuna lista restano non classificati, quindi il valore è un limite inferiore."
+            : $"Interrogazioni verso domini noti di tracciamento, pubblicità o analisi: {Percent(share)} del totale. Il valore è un limite inferiore.");
+
+        // Tracking Blocking, 10 points.
+        BlockingOutcome blocking = MeasureBlocking(
+            input,
+            PrivacyCategories,
+            points: 10,
+            thresholds: [(0.99m, 10), (0.90m, 8), (0.75m, 6), (0.50m, 4), (0.25m, 2)],
+            nothingToBlock: "Nessuna interrogazione verso domini di tracciamento noti: il filtro non è stato messo alla prova.",
+            subject: "tracciamento");
+
+        score += blocking.Score;
+        maxScore += blocking.MaxScore;
+        factors.Add(blocking.Factor);
+
+        return Build(ScoreComponentType.PrivacyProtection, Weight, score, maxScore, factors);
+    }
+
+    /// <summary>
+    /// Evaluates the known threats reaching the network and how many are
+    /// stopped.
+    /// </summary>
+    /// <remarks>
+    /// Exposure is counted per domain rather than as a share. A malware domain
+    /// contacted once is a fact worth reporting, and diluting it over the total
+    /// number of queries would make it disappear.
+    /// </remarks>
+    private static ScoreComponent EvaluateThreatProtection(NpssEvaluationInput input)
+    {
+        const int Weight = 25;
+
+        if (Unobservable(input) is string obstacle)
+        {
+            return NotMeasurable(ScoreComponentType.ThreatProtection, Weight, obstacle);
+        }
+
+        decimal score = 0;
+        decimal maxScore = 12;
+        List<string> factors = [];
+
+        int confirmed = input.Domains.Count(
+            domain => ConfirmedThreatCategories.Contains(domain.Category));
+
+        int suspicious = input.Domains.Count(
+            domain => domain.Category == ThreatCategory.Suspicious);
+
+        // Known Threat Exposure, 12 points.
+        score += (confirmed, suspicious) switch
+        {
+            (0, 0) => 12,
+
+            // A suspicious domain lowers the score without emptying it. The
+            // report is not confirmed, and treating it as an established
+            // threat would attribute to the network a problem never shown.
+            (0, _) => 9,
+            (1, _) => 6,
+            (<= 5, _) => 3,
+            _ => 0,
+        };
+
+        factors.Add((confirmed, suspicious) switch
+        {
+            (0, 0) => "Nessuna minaccia nota e nessun dominio sospetto osservato. Il valore è un limite inferiore: le liste affermano ciò che riconoscono.",
+            (0, _) => $"Nessuna minaccia confermata. Domini segnalati come sospetti: {suspicious}. La segnalazione non è confermata.",
+            _ => $"Domini di minaccia confermata osservati: {confirmed}. Domini sospetti: {suspicious}.",
+        });
+
+        // Threat Blocking, 13 points. The bar is higher than for tracking: a
+        // tracker that gets through costs privacy, a malware domain that gets
+        // through can cost the machine.
+        BlockingOutcome blocking = MeasureBlocking(
+            input,
+            [.. ConfirmedThreatCategories, ThreatCategory.Suspicious],
+            points: 13,
+            thresholds: [(1m, 13), (0.95m, 10), (0.80m, 6), (0.50m, 3)],
+            nothingToBlock: "Nessuna interrogazione verso domini di minaccia noti: il filtro non è stato messo alla prova.",
+            subject: "minaccia");
+
+        score += blocking.Score;
+        maxScore += blocking.MaxScore;
+        factors.Add(blocking.Factor);
+
+        return Build(ScoreComponentType.ThreatProtection, Weight, score, maxScore, factors);
+    }
+
+    /// <summary>
+    /// Returns why the areas based on classification cannot be measured, or
+    /// null when they can.
+    /// </summary>
+    private static string? Unobservable(NpssEvaluationInput input)
+    {
+        if (!input.ClassificationAvailable)
+        {
+            return "Nessuna lista di classificazione disponibile: senza liste ogni dominio risulta non classificato, e leggerlo come assenza di tracciamento trasformerebbe la mancanza di uno strumento in un buon risultato.";
+        }
+
+        if (input.Statistics.TotalQueries < MinimumQueriesForClassification)
+        {
+            return $"Interrogazioni osservate nel periodo insufficienti: {input.Statistics.TotalQueries} su {MinimumQueriesForClassification} richieste. Una rete poco osservata non è una rete protetta.";
+        }
+
+        return null;
+    }
+
+    private static long QueriesTowards(NpssEvaluationInput input, ThreatCategory[] categories)
+    {
+        return input.Domains
+            .Where(domain => categories.Contains(domain.Category))
+            .Sum(domain => domain.Occurrences);
+    }
+
+    /// <summary>
+    /// Result of the blocking indicator of an area.
+    /// </summary>
+    /// <param name="Score">Points obtained.</param>
+    /// <param name="MaxScore">Points that were obtainable, zero when the
+    /// indicator could not be measured.</param>
+    /// <param name="Factor">What to tell the person.</param>
+    private readonly record struct BlockingOutcome(decimal Score, decimal MaxScore, string Factor);
+
+    /// <summary>
+    /// Measures how much of the traffic towards a set of categories was
+    /// blocked.
+    /// </summary>
+    private static BlockingOutcome MeasureBlocking(
+        NpssEvaluationInput input,
+        ThreatCategory[] categories,
+        decimal points,
+        (decimal Threshold, decimal Points)[] thresholds,
+        string nothingToBlock,
+        string subject)
+    {
+        if (!input.DomainActivityAvailable)
+        {
+            return new BlockingOutcome(
+                0,
+                0,
+                $"La sorgente non riporta l'attività per dominio: la quota di {subject} bloccata non è valutabile.");
+        }
+
+        HashSet<string> names =
+        [
+            .. input.Domains
+                .Where(domain => categories.Contains(domain.Category))
+                .Select(domain => domain.Name),
+        ];
+
+        List<DomainActivity> relevant =
+        [
+            .. input.DomainActivities.Where(activity => names.Contains(activity.Domain)),
+        ];
+
+        long total = relevant.Sum(activity => activity.QueryCount);
+
+        if (total == 0)
+        {
+            // Excluded rather than scored: with nothing to block there is no
+            // judgement to pass, and the full marks already came from the
+            // exposure indicator.
+            return new BlockingOutcome(0, 0, nothingToBlock);
+        }
+
+        long blocked = relevant.Where(activity => activity.Blocked).Sum(activity => activity.QueryCount);
+        decimal blockedShare = (decimal)blocked / total;
+
+        decimal obtained = 0;
+
+        foreach ((decimal threshold, decimal awarded) in thresholds)
+        {
+            if (blockedShare >= threshold)
+            {
+                obtained = awarded;
+                break;
+            }
+        }
+
+        return new BlockingOutcome(
+            obtained,
+            points,
+            $"Interrogazioni verso domini di {subject} bloccate: {Percent(blockedShare)} su {total}.");
     }
 
     private static ScoreComponent EvaluateConfiguration(NpssEvaluationInput input)

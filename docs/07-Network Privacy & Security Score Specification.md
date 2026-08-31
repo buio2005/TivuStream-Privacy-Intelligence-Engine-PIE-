@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy & Security Score (NPSS) Specification
 
-**Version:** 2.0.0
+**Version:** 3.0.0
 
 **Status:** Approved
 
@@ -204,31 +204,172 @@ La versione precedente elencava un indicatore denominato **Query Validation**, p
 
 ---
 
+# Classification-Based Areas
+
+Privacy Protection e Threat Protection derivano entrambe dalla classificazione dei domini.
+
+Ne condividono due condizioni.
+
+---
+
+## Minimum Observation
+
+Sotto **cento interrogazioni** nel periodo, gli indicatori di queste due aree sono **non misurabili**.
+
+Una rete che non ha contattato alcun dominio di tracciamento in tre interrogazioni non è una rete protetta: è una rete che non è stata osservata abbastanza.
+
+Senza questa condizione la rete meno usata otterrebbe il punteggio migliore, e il punteggio misurerebbe il silenzio anziché la protezione.
+
+---
+
+## What Classification Can And Cannot Assert
+
+Le liste affermano soltanto in positivo: dicono che un dominio traccia, non che non traccia.
+
+Un dominio assente da ogni lista è `Unknown`, e `Unknown` comprende sia i domini innocui sia i tracciatori che nessuna lista conosce.
+
+Ne discende un'asimmetria che governa la formulazione di questi indicatori.
+
+| Osservazione | Affidabilità |
+| ------------ | ------------- |
+| Esposizione elevata | **Attendibile**: quei domini sono noti per tracciare |
+| Esposizione nulla   | **Non attendibile come assoluzione**: può significare rete pulita oppure tracciatori sconosciuti |
+
+Il calcolo è simmetrico, la formulazione no. Il punteggio pieno significa **nessun tracciamento noto**, mai *nessun tracciamento*, e la Network Privacy Specification vincola l'interfaccia a dirlo così.
+
+Il valore dell'esposizione è sempre dichiarato come **limite inferiore**.
+
+---
+
 # Privacy Protection
 
-Valuta il livello di protezione della privacy.
+Peso complessivo **20**, distribuito su due indicatori da **10** punti.
 
-Indicatori.
+Le categorie considerate sono `Tracking`, `Analytics` e `Advertising`.
 
-* Tracker Blocking
-* Analytics Detection
-* Advertising Domains
-* Telemetry Detection
-* Privacy Configuration
+I due indicatori rispondono a domande diverse che l'utente si pone entrambe: *quanto mi tracciano* e *quanto me lo impediscono*. Il secondo da solo premierebbe un filtro efficace su una rete assediata; il primo da solo ignorerebbe il lavoro del filtro.
+
+---
+
+## Known Tracking Exposure
+
+Quota di interrogazioni dirette a domini classificati in una categoria di privacy, sul totale delle interrogazioni.
+
+Il conteggio è **per interrogazione, non per dominio**. Dieci domini di tracciamento contattati una volta ciascuno e un solo dominio contattato quattrocento volte descrivono reti diverse, e contare i domini le farebbe apparire uguali.
+
+| Quota osservata | Punti |
+| --------------- | ----- |
+| Nessuna          | 10    |
+| Fino al 2%       | 8     |
+| Fino al 5%       | 6     |
+| Fino al 10%      | 4     |
+| Fino al 20%      | 2     |
+| Oltre il 20%     | 0     |
+
+Qualità della misura: **limite inferiore**.
+
+Non misurabile quando le interrogazioni sono meno di cento, o quando nessuna lista è disponibile.
+
+Dato: categoria e occorrenze dei domini, statistiche.
+
+---
+
+## Tracking Blocking
+
+Quota di interrogazioni dirette a quei domini che sono state bloccate.
+
+| Quota bloccata | Punti |
+| -------------- | ----- |
+| Almeno il 99%   | 10    |
+| Almeno il 90%   | 8     |
+| Almeno il 75%   | 6     |
+| Almeno il 50%   | 4     |
+| Almeno il 25%   | 2     |
+| Inferiore       | 0     |
+
+Non misurabile quando nessuna interrogazione è diretta a quei domini, e quando la Data Source non fornisce l'attività per dominio.
+
+**L'assenza di tracciamento non produce un doppio giudizio.** Se non c'è nulla da bloccare, l'indicatore è escluso e il punteggio pieno arriva dall'esposizione. La copertura risulta inferiore a 100, ed è corretto: quel filtro non è stato messo alla prova.
+
+Dato: attività per dominio, categoria dei domini.
+
+---
+
+## Removed Indicators
+
+La versione precedente elencava **Tracker Blocking**, **Analytics Detection**, **Advertising Domains**, **Telemetry Detection** e **Privacy Configuration** come soli titoli.
+
+I primi quattro descrivevano la stessa misura suddivisa per categoria, senza che le categorie avessero pesi distinti motivati. Sono confluiti nei due indicatori sopra.
+
+**Privacy Configuration** è stato rimosso perché ogni impostazione che avrebbe potuto misurare è già valutata da Resolver Configuration e da Filtering Configuration. Contarla di nuovo avrebbe gonfiato il punteggio due volte per lo stesso fatto.
+
+**Nota sulla categoria `Analytics`.** Nessuna lista predefinita la fornisce: i domini di analisi ricevono in pratica la categoria `Tracking`, secondo quanto dichiarato dalla fonte adottata. La categoria resta nel modello e non viene attribuita per convenienza.
 
 ---
 
 # Threat Protection
 
-Valuta la protezione contro minacce note.
+Peso complessivo **25**, distribuito su due indicatori.
 
-Indicatori.
+Le categorie considerate sono `Malware`, `Phishing` e `Cryptomining`, che costituiscono minacce **confermate** da una lista, e `Suspicious`, che costituisce una segnalazione **non confermata**.
 
-* Malware
-* Phishing
-* Cryptomining
-* Suspicious Domains
-* Threat Intelligence
+La struttura ricalca quella di Privacy Protection, con due differenze motivate.
+
+**L'esposizione si conta per dominio, non per quota.** Un dominio di malware contattato una sola volta è un fatto rilevante; diluirlo sul totale delle interrogazioni lo farebbe sparire. Per il tracciamento la proporzione è informativa, per una minaccia il numero assoluto lo è di più.
+
+**La soglia del blocco è più alta.** Un tracciatore che passa costa privacy, un dominio di malware che passa può costare la macchina.
+
+---
+
+## Known Threat Exposure
+
+Peso **12**.
+
+| Condizione osservata                                          | Punti |
+| ------------------------------------------------------------- | ----- |
+| Nessun dominio di minaccia, nessun dominio sospetto             | 12    |
+| Nessuna minaccia confermata, almeno un dominio sospetto         | 9     |
+| Un dominio di minaccia confermata                               | 6     |
+| Da due a cinque domini di minaccia confermata                   | 3     |
+| Più di cinque                                                   | 0     |
+
+Un dominio sospetto riduce il punteggio senza azzerarlo: la segnalazione non è confermata, e trattarla come una minaccia accertata attribuirebbe alla rete un problema che non è stato dimostrato.
+
+Qualità della misura: **limite inferiore**.
+
+Non misurabile quando le interrogazioni sono meno di cento, o quando nessuna lista è disponibile.
+
+Dato: categoria dei domini, statistiche.
+
+---
+
+## Threat Blocking
+
+Peso **13**.
+
+Quota di interrogazioni dirette a domini di minaccia, confermata o sospetta, che sono state bloccate.
+
+| Quota bloccata | Punti |
+| -------------- | ----- |
+| Totalità        | 13    |
+| Almeno il 95%   | 10    |
+| Almeno l'80%    | 6     |
+| Almeno il 50%   | 3     |
+| Inferiore       | 0     |
+
+Non misurabile quando nessuna interrogazione è diretta a quei domini, e quando la Data Source non fornisce l'attività per dominio.
+
+Dato: attività per dominio, categoria dei domini.
+
+---
+
+## Removed Indicator
+
+La versione precedente elencava **Threat Intelligence** fra gli indicatori.
+
+Non è un indicatore: è il nome del sottosistema che produce la classificazione da cui tutti gli altri derivano.
+
+È stato rimosso anziché reinterpretato.
 
 ---
 

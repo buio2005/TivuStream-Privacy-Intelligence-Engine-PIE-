@@ -4,7 +4,7 @@
 
 **Document:** Network Privacy Specification
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 
 **Status:** Approved
 
@@ -310,6 +310,38 @@ Ogni classificazione mostrata dichiara **da dove proviene e quanto è recente**.
 Un dominio con categoria `Unknown` viene presentato come **non classificato**, mai come sicuro.
 
 È la differenza fra dire che non si sa e dire che non c'è nulla. Solo la prima è vera.
+
+---
+
+## Known, Not Absent
+
+Gli indicatori fondati sulla classificazione misurano ciò che le liste **riconoscono**.
+
+L'interfaccia non presenta mai il punteggio pieno di quelle aree come assenza di tracciamento o di minacce.
+
+| Vietato                        | Richiesto                              |
+| ------------------------------ | -------------------------------------- |
+| «Nessun tracciamento»           | «Nessun tracciamento **noto**»          |
+| «Rete pulita»                   | «Nessuna minaccia riconosciuta dalle liste» |
+| «Sei protetto»                  | «Non è stato osservato nulla di noto»   |
+
+La differenza non è prudenza formale. Un dominio assente da ogni lista può essere innocuo oppure un tracciatore che nessuna lista conosce, e il sistema non è in grado di distinguerli.
+
+Dire «nessun tracciamento» sarebbe l'unica affermazione dell'intero prodotto che il prodotto non può sostenere.
+
+---
+
+## Device Visibility
+
+L'elenco dei dispositivi comprende **soltanto i dispositivi che utilizzano questo servizio DNS**.
+
+Un apparecchio configurato con un resolver proprio, o che utilizza DNS cifrato verso un servizio esterno, non compare in alcuna statistica. Non risulta privo di attività: risulta inesistente.
+
+L'interfaccia dichiara questa condizione accanto all'elenco dei dispositivi.
+
+La ragione è concreta. Chi osserva la propria rete pensa anzitutto a computer e telefoni, mentre televisori, console e apparecchi domestici vengono percepiti come oggetti d'uso anziché come dispositivi connessi. Sono anche quelli che più spesso portano un resolver cablato dal produttore.
+
+L'assenza di un apparecchio dall'elenco è quindi un'informazione, e va presentata come tale invece di essere lasciata interpretare come una buona notizia.
 
 ---
 

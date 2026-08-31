@@ -203,6 +203,232 @@ public sealed class NpssEngineTests
     }
 
     // ------------------------------------------------------------------
+    // Not having the tool is not a result
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void Without_lists_the_areas_based_on_classification_are_not_measurable()
+    {
+        Npss score = Evaluate(Observed() with { ClassificationAvailable = false });
+
+        ScoreComponent privacy = Component(score, ScoreComponentType.PrivacyProtection);
+
+        Assert.Equal(ScoreComponentState.NotMeasurable, privacy.State);
+        Assert.Equal(0, privacy.MaxScore);
+    }
+
+    [Fact]
+    public void Having_no_list_is_not_worth_the_same_as_having_found_nothing()
+    {
+        // Two networks with identical traffic. One has lists and no tracking
+        // was recognised; the other has no lists at all.
+        //
+        // Reading the second as an absence of tracking would turn a missing
+        // tool into a good result, which is the failure this whole area exists
+        // to avoid.
+        Npss withLists = Evaluate(Observed());
+        Npss withoutLists = Evaluate(Observed() with { ClassificationAvailable = false });
+
+        ScoreComponent measured = Component(withLists, ScoreComponentType.PrivacyProtection);
+        ScoreComponent blind = Component(withoutLists, ScoreComponentType.PrivacyProtection);
+
+        Assert.Equal(10, measured.Score);
+        Assert.Equal(0, blind.Score);
+        Assert.True(blind.MaxScore < measured.MaxScore);
+    }
+
+    // ------------------------------------------------------------------
+    // A network barely observed is not a network protected
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void Below_the_minimum_number_of_queries_nothing_is_judged()
+    {
+        Npss score = Evaluate(Observed() with
+        {
+            Statistics = WithTraffic() with { TotalQueries = 99, EncryptedQueries = 99 },
+        });
+
+        Assert.Equal(
+            ScoreComponentState.NotMeasurable,
+            Component(score, ScoreComponentType.PrivacyProtection).State);
+
+        Assert.Equal(
+            ScoreComponentState.NotMeasurable,
+            Component(score, ScoreComponentType.ThreatProtection).State);
+    }
+
+    [Fact]
+    public void The_reason_for_not_judging_is_stated_in_full()
+    {
+        Npss score = Evaluate(Observed() with
+        {
+            Statistics = WithTraffic() with { TotalQueries = 99, EncryptedQueries = 99 },
+        });
+
+        // The person is told what is missing and how much, not merely that
+        // something is missing.
+        string reason = Assert.Single(
+            Component(score, ScoreComponentType.PrivacyProtection).Factors);
+
+        Assert.Contains("99", reason, StringComparison.Ordinal);
+        Assert.Contains("100", reason, StringComparison.Ordinal);
+    }
+
+    // ------------------------------------------------------------------
+    // Exposure to tracking is counted per query
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void One_domain_contacted_often_weighs_more_than_many_contacted_once()
+    {
+        NpssEvaluationInput spread = Observed() with
+        {
+            Domains =
+            [
+                .. Enumerable
+                    .Range(0, 10)
+                    .Select(index => Tracker($"tracker{index}.example.com", occurrences: 1)),
+            ],
+        };
+
+        NpssEvaluationInput concentrated = Observed() with
+        {
+            Domains = [Tracker("tracker.example.com", occurrences: 400)],
+        };
+
+        // Ten domains against one. Counting domains would call the second
+        // network the cleaner of the two.
+        Assert.True(
+            Component(Evaluate(concentrated), ScoreComponentType.PrivacyProtection).Score
+            < Component(Evaluate(spread), ScoreComponentType.PrivacyProtection).Score);
+    }
+
+    [Fact]
+    public void Full_marks_on_exposure_never_claim_an_absence()
+    {
+        ScoreComponent privacy = Component(
+            Evaluate(Observed()),
+            ScoreComponentType.PrivacyProtection);
+
+        // The lists assert that a domain tracks, never that it does not. The
+        // wording is part of the commitment, not decoration.
+        Assert.Contains(
+            privacy.Factors,
+            factor => factor.Contains("limite inferiore", StringComparison.Ordinal));
+    }
+
+    // ------------------------------------------------------------------
+    // A filter that was never tested is not a filter that failed
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void With_nothing_to_block_the_indicator_is_excluded_rather_than_scored()
+    {
+        ScoreComponent privacy = Component(
+            Evaluate(Observed()),
+            ScoreComponentType.PrivacyProtection);
+
+        // Ten obtainable points instead of twenty: the exposure was measured,
+        // the blocking was not, and the missing half is removed from what
+        // could be obtained rather than scored as zero.
+        Assert.Equal(10, privacy.MaxScore);
+        Assert.Equal(10, privacy.Score);
+        Assert.Equal(ScoreComponentState.PartiallyMeasured, privacy.State);
+    }
+
+    [Fact]
+    public void A_source_that_cannot_report_activity_leaves_blocking_unmeasured()
+    {
+        NpssEvaluationInput tracked = Observed() with
+        {
+            Domains = [Tracker("tracker.example.com", occurrences: 50)],
+            DomainActivityAvailable = false,
+        };
+
+        ScoreComponent privacy = Component(Evaluate(tracked), ScoreComponentType.PrivacyProtection);
+
+        Assert.Equal(10, privacy.MaxScore);
+    }
+
+    [Fact]
+    public void Traffic_that_is_blocked_earns_the_points_that_traffic_let_through_does_not()
+    {
+        NpssEvaluationInput passing = Tracked(blocked: false);
+        NpssEvaluationInput stopped = Tracked(blocked: true);
+
+        ScoreComponent letThrough = Component(Evaluate(passing), ScoreComponentType.PrivacyProtection);
+        ScoreComponent blocked = Component(Evaluate(stopped), ScoreComponentType.PrivacyProtection);
+
+        Assert.Equal(20, letThrough.MaxScore);
+        Assert.Equal(20, blocked.MaxScore);
+        Assert.True(blocked.Score > letThrough.Score);
+    }
+
+    // ------------------------------------------------------------------
+    // Threats are counted by name, not by proportion
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void A_single_malware_domain_costs_points_however_little_traffic_it_drew()
+    {
+        NpssEvaluationInput exposed = Observed() with
+        {
+            Domains = [Classified("bad.example.com", ThreatCategory.Malware, occurrences: 1)],
+        };
+
+        ScoreComponent threats = Component(Evaluate(exposed), ScoreComponentType.ThreatProtection);
+
+        // One query out of a thousand. As a share it would round to nothing.
+        Assert.True(threats.Score < 12);
+    }
+
+    [Fact]
+    public void A_suspicious_domain_lowers_the_score_without_emptying_it()
+    {
+        NpssEvaluationInput suspicious = Observed() with
+        {
+            Domains = [Classified("odd.example.com", ThreatCategory.Suspicious, occurrences: 5)],
+        };
+
+        NpssEvaluationInput confirmed = Observed() with
+        {
+            Domains = [Classified("bad.example.com", ThreatCategory.Malware, occurrences: 5)],
+        };
+
+        decimal clean = Component(Evaluate(Observed()), ScoreComponentType.ThreatProtection).Score;
+        decimal unconfirmed = Component(Evaluate(suspicious), ScoreComponentType.ThreatProtection).Score;
+        decimal established = Component(Evaluate(confirmed), ScoreComponentType.ThreatProtection).Score;
+
+        // A report that was never confirmed must not be treated as an
+        // established threat: it would attribute to the network a problem
+        // nobody demonstrated.
+        Assert.True(unconfirmed < clean);
+        Assert.True(established < unconfirmed);
+    }
+
+    [Fact]
+    public void The_bar_for_blocking_threats_is_higher_than_for_blocking_trackers()
+    {
+        Npss almost = Evaluate(BothKinds(blockedQueries: 99, passingQueries: 1));
+        Npss complete = Evaluate(BothKinds(blockedQueries: 100, passingQueries: 0));
+
+        decimal trackingAlmost = Component(almost, ScoreComponentType.PrivacyProtection).Score;
+        decimal trackingComplete = Component(complete, ScoreComponentType.PrivacyProtection).Score;
+
+        decimal threatAlmost = Component(almost, ScoreComponentType.ThreatProtection).Score;
+        decimal threatComplete = Component(complete, ScoreComponentType.ThreatProtection).Score;
+
+        // Ninety nine per cent already earns everything obtainable against
+        // tracking, and does not against threats.
+        //
+        // A tracker that gets through costs privacy; a malware domain that
+        // gets through can cost the machine.
+        Assert.Equal(trackingComplete, trackingAlmost);
+        Assert.True(threatAlmost < threatComplete);
+    }
+
+    // ------------------------------------------------------------------
     // Trend
     // ------------------------------------------------------------------
 
@@ -271,6 +497,98 @@ public sealed class NpssEngineTests
             SourceReachable = true,
             ObservedPeriods = 24,
             ExpectedPeriods = 24,
+        };
+    }
+
+    /// <summary>
+    /// A well configured source, with lists loaded, activity available, and
+    /// traffic above the minimum. No domain was recognised as anything.
+    /// </summary>
+    private static NpssEvaluationInput Observed()
+    {
+        return WellConfigured() with
+        {
+            ClassificationAvailable = true,
+            DomainActivityAvailable = true,
+        };
+    }
+
+    /// <summary>
+    /// One tracking domain, contacted a hundred times, either stopped or let
+    /// through in full.
+    /// </summary>
+    private static NpssEvaluationInput Tracked(bool blocked)
+    {
+        return Observed() with
+        {
+            Domains = [Tracker("tracker.example.com", occurrences: 100)],
+            DomainActivities = [Activity("tracker.example.com", queries: 100, blocked)],
+        };
+    }
+
+    /// <summary>
+    /// A tracking domain and a malware domain, both blocked in the same
+    /// proportion.
+    /// </summary>
+    private static NpssEvaluationInput BothKinds(long blockedQueries, long passingQueries)
+    {
+        long total = blockedQueries + passingQueries;
+
+        List<DomainActivity> activities =
+        [
+            Activity("tracker.example.com", blockedQueries, blocked: true),
+            Activity("bad.example.com", blockedQueries, blocked: true),
+        ];
+
+        if (passingQueries > 0)
+        {
+            activities.Add(Activity("tracker.example.com", passingQueries, blocked: false));
+            activities.Add(Activity("bad.example.com", passingQueries, blocked: false));
+        }
+
+        return Observed() with
+        {
+            Domains =
+            [
+                Tracker("tracker.example.com", total),
+                Classified("bad.example.com", ThreatCategory.Malware, total),
+            ],
+            DomainActivities = activities,
+        };
+    }
+
+    private static Domain Tracker(string name, long occurrences)
+    {
+        return Classified(name, ThreatCategory.Tracking, occurrences);
+    }
+
+    private static Domain Classified(string name, ThreatCategory category, long occurrences)
+    {
+        return new Domain
+        {
+            Name = name,
+            Category = category,
+            CategoryConfidence = ConfidenceLevel.High,
+            CategorySource = "Test list",
+            CategorySourceUpdatedAt = Now.AddDays(-1),
+            FirstSeen = Now.AddHours(-1),
+            LastSeen = Now,
+            ObservationQuality = MeasurementQuality.PeriodBounded,
+            Occurrences = occurrences,
+        };
+    }
+
+    private static DomainActivity Activity(string domain, long queries, bool blocked)
+    {
+        return new DomainActivity
+        {
+            DeviceId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            Domain = domain,
+            QueryCount = queries,
+            Blocked = blocked,
+            Protocol = "Udp",
+            FirstSeen = Now.AddHours(-1),
+            LastSeen = Now,
         };
     }
 

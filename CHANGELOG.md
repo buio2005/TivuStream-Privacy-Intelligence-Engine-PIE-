@@ -8,6 +8,145 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone M4.5 — Il primo punteggio complessivo — 2026-08-31
+
+Per la prima volta il sistema si considera autorizzato a esprimere un giudizio d'insieme.
+
+### Added
+
+**Quattro indicatori nel motore — M4.5a**
+
+Privacy Protection e Threat Protection sono calcolate secondo la Specification 07 alla 3.0.0.
+
+`NpssEvaluationInput` riceve i domini classificati e le attività, e due dichiarazioni esplicite.
+
+| Proprietà | Perché non è dedotta da un risultato vuoto |
+| --- | --- |
+| `ClassificationAvailable` | Senza liste ogni dominio è `Unknown`. Leggerlo come assenza di tracciamento trasformerebbe la mancanza di uno strumento in un buon risultato. |
+| `DomainActivityAvailable` | Una sorgente che non sa dire cosa ha bloccato è una lacuna nell'osservazione, non una rete senza blocchi. |
+
+**Migrazione 0008 — M4.5b**
+
+I punteggi calcolati con l'algoritmo 2.0.0 vengono rimossi anziché conservati. Due aree passano da non misurabili a misurabili, quindi i valori precedenti non sono confrontabili con i successivi.
+
+Nessuna misura va perduta: i punteggi derivano dalle acquisizioni, che restano.
+
+**Dodici prove — M4.5c**
+
+Sessantaquattro prove complessive.
+
+Fra le proprietà verificate.
+
+* **Non avere le liste non vale quanto non aver trovato nulla.** Due reti con traffico identico: quella con le liste ottiene dieci punti, quella senza ne ottiene zero **ottenibili**.
+* **Un dominio contattato quattrocento volte pesa più di dieci contattati una volta.** Contando i domini la rete peggiore sembrerebbe la migliore.
+* **La soglia per le minacce è più alta.** Al novantanove per cento bloccato il tracciamento ha già tutto, le minacce no.
+* **Un dominio sospetto abbassa il punteggio senza azzerarlo**, e resta distinto da una minaccia confermata.
+* **Il testo mostrato all'utente contiene «limite inferiore».** È l'unica prova che verifica una formulazione anziché un numero, e sorveglia l'unica affermazione che il prodotto non potrebbe sostenere.
+
+### Verified
+
+Prima valutazione completa su installazione reale.
+
+```
+overallScore 57, status Warning, coverage 67, algoritmo 3.0.0
+
+ThreatProtection    12 / 12   PartiallyMeasured
+DnsSecurity      13,93 / 20   Measured
+PrivacyProtection    4 / 20   Measured
+DeviceHealth         0 / 0    NotMeasurable
+Configuration      7,5 / 10   Measured
+NetworkIntegrity  1,04 / 5    PartiallyMeasured
+```
+
+Il giudizio su Privacy Protection è severo e corretto: *interrogazioni verso domini di tracciamento bloccate, 0% su 60*. La rete osservata contatta tracciatori e non ne blocca alcuno.
+
+Threat Protection ottiene il punteggio pieno su ciò che è stato misurato e resta `PartiallyMeasured`: tredici punti di peso escludono l'indicatore di blocco, perché *il filtro non è stato messo alla prova*. La copertura scende invece di regalare punti.
+
+### Added
+
+**Script di prova**
+
+`scripts/generate-dns-traffic.sh` genera traffico DNS verso il server locale, da eseguire in un container che ne condivide la rete.
+
+Serve perché su Docker Desktop per Windows l'inoltro UDP verso il container non è affidabile, e le prove manuali non raggiungono la soglia minima di osservazione.
+
+---
+
+## Documentation Release 1.4.0 — Indicatori di privacy e minaccia — 2026-08-31
+
+Le due aree che valgono quarantacinque punti su cento smettono di essere elenchi di titoli e diventano misure calcolabili.
+
+### Changed
+
+**Specification 07 alla 3.0.0**
+
+Privacy Protection e Threat Protection elencavano i propri indicatori come soli titoli, mentre la stessa specifica stabilisce che un titolo non è utilizzabile. La contraddizione non emergeva finché quelle aree erano non misurabili.
+
+Ogni area ha ora **due indicatori**: quanto la rete è esposta, e quanto le viene impedito.
+
+Rispondono a due domande che l'utente si pone entrambe. Il solo blocco premierebbe un filtro efficace su una rete assediata; la sola esposizione ignorerebbe il lavoro del filtro.
+
+**L'esposizione al tracciamento si conta per interrogazione, non per dominio.**
+
+Dieci domini contattati una volta ciascuno e un solo dominio contattato quattrocento volte descrivono reti diverse. Contare i domini le farebbe apparire uguali.
+
+**L'esposizione alle minacce si conta per dominio, non per quota.**
+
+Un dominio di malware contattato una sola volta è un fatto rilevante, e diluirlo sul totale delle interrogazioni lo farebbe sparire. Per il tracciamento la proporzione informa, per una minaccia il numero assoluto informa di più.
+
+Un dominio soltanto sospetto riduce il punteggio senza azzerarlo: la segnalazione non è confermata, e trattarla come accertata attribuirebbe alla rete un problema non dimostrato.
+
+**Soglia minima di osservazione: cento interrogazioni.**
+
+Una rete che non ha contattato alcun tracciatore in tre interrogazioni non è protetta: non è stata osservata.
+
+Senza la soglia, la rete meno usata otterrebbe il punteggio migliore, e il punteggio misurerebbe il silenzio.
+
+**Indicatori rimossi.**
+
+`Tracker Blocking`, `Analytics Detection`, `Advertising Domains` e `Telemetry Detection` descrivevano la stessa misura suddivisa per categoria, senza pesi distinti motivati. Confluiscono nei due nuovi indicatori.
+
+`Privacy Configuration` è rimosso perché ogni impostazione che avrebbe potuto misurare è già valutata da Resolver Configuration e da Filtering Configuration. Contarla di nuovo avrebbe premiato due volte lo stesso fatto.
+
+`Threat Intelligence` è rimosso perché non è un indicatore: è il nome del sottosistema che produce la classificazione da cui gli altri derivano.
+
+**Specification 09 alla 1.5.0**
+
+Due vincoli di presentazione.
+
+*Known, not absent.* Le liste affermano solo in positivo: dicono che un dominio traccia, non che non traccia. Il punteggio pieno significa **nessun tracciamento noto**, mai nessun tracciamento. Dire «rete pulita» sarebbe l'unica affermazione dell'intero prodotto che il prodotto non può sostenere.
+
+*Device visibility.* L'elenco dei dispositivi comprende soltanto quelli che usano questo servizio DNS. Un apparecchio con un resolver proprio non risulta privo di attività: risulta inesistente.
+
+La condizione va dichiarata perché riguarda proprio gli apparecchi che l'utente non percepisce come dispositivi connessi — televisori, console, oggetti domestici — che sono anche quelli che più spesso portano un resolver cablato dal produttore.
+
+### Rationale
+
+Un'asimmetria governa entrambe le aree.
+
+| Osservazione | Affidabilità |
+| --- | --- |
+| Esposizione elevata | Attendibile: quei domini sono noti per tracciare |
+| Esposizione nulla | Non attendibile come assoluzione |
+
+Il calcolo è simmetrico, la formulazione no. È il motivo per cui la Specification 09 vincola le parole e non solo i numeri.
+
+### Known Impact
+
+**L'algoritmo passa alla versione 3.0.0.**
+
+I punteggi prodotti finora non sono confrontabili con i successivi: due aree che erano non misurabili diventano misurabili. Sarà necessaria una migrazione che li rimuove anziché conservarli, come già fatto alla versione 2.0.0.
+
+**Nessuna lista fornisce la categoria `Analytics`.**
+
+I domini di analisi ricevono in pratica `Tracking`, secondo quanto dichiara la fonte adottata. La categoria resta nel modello e non viene attribuita per convenienza.
+
+**La copertura non raggiungerà 100.**
+
+Device Health resta priva di definizioni calcolabili, e Tracking Blocking è escluso quando non c'è nulla da bloccare. Una rete senza tracciamento noto avrà copertura inferiore a una rete tracciata, ed è corretto: il suo filtro non è stato messo alla prova.
+
+---
+
 ## Milestone M4.4 — La classificazione entra in funzione — 2026-08-31
 
 Per la prima volta un dominio osservato riceve una categoria, e la categoria dichiara da dove viene e quanto è recente.

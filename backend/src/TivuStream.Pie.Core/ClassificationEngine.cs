@@ -84,6 +84,16 @@ public sealed class ClassificationEngine
     }
 
     /// <summary>
+    /// Whether the engine holds at least one list to consult.
+    /// </summary>
+    /// <remarks>
+    /// Without a list every domain comes back unclassified. That is a
+    /// statement about the tool, not about the network, and whoever acts on
+    /// the result must be able to tell the two apart.
+    /// </remarks>
+    public bool HasLists => _lists.Count > 0;
+
+    /// <summary>
     /// Classifies a domain name.
     /// </summary>
     /// <remarks>
