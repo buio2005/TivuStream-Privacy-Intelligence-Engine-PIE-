@@ -17,6 +17,7 @@ using TivuStream.Pie.Api.Classification;
 using TivuStream.Pie.Api.Contracts;
 using TivuStream.Pie.Api.Storage;
 using TivuStream.Pie.Core;
+using TivuStream.Pie.Model;
 using TivuStream.Pie.Model.Entities;
 using TivuStream.Pie.Storage;
 using TivuStream.Pie.Storage.Schema;
@@ -159,14 +160,27 @@ app.MapGet("/api/v1/devices", (AcquisitionRepository repository) =>
     return Results.Ok(ApiResponse.Ok(repository.GetLatestDevices()));
 });
 
-// The period travels with the list. An empty list on its own cannot be told
+// The window travels with the list. An empty list on its own cannot be told
 // apart from an hour that has only just begun.
-app.MapGet("/api/v1/domains", (AcquisitionRepository repository) =>
+//
+// A whole day rather than the current hour: a fixed hourly bucket empties at
+// every turn of the clock, which is the opposite of what someone asking what
+// their network is doing wants to see.
+app.MapGet("/api/v1/domains", (AcquisitionRepository repository, TimeProvider time) =>
 {
+    const int RequestedHours = 24;
+
+    DateTimeOffset since = ObservationPeriod
+        .Containing(time.GetUtcNow())
+        .Start
+        .AddHours(-(RequestedHours - 1));
+
     return Results.Ok(ApiResponse.Ok(new ObservedDomains
     {
-        Period = repository.GetLatestPeriod(),
-        Domains = repository.GetLatestDomains(),
+        Period = repository.GetPeriodRangeSince(since),
+        PeriodsObserved = repository.CountPeriodsSince(since),
+        PeriodsRequested = RequestedHours,
+        Domains = repository.GetDomainsSince(since),
     }));
 });
 

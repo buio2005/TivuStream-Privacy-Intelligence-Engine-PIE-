@@ -75,8 +75,6 @@
     "title": "Observed domains",
     "empty": "No domain was recorded in the last observed period.",
     "occurrences": "{count} query | {count} queries",
-    "period": "Observed between {from} and {to}",
-    "periodNote": "The period, not a precise moment.",
     "unclassifiedTitle": "Unclassified",
     "unclassifiedNote": "This domain appears in none of the installed lists. That does not mean it is safe: it means we did not recognise it.",
     "source": "From {list}, updated on {date}",
@@ -91,10 +89,14 @@
       "Medium": "The list names a parent domain, and the category was extended to this one. A reasonable inference, not a direct statement.",
       "Low": "The classification is uncertain."
     },
-    "observedPeriod": "Observed period: from {from} to {to}",
+    "observedPeriod": "From {from} to {to}",
     "emptyInPeriod": "No domain observed between {from} and {to}.",
     "emptyEver": "No observation recorded yet.",
-    "hourly": "The list covers the current hour. Collection restarts every hour, so shortly after the hour turns it is normal to find it empty."
+    "hourly": "The list covers the last twenty four hours, or those observed so far if the installation is more recent.",
+    "hoursObserved": "{observed} hour observed out of the {requested} requested | {observed} hours observed out of the {requested} requested",
+    "inProgress": "The last hour is still in progress.",
+    "seen": "First seen {from}, last {to}",
+    "seenOnce": "Seen in the hour of {from}"
   },
   "category": {
     "Malware": "Malware",

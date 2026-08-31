@@ -72,5 +72,10 @@ export interface ObservationPeriod {
 export interface ObservedDomains {
   /** Absent when nothing was ever observed. */
   period: ObservationPeriod | null
+
+  /** Hourly periods that exist, told apart from those asked for. */
+  periodsObserved: number
+  periodsRequested: number
+
   domains: Domain[]
 }

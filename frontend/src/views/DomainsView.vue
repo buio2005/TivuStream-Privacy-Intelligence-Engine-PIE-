@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useDomainsStore } from '@/stores/domains'
@@ -7,9 +7,15 @@ import TermNote from '@/components/TermNote.vue'
 import type { Domain } from '@/api/types'
 
 const store = useDomainsStore()
-const { domains, period, loading, failure } = storeToRefs(store)
+const { domains, period, periodsObserved, periodsRequested, loading, failure } =
+  storeToRefs(store)
 
 const { d } = useI18n()
+
+/** The window includes the current hour, which has not elapsed. */
+const inProgress = computed(
+  () => period.value !== null && new Date(period.value.end) > new Date(),
+)
 
 onMounted(store.load)
 
@@ -19,7 +25,7 @@ function isUnclassified(domain: Domain): boolean {
 }
 
 function moment(value: string): string {
-  return d(new Date(value), 'short')
+  return d(new Date(value), 'stamp')
 }
 
 function day(value: string): string {
@@ -57,6 +63,13 @@ function day(value: string): string {
 
     <p v-if="period && domains.length > 0" class="period">
       {{ $t('domains.observedPeriod', { from: moment(period.start), to: moment(period.end) }) }}
+      &middot;
+      <!--
+        What was asked for and what exists are told apart. An installation
+        running for six hours must not report a day.
+      -->
+      {{ $t('domains.hoursObserved', { observed: periodsObserved, requested: periodsRequested }, periodsObserved) }}
+      <em v-if="inProgress">{{ $t('domains.inProgress') }}</em>
     </p>
 
     <ul v-if="!loading && !failure && domains.length > 0" class="domains">
@@ -99,11 +112,19 @@ function day(value: string): string {
         </template>
 
         <!--
-          The instants are bounded to the period, so they are shown as a span
-          and never as the moment something happened.
+          Two facts, not a span. Saying "observed between ten and nine" would
+          suggest a presence throughout, while the domain may have been
+          contacted in two of those hours and in none of the others.
+
+          The instants are bounded to the hour, so neither is a moment.
         -->
         <p class="note observation">
-          {{ $t('domains.period', { from: moment(domain.firstSeen), to: moment(domain.lastSeen) }) }}
+          <template v-if="domain.firstSeen === domain.lastSeen">
+            {{ $t('domains.seenOnce', { from: moment(domain.firstSeen) }) }}
+          </template>
+          <template v-else>
+            {{ $t('domains.seen', { from: moment(domain.firstSeen), to: moment(domain.lastSeen) }) }}
+          </template>
         </p>
       </li>
     </ul>
@@ -118,6 +139,12 @@ function day(value: string): string {
 .period,
 .empty {
   opacity: 0.85;
+  font-size: 0.9rem;
+}
+
+.period em {
+  font-style: normal;
+  opacity: 0.75;
 }
 
 .empty em {

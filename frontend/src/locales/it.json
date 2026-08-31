@@ -75,8 +75,6 @@
     "title": "Domini osservati",
     "empty": "Nessun dominio registrato nell'ultimo periodo osservato.",
     "occurrences": "{count} interrogazione | {count} interrogazioni",
-    "period": "Osservato fra le {from} e le {to}",
-    "periodNote": "Il periodo, non un istante preciso.",
     "unclassifiedTitle": "Non classificato",
     "unclassifiedNote": "Questo dominio non compare in nessuna delle liste installate. Non significa che sia sicuro: significa che non lo abbiamo riconosciuto.",
     "source": "Da {list}, aggiornata il {date}",
@@ -91,10 +89,14 @@
       "Medium": "La lista nomina un dominio superiore, e la categoria è stata estesa a questo. È una deduzione ragionevole, non un'affermazione diretta.",
       "Low": "La classificazione è incerta."
     },
-    "observedPeriod": "Periodo osservato: dalle {from} alle {to}",
-    "emptyInPeriod": "Nessun dominio osservato fra le {from} e le {to}.",
+    "observedPeriod": "Dal {from} al {to}",
+    "emptyInPeriod": "Nessun dominio osservato fra il {from} e il {to}.",
     "emptyEver": "Nessuna osservazione registrata finora.",
-    "hourly": "L'elenco riguarda l'ora in corso. A ogni ora la raccolta ricomincia, quindi poco dopo lo scoccare dell'ora è normale trovarlo vuoto."
+    "hourly": "L'elenco copre le ultime ventiquattro ore, o quelle osservate finora se l'installazione è più recente.",
+    "hoursObserved": "{observed} ora osservata su {requested} richieste | {observed} ore osservate su {requested} richieste",
+    "inProgress": "L'ultima ora è ancora in corso.",
+    "seen": "Prima osservazione {from}, ultima {to}",
+    "seenOnce": "Osservato nell'ora delle {from}"
   },
   "category": {
     "Malware": "Malware",

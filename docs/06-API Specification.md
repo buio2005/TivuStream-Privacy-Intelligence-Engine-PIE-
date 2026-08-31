@@ -4,7 +4,7 @@
 
 **Document:** API Specification
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
@@ -116,11 +116,15 @@ Le risposte che descrivono ciò che è stato osservato dichiarano **a quale peri
 ```json
 {
   "period": { "start": "...", "end": "..." },
+  "periodsObserved": 6,
+  "periodsRequested": 24,
   "domains": []
 }
 ```
 
 Il campo `period` è assente quando nessuna osservazione è stata ancora registrata.
+
+I due conteggi non sono ridondanti. Un'installazione accesa da sei ore che dichiarasse «ultime 24 ore» direbbe il falso: `periodsRequested` è l'intervallo chiesto, `periodsObserved` è quello che esiste davvero.
 
 La ragione non è formale. Un elenco vuoto senza il proprio periodo è ambiguo: chi legge non distingue «la rete non ha contattato nulla» da «l'ora in corso è appena cominciata». La prima è un'affermazione sulla rete, la seconda sul momento in cui si guarda, e presentarle allo stesso modo è un'informazione falsa.
 
@@ -258,16 +262,46 @@ Restituisce tutte le Recommendations prodotte dal sistema.
 /api/v1/domains
 ```
 
-Restituisce il periodo osservato e l'elenco dei domini che vi compaiono.
+Restituisce i domini osservati nelle **ultime ventiquattro ore**, insieme all'intervallo effettivamente coperto.
 
 ```json
 {
-  "period": { "start": "2026-08-31T21:00:00+00:00", "end": "2026-08-31T22:00:00+00:00" },
+  "period": { "start": "2026-08-30T22:00:00+00:00", "end": "2026-08-31T22:00:00+00:00" },
+  "periodsObserved": 6,
+  "periodsRequested": 24,
   "domains": []
 }
 ```
 
-Un elenco vuoto accompagnato dal periodo significa che in quell'intervallo non è stato osservato alcun dominio. Senza il periodo la stessa risposta non direbbe nulla di verificabile.
+Un elenco vuoto accompagnato dall'intervallo significa che in quell'arco non è stato osservato alcun dominio. Senza l'intervallo la stessa risposta non direbbe nulla di verificabile.
+
+---
+
+### Aggregation
+
+I periodi di osservazione sono fissi e **non si sovrappongono**, quindi le occorrenze di uno stesso dominio in periodi diversi si sommano senza contare due volte il medesimo traffico.
+
+È la scelta compiuta nella Persistence Specification che rende lecita questa somma. Con finestre mobili di acquisizione l'aggregazione sarebbe stata impossibile.
+
+| Proprietà              | Regola                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| `occurrences`          | Somma dei periodi inclusi                                       |
+| `firstSeen`            | Il più antico fra i periodi inclusi                             |
+| `lastSeen`             | Il più recente fra i periodi inclusi                            |
+| `observationQuality`   | La qualità meno precisa fra quelle aggregate                    |
+| Classificazione        | Quella del periodo **più recente** in cui il dominio compare    |
+
+L'ultima riga è una scelta e va motivata. Ogni periodo conserva la classificazione che era possibile dare allora; presentando la più recente si mostra ciò che si sa **adesso**, e l'età della lista dichiarata insieme alla categoria dice quanto quel «adesso» sia recente.
+
+Mostrare la classificazione più antica, o una sintesi delle diverse classificazioni ricevute, produrrebbe un'affermazione che nessun periodo ha mai fatto.
+
+---
+
+### The Last Hour Is In Progress
+
+L'intervallo restituito comprende il periodo corrente, che non è concluso.
+
+La sua fine è quindi un istante futuro, e l'interfaccia dichiara che l'ultima ora è ancora in corso anziché presentarla come osservata per intero.
 
 ---
 

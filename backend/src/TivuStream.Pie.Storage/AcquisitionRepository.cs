@@ -345,6 +345,122 @@ public sealed class AcquisitionRepository
     }
 
     /// <summary>
+    /// Returns the domains observed since the given instant, aggregated.
+    /// </summary>
+    /// <remarks>
+    /// Observation periods are fixed and do not overlap, so the occurrences of
+    /// the same domain in different periods add up without counting the same
+    /// traffic twice. That property comes from the Persistence Specification,
+    /// and is what makes this reading lawful at all.
+    /// <para>
+    /// The classification is taken from the most recent period the domain
+    /// appears in: each period holds what could be said then, and the most
+    /// recent one is what is known now. The age of the list travels with it
+    /// and says how recent that "now" is.
+    /// </para>
+    /// </remarks>
+    /// <param name="since">Beginning of the window, inclusive.</param>
+    public List<Domain> GetDomainsSince(DateTimeOffset since)
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText =
+            """
+            WITH windowed AS (
+                SELECT      d.*, p.period_start
+                FROM        domain d
+                INNER JOIN  observation_period p ON p.id = d.observation_period_id
+                WHERE       p.period_start >= $since
+            ),
+            aggregated AS (
+                SELECT   name,
+                         MIN(first_seen)   AS first_seen,
+                         MAX(last_seen)    AS last_seen,
+                         SUM(occurrences)  AS occurrences,
+                         MAX(period_start) AS latest_period,
+
+                         -- The least precise quality among those aggregated:
+                         -- a total is known no better than its vaguest part.
+                         MAX(CASE observation_quality
+                                 WHEN 'Exact'         THEN 0
+                                 WHEN 'LowerBound'    THEN 1
+                                 WHEN 'PeriodBounded' THEN 2
+                                 ELSE 3
+                             END) AS quality_rank
+                FROM     windowed
+                GROUP BY name
+            )
+            SELECT      a.name, w.category, w.reputation, a.first_seen, a.last_seen,
+                        a.occurrences, a.quality_rank, w.category_confidence,
+                        w.category_source, w.category_source_updated_at
+            FROM        aggregated a
+            INNER JOIN  windowed w
+                    ON  w.name = a.name AND w.period_start = a.latest_period
+            ORDER BY    a.occurrences DESC, a.name;
+            """;
+
+        command.Parameters.AddWithValue("$since", Format(since));
+
+        List<Domain> domains = [];
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            domains.Add(new Domain
+            {
+                Name = reader.GetString(0),
+                Category = Enum.Parse<ThreatCategory>(reader.GetString(1)),
+                Reputation = reader.IsDBNull(2) ? null : reader.GetString(2),
+                FirstSeen = ReadInstant(reader, 3),
+                LastSeen = ReadInstant(reader, 4),
+                Occurrences = reader.GetInt64(5),
+                ObservationQuality = (MeasurementQuality)reader.GetInt32(6),
+                CategoryConfidence = reader.IsDBNull(7)
+                    ? null
+                    : Enum.Parse<ConfidenceLevel>(reader.GetString(7)),
+                CategorySource = reader.IsDBNull(8) ? null : reader.GetString(8),
+                CategorySourceUpdatedAt = reader.IsDBNull(9) ? null : ReadInstant(reader, 9),
+            });
+        }
+
+        return domains;
+    }
+
+    /// <summary>
+    /// Returns the interval actually covered by the periods recorded since the
+    /// given instant.
+    /// </summary>
+    /// <remarks>
+    /// What was asked for and what exists are not the same thing. An
+    /// installation running for six hours must not report a day.
+    /// </remarks>
+    /// <param name="since">Beginning of the window, inclusive.</param>
+    public ObservationPeriod? GetPeriodRangeSince(DateTimeOffset since)
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText =
+            """
+            SELECT MIN(period_start), MAX(period_end)
+            FROM   observation_period
+            WHERE  period_start >= $since;
+            """;
+
+        command.Parameters.AddWithValue("$since", Format(since));
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        return reader.Read() && !reader.IsDBNull(0)
+            ? new ObservationPeriod(ReadInstant(reader, 0), ReadInstant(reader, 1))
+            : null;
+    }
+
+    /// <summary>
     /// Returns the most recent observation period, when one exists.
     /// </summary>
     /// <remarks>

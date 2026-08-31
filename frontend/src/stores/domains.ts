@@ -12,6 +12,8 @@ import type { Domain, ObservationPeriod, ObservedDomains } from '@/api/types'
 export const useDomainsStore = defineStore('domains', () => {
   const domains = ref<Domain[]>([])
   const period = ref<ObservationPeriod | null>(null)
+  const periodsObserved = ref(0)
+  const periodsRequested = ref(0)
   const loading = ref(false)
   const failure = ref<string | null>(null)
 
@@ -24,14 +26,17 @@ export const useDomainsStore = defineStore('domains', () => {
 
       domains.value = observed.domains
       period.value = observed.period
+      periodsObserved.value = observed.periodsObserved
+      periodsRequested.value = observed.periodsRequested
     } catch (error) {
       domains.value = []
       period.value = null
+      periodsObserved.value = 0
       failure.value = error instanceof Error ? error.message : 'UnknownError'
     } finally {
       loading.value = false
     }
   }
 
-  return { domains, period, loading, failure, load }
+  return { domains, period, periodsObserved, periodsRequested, loading, failure, load }
 })

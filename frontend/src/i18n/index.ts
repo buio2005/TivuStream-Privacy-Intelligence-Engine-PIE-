@@ -27,10 +27,12 @@ export const i18n = createI18n({
   datetimeFormats: {
     it: {
       short: { hour: '2-digit', minute: '2-digit' },
+      stamp: { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' },
       day: { day: 'numeric', month: 'long', year: 'numeric' },
     },
     en: {
       short: { hour: '2-digit', minute: '2-digit' },
+      stamp: { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' },
       day: { day: 'numeric', month: 'long', year: 'numeric' },
     },
   },
