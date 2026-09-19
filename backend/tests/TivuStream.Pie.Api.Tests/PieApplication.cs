@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using TivuStream.Pie.Api.Authentication;
 using TivuStream.Pie.Storage;
 
@@ -47,6 +49,58 @@ internal sealed class TestClock : TimeProvider
     internal void Advance(TimeSpan by)
     {
         _now += by;
+    }
+}
+
+/// <summary>
+/// Collects what the host writes to its logs, so that a test can look for what
+/// must never be there.
+/// </summary>
+internal sealed class CollectingLoggerProvider : ILoggerProvider
+{
+    private readonly List<string> _sink;
+
+    internal CollectingLoggerProvider(List<string> sink)
+    {
+        _sink = sink;
+    }
+
+    public ILogger CreateLogger(string categoryName)
+    {
+        return new Collector(_sink);
+    }
+
+    public void Dispose()
+    {
+    }
+
+    private sealed class Collector : ILogger
+    {
+        private readonly List<string> _sink;
+
+        internal Collector(List<string> sink)
+        {
+            _sink = sink;
+        }
+
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+        {
+            return null;
+        }
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            return true;
+        }
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            lock (_sink)
+            {
+                _sink.Add(formatter(state, exception));
+            }
+        }
     }
 }
 
@@ -96,6 +150,16 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
     /// </summary>
     internal TestClock Clock { get; } = new(Now);
 
+    /// <summary>
+    /// What the host writes to its standard output: where the setup code goes.
+    /// </summary>
+    internal StringWriter Output { get; } = new();
+
+    /// <summary>
+    /// What the host writes to its logs.
+    /// </summary>
+    internal List<string> Logs { get; } = [];
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         Directory.CreateDirectory(_directory);
@@ -111,8 +175,13 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
                 ["Technitium:ApiToken"] = SourceToken,
             }));
 
+        builder.ConfigureLogging(logging => logging.AddProvider(new CollectingLoggerProvider(Logs)));
+
         builder.ConfigureServices(services =>
         {
+            services.RemoveAll<SetupOutput>();
+            services.AddSingleton(new SetupOutput(Output));
+
             services.RemoveAll<IHostedService>();
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Clock);
@@ -140,6 +209,20 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
         {
             Directory.Delete(_directory, recursive: true);
         }
+    }
+
+    /// <summary>
+    /// The setup code the host showed when it started.
+    /// </summary>
+    internal string SetupCode()
+    {
+        // The host announces the code as it starts, which is when the first
+        // service is asked for.
+        _ = Services;
+
+        Match match = Regex.Match(Output.ToString(), "[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}");
+
+        return match.Success ? match.Value : throw new InvalidOperationException("The host showed no setup code.");
     }
 
     /// <summary>

@@ -38,6 +38,10 @@ public sealed class AuthenticationTests : IDisposable
     [Fact]
     public async Task Every_endpoint_of_the_host_refuses_a_caller_who_has_not_signed_in()
     {
+        // An installation that has an account. Without one the answer is a
+        // different one, checked with the setup tests.
+        _app.AddAccount("someone", AccountRole.Viewer);
+
         List<RouteEndpoint> endpoints = Endpoints();
 
         // A host that reports no endpoints would make every check below pass
@@ -66,7 +70,7 @@ public sealed class AuthenticationTests : IDisposable
 
         // Adding an endpoint that opens itself to everyone must fail here, and
         // ask whoever added it to say why.
-        Assert.Equal(["/api/v1/auth/login"], open);
+        Assert.Equal(["/api/v1/auth/login", "/api/v1/setup"], open);
     }
 
     [Fact]

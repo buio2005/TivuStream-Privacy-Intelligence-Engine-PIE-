@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace TivuStream.Pie.Api.Contracts;
 
 /// <summary>
@@ -66,13 +68,14 @@ public static class ApiResponse
     /// <typeparam name="TData">Payload the answer would have carried.</typeparam>
     /// <param name="code">Identifier of the failure.</param>
     /// <param name="message">Description of the failure.</param>
-    public static ApiResponse<TData> Failed<TData>(string code, string message)
+    /// <param name="reason">Precise cause, in a form a program can read, when there is one.</param>
+    public static ApiResponse<TData> Failed<TData>(string code, string message, string? reason = null)
     {
         return new ApiResponse<TData>
         {
             Success = false,
             Timestamp = DateTimeOffset.UtcNow,
-            Error = new ApiError { Code = code, Message = message },
+            Error = new ApiError { Code = code, Message = message, Reason = reason },
         };
     }
 }
@@ -91,4 +94,12 @@ public sealed record ApiError
     /// Description of the failure, suitable for being shown to a person.
     /// </summary>
     public required string Message { get; init; }
+
+    /// <summary>
+    /// Precise cause of the failure, in a form a program can read, so that an
+    /// interface can say it in the language of whoever is reading. Absent, and
+    /// not null, when there is none.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Reason { get; init; }
 }

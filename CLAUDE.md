@@ -47,10 +47,13 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 211 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 252 tests, all must pass
 cd frontend && npm run test:unit -- --run        # 35 tests, all must pass
 
-cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000
+cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000; a fresh database
+                                                  # prints a one-time setup code
+cd backend/src/TivuStream.Pie.Api && dotnet run -- reset-password <name>
+                                                  # restores access, from this machine
 cd frontend && npm run dev                        # proxies /api to :5000
 ```
 
@@ -92,10 +95,11 @@ Every boundary crossed carries at least one test.
 * **No authentication.** The API is open to anyone who reaches it. Safe today
   only because it binds to loopback. This is the blocker before any use
   beyond the local machine. Specified in `docs/18-Authentication
-  Specification.md` (approved); milestones A1 to A7. A1 and A2 are done: every
-  endpoint now requires a signed in account, and **no account can be created
-  until A3**, so a running instance answers 401 to everything and the frontend
-  shows no data. Tests create accounts directly.
+  Specification.md` (approved); milestones A1 to A7. A1 to A3 are done: every
+  endpoint requires a signed in account, and the first one is created with the
+  setup code printed by a fresh instance (`POST /api/v1/setup`), or with
+  `dotnet run -- reset-password <name>`. **The frontend has no sign in or setup
+  screen until A6**, so it shows no data. Tests create accounts directly.
 * HTTP, not HTTPS.
 * No installation procedure: the `installer/` directory is empty.
 * Tiered retention is designed in Specification 16 and not implemented; the

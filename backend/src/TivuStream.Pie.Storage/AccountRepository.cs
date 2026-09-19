@@ -51,52 +51,51 @@ public sealed class AccountRepository
         bool passwordChangeRequired,
         DateTimeOffset createdAt)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(username);
-        ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
+        return Insert(username, role, passwordHash, passwordChangeRequired, createdAt, onlyIfNoAccountExists: false);
+    }
 
-        string canonical = Canonical(username);
+    /// <summary>
+    /// Records the first account, if and only if none exists.
+    /// </summary>
+    /// <remarks>
+    /// Checking that no account exists and then creating one are a single
+    /// statement. Done in two steps, two requests arriving together with the
+    /// right code would both find the installation empty and both create an
+    /// administrator.
+    /// </remarks>
+    /// <param name="username">Name of the account.</param>
+    /// <param name="passwordHash">Hash of the password, never the password.</param>
+    /// <param name="createdAt">Instant of creation.</param>
+    /// <returns>The administrator, or <c>null</c> when an account already existed.</returns>
+    public StoredAccount? CreateFirst(string username, string passwordHash, DateTimeOffset createdAt)
+    {
+        return Insert(username, AccountRole.Administrator, passwordHash, false, createdAt, onlyIfNoAccountExists: true);
+    }
 
+    /// <summary>
+    /// Indicates whether any account exists.
+    /// </summary>
+    public bool HasAny()
+    {
         using SqliteConnection connection = _connectionFactory.Open();
         using SqliteCommand command = connection.CreateCommand();
 
-        command.CommandText =
-            """
-            INSERT INTO account (
-                username, role, enabled, password_hash, password_change_required, created_at)
-            VALUES (
-                $username, $role, 1, $passwordHash, $passwordChangeRequired, $createdAt)
-            RETURNING id;
-            """;
+        command.CommandText = "SELECT EXISTS (SELECT 1 FROM account);";
 
-        command.Parameters.AddWithValue("$username", canonical);
-        command.Parameters.AddWithValue("$role", role.ToString());
-        command.Parameters.AddWithValue("$passwordHash", passwordHash);
-        command.Parameters.AddWithValue("$passwordChangeRequired", passwordChangeRequired ? 1 : 0);
-        command.Parameters.AddWithValue("$createdAt", createdAt.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
+        return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture) != 0;
+    }
 
-        try
-        {
-            long id = Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+    /// <summary>
+    /// Indicates whether an administrator can sign in.
+    /// </summary>
+    public bool HasEnabledAdministrator()
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+        using SqliteCommand command = connection.CreateCommand();
 
-            return new StoredAccount
-            {
-                Id = id,
-                Username = canonical,
-                Role = role,
-                Enabled = true,
-                PasswordHash = passwordHash,
-                PasswordChangeRequired = passwordChangeRequired,
-                CreatedAt = createdAt,
-            };
-        }
-        catch (SqliteException exception) when (exception.SqliteExtendedErrorCode == UniqueConstraintViolation)
-        {
-            return null;
-        }
-        catch (SqliteException exception)
-        {
-            throw new StorageException("The account could not be recorded.", exception);
-        }
+        command.CommandText = "SELECT EXISTS (SELECT 1 FROM account WHERE role = 'Administrator' AND enabled = 1);";
+
+        return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture) != 0;
     }
 
     /// <summary>
@@ -171,6 +170,95 @@ public sealed class AccountRepository
         command.Parameters.AddWithValue("$passwordHash", passwordHash);
         command.Parameters.AddWithValue("$passwordChangeRequired", passwordChangeRequired ? 1 : 0);
 
+        Change(command, "The password could not be recorded.", "The account whose password was to be changed does not exist.");
+    }
+
+    /// <summary>
+    /// Allows or forbids an account to sign in.
+    /// </summary>
+    /// <param name="accountId">Account to change.</param>
+    /// <param name="enabled">Whether the account may sign in.</param>
+    public void SetEnabled(long accountId, bool enabled)
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText = "UPDATE account SET enabled = $enabled WHERE id = $id;";
+
+        command.Parameters.AddWithValue("$id", accountId);
+        command.Parameters.AddWithValue("$enabled", enabled ? 1 : 0);
+
+        Change(command, "The account could not be changed.", "The account to change does not exist.");
+    }
+
+    private StoredAccount? Insert(
+        string username,
+        AccountRole role,
+        string passwordHash,
+        bool passwordChangeRequired,
+        DateTimeOffset createdAt,
+        bool onlyIfNoAccountExists)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(username);
+        ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
+
+        string canonical = Canonical(username);
+
+        using SqliteConnection connection = _connectionFactory.Open();
+        using SqliteCommand command = connection.CreateCommand();
+
+        // A single statement, so that "no account exists" and "create one"
+        // cannot be separated by another request.
+        command.CommandText =
+            """
+            INSERT INTO account (
+                username, role, enabled, password_hash, password_change_required, created_at)
+            SELECT $username, $role, 1, $passwordHash, $passwordChangeRequired, $createdAt
+            WHERE  $onlyIfNoAccountExists = 0
+                   OR NOT EXISTS (SELECT 1 FROM account)
+            RETURNING id;
+            """;
+
+        command.Parameters.AddWithValue("$username", canonical);
+        command.Parameters.AddWithValue("$role", role.ToString());
+        command.Parameters.AddWithValue("$passwordHash", passwordHash);
+        command.Parameters.AddWithValue("$passwordChangeRequired", passwordChangeRequired ? 1 : 0);
+        command.Parameters.AddWithValue("$createdAt", createdAt.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
+        command.Parameters.AddWithValue("$onlyIfNoAccountExists", onlyIfNoAccountExists ? 1 : 0);
+
+        try
+        {
+            object? id = command.ExecuteScalar();
+
+            // No row came back: the condition did not hold.
+            if (id is null)
+            {
+                return null;
+            }
+
+            return new StoredAccount
+            {
+                Id = Convert.ToInt64(id, CultureInfo.InvariantCulture),
+                Username = canonical,
+                Role = role,
+                Enabled = true,
+                PasswordHash = passwordHash,
+                PasswordChangeRequired = passwordChangeRequired,
+                CreatedAt = createdAt,
+            };
+        }
+        catch (SqliteException exception) when (exception.SqliteExtendedErrorCode == UniqueConstraintViolation)
+        {
+            return null;
+        }
+        catch (SqliteException exception)
+        {
+            throw new StorageException("The account could not be recorded.", exception);
+        }
+    }
+
+    private static void Change(SqliteCommand command, string failure, string missing)
+    {
         int changed;
 
         try
@@ -179,12 +267,12 @@ public sealed class AccountRepository
         }
         catch (SqliteException exception)
         {
-            throw new StorageException("The password could not be recorded.", exception);
+            throw new StorageException(failure, exception);
         }
 
         if (changed == 0)
         {
-            throw new StorageException("The account whose password was to be changed does not exist.");
+            throw new StorageException(missing);
         }
     }
 

@@ -102,6 +102,84 @@ public sealed class AccountRepositoryTests : IDisposable
             () => _database.Accounts.ReplacePasswordHash(999, "hash", passwordChangeRequired: false));
     }
 
+    // ------------------------------------------------------------------
+    // The first account
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void The_first_account_is_created_when_none_exists_and_is_an_administrator()
+    {
+        StoredAccount? first = _database.Accounts.CreateFirst("maria", SomeHash, TestDatabase.Noon);
+
+        Assert.NotNull(first);
+        Assert.Equal(AccountRole.Administrator, first.Role);
+        Assert.False(first.PasswordChangeRequired);
+        Assert.True(_database.Accounts.HasAny());
+    }
+
+    [Fact]
+    public void The_first_account_is_refused_when_any_account_exists_and_nothing_is_added()
+    {
+        Create("maria", AccountRole.Viewer);
+
+        StoredAccount? first = _database.Accounts.CreateFirst("luca", SomeHash, TestDatabase.Noon);
+
+        Assert.Null(first);
+        Assert.Null(_database.Accounts.FindByUsername("luca"));
+    }
+
+    [Fact]
+    public void Requests_arriving_together_create_one_first_account_and_no_more()
+    {
+        // Checking that none exists and creating one are a single statement.
+        // Done in two, several of these would find the installation empty.
+        StoredAccount?[] results = new StoredAccount?[16];
+
+        Parallel.For(
+            0,
+            results.Length,
+            index => results[index] = _database.Accounts.CreateFirst($"admin-{index}", SomeHash, TestDatabase.Noon));
+
+        Assert.Equal(1, results.Count(result => result is not null));
+    }
+
+    [Fact]
+    public void An_installation_with_no_account_is_told_apart_from_one_with_accounts()
+    {
+        Assert.False(_database.Accounts.HasAny());
+
+        Create("maria", AccountRole.Viewer);
+
+        Assert.True(_database.Accounts.HasAny());
+    }
+
+    [Fact]
+    public void Only_an_enabled_administrator_counts_as_a_way_back_in()
+    {
+        Assert.False(_database.Accounts.HasEnabledAdministrator());
+
+        StoredAccount viewer = Create("maria", AccountRole.Viewer);
+        Assert.False(_database.Accounts.HasEnabledAdministrator());
+
+        StoredAccount admin = Create("root", AccountRole.Administrator);
+        Assert.True(_database.Accounts.HasEnabledAdministrator());
+
+        _database.Accounts.SetEnabled(admin.Id, enabled: false);
+        Assert.False(_database.Accounts.HasEnabledAdministrator());
+
+        _database.Accounts.SetEnabled(admin.Id, enabled: true);
+        Assert.True(_database.Accounts.HasEnabledAdministrator());
+
+        // The viewer never made a difference.
+        Assert.True(_database.Accounts.FindByUsername(viewer.Username)!.Enabled);
+    }
+
+    [Fact]
+    public void Enabling_an_account_that_does_not_exist_is_a_failure()
+    {
+        Assert.Throws<StorageException>(() => _database.Accounts.SetEnabled(999, enabled: true));
+    }
+
     [Fact]
     public void The_schema_refuses_a_role_it_does_not_know()
     {

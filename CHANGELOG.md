@@ -8,6 +8,101 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone A3 — Configurazione iniziale e recupero — 2026-09-19
+
+Terza delle sette milestone della Specification 18. Restituisce all'installazione la possibilità di avere un primo account, e a chi perde l'accesso quella di riaverlo. L'istanza torna utilizzabile da un client dell'API; per il Frontend serve A6.
+
+### Added
+
+**Configurazione iniziale**
+
+* `SetupService`: quando l'installazione non ha alcun account, all'avvio genera un **codice di 12 caratteri** (`ABCD-EFGH-JKLM`) e lo scrive sull'output standard del processo. Il codice esiste in memoria come hash, si rifà a ogni avvio finché non viene usato, e non compare nel sistema di registrazione: è scritto con una scrittura diretta, perché quel sistema alimenta file e raccoglitori che non devono ricevere un segreto.
+* `POST /api/v1/setup`: riceve codice, nome e password, crea il primo `Administrator` e lo fa entrare (`201`). Il codice si controlla per primo; un nome o una password non conformi vengono rifiutati **senza consumarlo**; si accetta in qualunque combinazione di maiuscole e con o senza trattini e spazi.
+* Finché non esiste alcun account, ogni endpoint e lo stesso `login` rispondono `401 SetupRequired` invece di `AuthenticationRequired` o `AuthenticationFailed`: dire «autenticati» sarebbe un'istruzione che nessuno può seguire, e dire «credenziali errate» sarebbe falso.
+* La creazione del primo account e il controllo che nessun altro esista sono **un'unica istruzione SQL**. In due passi, otto richieste contemporanee con il codice giusto avrebbero trovato l'installazione vuota e creato otto amministratori.
+
+**Recupero**
+
+* `RecoveryCommand`, dallo stesso eseguibile: `reset-password <nome>`. Chiede la nuova password due volte sul terminale, senza mostrarla; con l'input rediretto (script, container) legge le righe così come arrivano.
+* Regole, dalla Specification 18: con un amministratore che può entrare reimposta la password di qualunque account esistente e **rifiuta un nome sconosciuto**, perché un errore di battitura non deve creare un account; senza alcun amministratore che possa entrare riattiva un amministratore disattivato o ne crea uno, e **rifiuta di promuovere** un `Viewer`.
+* La password nuova è soggetta alle regole di sempre, vi si rimette `passwordChangeRequired` e cadono tutte le sessioni dell'account.
+* Il comando non avvia il servizio: viene smistato dalla composition root subito dopo la migrazione.
+
+**Storage**
+
+* `AccountRepository`: `CreateFirst` (atomico), `HasAny`, `HasEnabledAdministrator`, `SetEnabled`.
+
+**Api**
+
+* `ApiError.Reason`: causa precisa leggibile da un programma, per esempio `TooShort`. **Assente e non `null`** quando non c'è: un campo sempre presente non dice nulla.
+
+**Prove — 41 nuove, da 211 a 252 sul backend**
+
+| Impegno (Specification 18) | Cosa si verifica |
+| --- | --- |
+| V10, la configurazione si fa una volta | Senza codice o con codice errato: `401 SetupCodeRejected`, con le stesse parole, senza cookie e senza creare nulla. Con il codice giusto: `201`, amministratore, già dentro. Una seconda richiesta: `409 SetupAlreadyCompleted` |
+| Un errore di battitura non brucia il codice | Nome non conforme e password troppo corta (con `reason: TooShort`) sono `422`, e il codice serve ancora |
+| Otto richieste insieme | Una sola `201`, sette `409`, un solo account |
+| Il codice non è un segreto perduto | Formato in gruppi di quattro, senza caratteri ambigui; **non compare in nessuna riga di registro**, con un controllo positivo che l'host abbia registrato qualcosa; non è nel file del database |
+| Vita del codice | Nessuna installazione con account lo mostra; un riavvio ne fa uno nuovo e il vecchio smette di valere; prima che ne sia mostrato uno nessun tentativo può riuscire |
+| Recupero | Ogni regola della tabella sopra, e che nulla cambia quando la password è rifiutata, le due non coincidono o nessuno risponde; che il terminale non riceve mai la password, **compresa quella rifiutata** |
+| **L'eseguibile vero** | Un processo lanciato dal prodotto compilato, con la sua base di dati, crea l'amministratore da terminale e **si ferma**; senza nome stampa l'uso ed esce con codice 2. È l'unica prova dello smistamento nella composition root |
+| Storage | Primo account solo se nessuno esiste, sedici richieste parallele ne creano uno, `HasEnabledAdministrator` conta soltanto un amministratore attivo |
+
+### Verified
+
+Tredici difetti introdotti di proposito, tutti intercettati, poi annullati: qualunque codice accettato, un nome non conforme che consuma il codice, codice non normalizzato, creazione del primo account non condizionata all'assenza di altri, rifiuto che non dice mai `SetupRequired`, accesso su installazione vuota che dice «credenziali errate», `setup` che non fa entrare il nuovo amministratore, `reason` sempre presente, recupero che lascia aperte le sessioni, che crea un account per un nome sconosciuto, che promuove un `Viewer`, che stampa la password, eseguibile che avvia il servizio invece di uscire.
+
+Due prove erano più deboli di come apparivano e sono state corrette:
+
+* la prova «nessuna password sul terminale» usava una password diversa da quella rifiutata, che è quella che si è tentati di stampare per spiegare il rifiuto;
+* la prova sull'atomicità a livello di host non è deterministica, perché la finestra della gara è stretta. L'atomicità è provata **a livello di repository**, con sedici richieste parallele, dove la mutazione viene vista.
+
+La prova sull'eseguibile termina il processo figlio se il comando non si ferma. Senza, un difetto lascerebbe un servizio in ascolto ben dopo la fine della prova.
+
+Compilazione senza avvisi.
+
+### Decided
+
+**Il codice ha 12 caratteri da un alfabeto di 32 simboli**: 60 bit, senza `I`, `O`, `0`, `1` che si scambiano fra loro.
+
+**Un solo punto decide se l'installazione ha un account.** Una volta visto un account il risultato si ricorda e la base di dati non viene più interrogata: un'installazione con account non torna mai a non averne.
+
+**`SetEnabled` esiste in anticipo di una milestone.** Serve al recupero. A4 lo riuserà per disattivare gli account.
+
+### Known Impact
+
+**Il Frontend non sa ancora creare il primo account.** Non esiste schermata di configurazione iniziale né di accesso fino ad A6. Per usare l'istanza oggi: avviare il servizio, leggere il codice sull'output e chiamare `POST /api/v1/setup`; oppure `dotnet run -- reset-password <nome>` nella cartella dell'Api, che con un'installazione vuota crea un amministratore. Con `dotnet run` gli argomenti del programma vanno dopo `--`.
+
+**`passwordChangeRequired` è messo a vero dal recupero e non ancora applicato.** Un account la cui password è stata reimpostata non è ancora costretto a cambiarla: l'obbligo arriva con A4.
+
+**Nessun limite ai tentativi sul codice** (A5). Sessanta bit e l'ascolto sul solo loopback sono ciò che oggi protegge.
+
+**Il codice è leggibile da chi legge l'output del processo**, in un container da chi esegue `docker logs`. È il limite dichiarato nella specifica: la prova di possesso è l'accesso alla macchina.
+
+**I messaggi sul terminale sono in inglese.** Sono per chi amministra l'host, non per l'interfaccia bilingue.
+
+---
+
+## Documentation Release 1.6.1 — Codici della configurazione iniziale — 2026-09-19
+
+Scrivendo A3 sono emerse tre cose che la Specification 18 non diceva.
+
+### Changed
+
+**Specification 18 alla 1.1.0**
+
+* Tre codici di errore: `SetupCodeRejected` (401, codice assente o errato, identico nei due casi), `SetupAlreadyCompleted` (409) e `UsernameRejected` (422). La specifica elencava il motivo dei rifiuti di password e non diceva che cosa succede a un nome non conforme né dopo che la configurazione è stata fatta.
+* L'ordine dei controlli sulla configurazione iniziale e il fatto che un nome o una password non conformi **non consumano il codice**. Senza, chi sbaglia a digitare dovrebbe riavviare il servizio.
+* Le regole del recupero, in tabella. «Riattivarne o crearne uno» lasciava indeciso che cosa succede con un `Viewer` o con un nome sbagliato: sarebbe stata una scelta di prodotto presa in silenzio dal codice.
+* Il motivo di `PasswordRejected` viaggia in `reason` e non nel testo, perché l'interfaccia lo traduce.
+
+**Specification 06 alla 1.3.1**: il campo `reason` degli errori.
+
+**Roadmap 1.3.1, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.6.1.
+
+---
+
 ## Milestone A2 — Sessioni, accesso e rifiuto per impostazione predefinita — 2026-09-19
 
 Seconda delle sette milestone della Specification 18. Da qui ogni endpoint richiede un account. È il momento in cui il codice smette di essere aperto, ed è anche il momento in cui il sistema in esecuzione diventa inutilizzabile finché A3 non permette di creare il primo account: vedi Known Impact.

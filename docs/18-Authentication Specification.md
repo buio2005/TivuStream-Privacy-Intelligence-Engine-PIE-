@@ -4,7 +4,7 @@
 
 **Document:** Authentication Specification
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 
 **Status:** Approved
 
@@ -170,6 +170,8 @@ Una nuova installazione non ha account. Chi raggiunge per primo l'indirizzo non 
 2. Il codice viene **scritto sull'output standard, con una scrittura diretta**, e non passa dal sistema di registrazione. Non raggiunge quindi file di log né raccoglitori che quel sistema alimenti.
 3. Nello stato `SetupRequired` ogni richiesta, tranne la configurazione iniziale, riceve `401` con codice `SetupRequired`.
 4. `POST /api/v1/setup` riceve codice, nome utente e password, e crea il primo `Administrator`. Ha successo una volta sola: l'operazione è atomica, e una seconda richiesta contemporanea fallisce.
+
+   Il codice si controlla per primo. Un nome o una password non conformi vengono rifiutati **senza consumare il codice**: chi sbaglia a digitare non deve doverne chiedere un altro riavviando il servizio. Il codice si accetta in qualunque combinazione di maiuscole e minuscole, con o senza trattini e spazi.
 5. Il codice non viene mai conservato: esiste in memoria in forma di hash e si rigenera ad ogni avvio finché non viene usato. I tentativi sbagliati sottostanno agli stessi limiti dell'accesso.
 
 La prova di possesso è dunque l'**accesso alla macchina**: chi legge l'output standard del processo è, per definizione, chi amministra l'host. In un container è l'output di `docker logs`, e questo è un limite dichiarato.
@@ -186,6 +188,18 @@ Il recupero è **un comando eseguito sulla macchina che ospita PIE**, dallo stes
 * la imposta sull'account indicato e vi rimette `passwordChangeRequired`;
 * fa cadere tutte le sessioni di quell'account;
 * può, se non esiste alcun `Administrator` attivo, riattivarne o crearne uno.
+
+Le regole sul nome indicato:
+
+| Situazione | Effetto |
+| --- | --- |
+| Esiste un `Administrator` attivo e il nome è di un account | La password di quell'account viene reimpostata, qualunque ne sia il ruolo |
+| Esiste un `Administrator` attivo e il nome **non** è di un account | Rifiutato. Un errore di battitura non deve creare un account |
+| Nessun `Administrator` è attivo e il nome è di un `Administrator` disattivato | Viene riattivato e la sua password reimpostata |
+| Nessun `Administrator` è attivo e il nome non esiste | Viene creato un `Administrator` |
+| Nessun `Administrator` è attivo e il nome è di un `Viewer` | Rifiutato. Il comando ripristina un amministratore, non ne promuove uno |
+
+La password nuova è soggetta alle regole di sempre.
 
 Chi può eseguirlo ha già accesso al database. Il recupero non concede nulla che l'accesso alla macchina non conceda già. La forma esatta del comando è un dettaglio d'implementazione.
 
@@ -255,8 +269,13 @@ Tutte le risposte usano la struttura comune della API Specification.
 | 403 | `OriginNotAllowed` | Richiesta che modifica dati con `Origin` diverso dall'indirizzo del servizio |
 | 409 | `LastAdministrator` | L'operazione lascerebbe l'installazione senza amministratore |
 | 409 | `AccountExists` | Nome già usato |
+| 401 | `SetupCodeRejected` | Il codice di configurazione iniziale è assente o errato. Identico nei due casi |
+| 409 | `SetupAlreadyCompleted` | Esiste già un account: la configurazione iniziale non è più disponibile |
+| 422 | `UsernameRejected` | Nome non conforme |
 | 422 | `PasswordRejected` | Password non conforme, con il motivo: `TooShort`, `TooLong`, `EqualsUsername` |
 | 429 | `TooManyAttempts` | Vedi Attempts |
+
+Il motivo di `PasswordRejected` viaggia nel campo `reason` della risposta di errore e non nel testo: l'interfaccia lo traduce nella lingua di chi legge.
 
 Le risposte di rifiuto non riportano mai una `WWW-Authenticate` di tipo `Basic`: farebbe comparire la finestra di credenziali del browser al posto della schermata dell'applicazione.
 

@@ -61,8 +61,14 @@ internal sealed class AuthorizationResultHandler : IAuthorizationMiddlewareResul
     {
         if (authorizeResult.Challenged)
         {
+            // On an installation with no account, "authenticate" would be an
+            // instruction nobody can follow. What is needed is the first one.
+            bool setupRequired = context.RequestServices.GetRequiredService<SetupService>().IsRequired;
+
             return Results.Json(
-                ApiResponse.Failed<object>("AuthenticationRequired", "Authentication is required."),
+                setupRequired
+                    ? ApiResponse.Failed<object>("SetupRequired", "The installation has no account yet.")
+                    : ApiResponse.Failed<object>("AuthenticationRequired", "Authentication is required."),
                 statusCode: StatusCodes.Status401Unauthorized).ExecuteAsync(context);
         }
 

@@ -11,6 +11,14 @@ namespace TivuStream.Pie.Api.Authentication;
 internal sealed record LoginRequest(string? Username, string? Password);
 
 /// <summary>
+/// Body of a request to create the first administrator.
+/// </summary>
+/// <param name="SetupCode">Code shown on the standard output of the process.</param>
+/// <param name="Username">Name the administrator will have.</param>
+/// <param name="Password">Password the administrator will have.</param>
+internal sealed record SetupRequest(string? SetupCode, string? Username, string? Password);
+
+/// <summary>
 /// Who is signed in, as the interface needs to know it.
 /// </summary>
 internal sealed record AccountInfo
@@ -31,9 +39,9 @@ internal sealed record AccountInfo
 /// The endpoints that open, close and describe a session.
 /// </summary>
 /// <remarks>
-/// <c>login</c> is one of the two endpoints reachable without credentials,
-/// because it is how they are obtained. It returns nothing about the network
-/// or the system.
+/// <c>login</c> and <c>setup</c> are the two endpoints reachable without
+/// credentials, because they are how credentials are obtained. Neither returns
+/// anything about the network or the system.
 /// </remarks>
 internal static class AuthenticationEndpoints
 {
@@ -43,6 +51,8 @@ internal static class AuthenticationEndpoints
 
     internal static void MapAuthentication(this IEndpointRouteBuilder routes)
     {
+        routes.MapPost("/api/v1/setup", Setup).AllowAnonymous();
+
         RouteGroupBuilder group = routes.MapGroup("/api/v1/auth");
 
         group.MapPost("/login", SignIn).AllowAnonymous();
@@ -52,12 +62,66 @@ internal static class AuthenticationEndpoints
         group.MapGet("/session", Describe).RequireAuthorization(AuthorizationPolicies.Viewer);
     }
 
+    private static IResult Setup(
+        SetupRequest? request,
+        HttpContext context,
+        SetupService setup,
+        SessionService sessions)
+    {
+        SetupResult result = setup.Complete(request?.SetupCode, request?.Username, request?.Password);
+
+        switch (result.Outcome)
+        {
+            case SetupOutcome.CodeRejected:
+                return Results.Json(
+                    ApiResponse.Failed<AccountInfo>("SetupCodeRejected", "The setup code was not accepted."),
+                    statusCode: StatusCodes.Status401Unauthorized);
+
+            case SetupOutcome.UsernameRejected:
+                return Results.Json(
+                    ApiResponse.Failed<AccountInfo>("UsernameRejected", "The name is not acceptable."),
+                    statusCode: StatusCodes.Status422UnprocessableEntity);
+
+            case SetupOutcome.PasswordRejected:
+                return Results.Json(
+                    ApiResponse.Failed<AccountInfo>(
+                        "PasswordRejected",
+                        "The password is not acceptable.",
+                        result.PasswordProblem.ToString()),
+                    statusCode: StatusCodes.Status422UnprocessableEntity);
+
+            case SetupOutcome.AlreadyCompleted:
+                return Results.Json(
+                    ApiResponse.Failed<AccountInfo>("SetupAlreadyCompleted", "The installation already has an account."),
+                    statusCode: StatusCodes.Status409Conflict);
+        }
+
+        // The person who has just created the administrator is signed in.
+        (string token, DateTimeOffset expiresAt) = sessions.Start(result.Account!);
+
+        SessionCookie.Write(context, token);
+
+        return Results.Json(
+            ApiResponse.Ok(ToInfo(result.Account!, expiresAt)),
+            statusCode: StatusCodes.Status201Created);
+    }
+
     private static IResult SignIn(
         LoginRequest? request,
         HttpContext context,
+        SetupService setup,
         CredentialVerifier credentials,
         SessionService sessions)
     {
+        // Nobody can sign in to an installation that has no account, and
+        // saying that the credentials were wrong would be untrue.
+        if (setup.IsRequired)
+        {
+            return Results.Json(
+                ApiResponse.Failed<AccountInfo>("SetupRequired", "The installation has no account yet."),
+                statusCode: StatusCodes.Status401Unauthorized);
+        }
+
         StoredAccount? account = credentials.Verify(request?.Username, request?.Password);
 
         if (account is null)

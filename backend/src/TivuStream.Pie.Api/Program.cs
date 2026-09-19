@@ -52,6 +52,9 @@ builder.Services.AddSingleton(PasswordHasher.Standard);
 builder.Services.AddSingleton<SessionRepository>();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<CredentialVerifier>();
+builder.Services.AddSingleton(new SetupOutput(Console.Out));
+builder.Services.AddSingleton<SetupService>();
+builder.Services.AddSingleton<RecoveryCommand>();
 
 // Nothing answers without an identity. The framework is asked to refuse by
 // default and each endpoint says what it requires, rather than the other way
@@ -109,6 +112,21 @@ else if (migration.SchemaChanged)
 else
 {
     SchemaLog.Unchanged(app.Logger, migration.FinalVersion);
+}
+
+// Restoring access to an account is done at the terminal, by someone who has
+// the machine, and never starts the service. It runs once the schema is ready
+// and before anything slow is read.
+if (args.Length > 0 && args[0] == "reset-password")
+{
+    if (args.Length != 2)
+    {
+        Console.Error.WriteLine("Usage: reset-password <name>");
+
+        return RecoveryCommand.NotAcceptable;
+    }
+
+    return app.Services.GetRequiredService<RecoveryCommand>().Run(args[1], new ConsolePasswordPrompt(), Console.Out);
 }
 
 // The lists are put in place and read once the schema is ready. Reading them
@@ -253,4 +271,9 @@ app.MapGet("/api/v1/domains/{domain}", (string domain, AcquisitionRepository rep
     return Results.Ok(ApiResponse.Ok(detail));
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
 
+// Shown last, so that it is what is on the screen when the service is ready.
+app.Services.GetRequiredService<SetupService>().AnnounceIfRequired();
+
 app.Run();
+
+return 0;

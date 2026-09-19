@@ -4,7 +4,7 @@
 
 **Document:** API Specification
 
-**Version:** 1.3.0
+**Version:** 1.3.1
 
 **Status:** Approved
 
@@ -106,6 +106,8 @@ Ogni risposta utilizza una struttura comune.
   }
 }
 ```
+
+Un errore può portare un campo `reason` che ne precisa il motivo in forma leggibile da un programma, per esempio `TooShort` per una password rifiutata. Quando non c'è, il campo è assente e non `null`.
 
 ---
 
