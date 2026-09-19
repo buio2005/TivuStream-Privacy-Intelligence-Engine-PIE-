@@ -8,6 +8,88 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone A2 — Sessioni, accesso e rifiuto per impostazione predefinita — 2026-09-19
+
+Seconda delle sette milestone della Specification 18. Da qui ogni endpoint richiede un account. È il momento in cui il codice smette di essere aperto, ed è anche il momento in cui il sistema in esecuzione diventa inutilizzabile finché A3 non permette di creare il primo account: vedi Known Impact.
+
+### Added
+
+**Storage**
+
+* Migrazione `0011`: la tabella `session`. Del valore che il browser tiene si conserva soltanto l'hash, e una sessione non sopravvive al proprio account.
+* `SessionRepository` e `StoredSession`. La sessione si legge insieme all'account, così ruolo e stato sono quelli **di adesso** e non del giorno dell'accesso.
+
+**Api**
+
+* `SessionService`: identificativo di 32 byte casuali, hash SHA-256 nel database, fine dopo otto ore senza richieste e in ogni caso dopo quattordici giorni. Un accesso nuovo dove una sessione è già aperta la sostituisce.
+* `CredentialVerifier`: lo stesso calcolo in ogni caso di rifiuto. Per un nome inesistente la password è confrontata con un hash fatto apposta, per un account disattivato con il suo hash prima di rifiutarlo: la risposta non rivela il motivo, nemmeno dal tempo che impiega. Rifà l'hash quando i parametri sono più leggeri di quelli in vigore.
+* Autenticazione e autorizzazione con i meccanismi standard di ASP.NET Core, senza dipendenze nuove: un gestore che riconosce il cookie, due criteri (`Viewer`, `Administrator`) e un criterio di riserva `Administrator` per ciò che non dichiara nulla.
+* Rifiuti nella struttura standard: `401 AuthenticationRequired`, `403 Forbidden`, `401 AuthenticationFailed`. Mai una finestra di credenziali del browser.
+* Endpoint: `POST /auth/login` (l'unico raggiungibile senza credenziali), `POST /auth/logout`, `GET /auth/session`.
+* `Cache-Control: no-store` su ogni risposta di `/api`.
+
+**Ruolo richiesto da ciascun endpoint**
+
+| Endpoint | Ruolo |
+| --- | --- |
+| `/health`, `/statistics`, `/npss`, `/domains`, `/domains/{domain}` | `Viewer` |
+| `/devices` | `Administrator` |
+
+**Prove — 32 nuove, da 179 a 211 sul backend**
+
+| Impegno (Specification 18) | Cosa si verifica |
+| --- | --- |
+| V1, rifiuto predefinito | Si enumerano **tutti** gli endpoint dell'host: senza sessione ciascuno risponde `401`. L'unico aperto è `login` |
+| V2, dimenticare non apre | Ogni endpoint dichiara il proprio ruolo, e il criterio di riserva rifiuta un anonimo e un `Viewer` e ammette un `Administrator` |
+| V3, il rifiuto non insegna nulla | Cinque motivi diversi (nome inesistente, password errata, account disattivato, nome vuoto, corpo vuoto) producono la stessa risposta, senza cookie |
+| V5, una sessione finisce quando deve | Uscita, nuovo accesso, otto ore di inattività (con rinnovo dall'attività), quattordici giorni comunque attiva, account disattivato, fine delle sessioni di un account tranne quella in uso |
+| V12, niente cache | Risposte con dati e rifiuti portano `no-store` |
+| V15 dal vivo | L'accesso rifà l'hash fatto con parametri più leggeri, e il nuovo funziona |
+| Segreto non in chiaro | L'identificativo non è nel file del database; l'hash SHA-256, **calcolato dalla prova e non chiedendolo al codice**, sì |
+| Ruoli | Un `Viewer` legge statistiche e domini e non `/devices`, e la risposta non contiene l'indirizzo del dispositivo |
+| Corpi illeggibili | JSON rotto, password con caratteri Unicode non validi e un corpo di forma sbagliata sono errori del client e non guasti |
+| Storage | Sessione con il proprio account, unicità, rinnovo, rimozione, rimozione per account, scadute e vive, cascata alla rimozione dell'account |
+
+### Decided
+
+**Il cookie non ha scadenza propria.** Finisce con il browser. Le otto ore e i quattordici giorni sono tetti lato server, non una promessa di restare dentro: un «ricordami» implicito sarebbe una scelta che nessuno ha approvato, e la Frontend Specification dice che non esiste oltre la durata della sessione.
+
+**`no-store` su ogni risposta di `/api`, errori compresi.** La specifica lo chiede per le risposte autenticate. Una regola che vale ovunque è più difficile da violare per dimenticanza.
+
+**La prova sulla dichiarazione del ruolo è più severa della specifica.** La specifica dice che un endpoint senza dichiarazione richiede `Administrator`, e questo è garantito dal criterio di riserva. In più una prova **fallisce** se un endpoint non dichiara nulla: chi ne aggiunge uno deve scegliere il ruolo, non ereditarlo per caso.
+
+**L'host di test usa un hash a mille iterazioni.** Le prove verificano che cosa fanno gli endpoint con una password, non quanto dura il calcolo, e duecento millisecondi per ogni accesso avrebbero fatto aspettare l'insieme per nulla. Le prove sull'hash, con i parametri veri, sono in `PasswordHasherTests`.
+
+**Le sessioni scadute vengono eliminate quando se ne apre una nuova** e quando una viene presentata, non da un'attività a parte.
+
+### Verified
+
+Quattordici difetti introdotti di proposito, tutti intercettati, poi annullati: endpoint `/devices` aperto a un `Viewer`, risposte cacheabili, criterio di riserva che ammette chiunque sia entrato, limite di inattività ignorato, limite dei quattordici giorni ignorato, sessione di un account disattivato che continua a valere, cookie leggibile dalla pagina, cookie inviato da altri siti, account disattivato che può entrare, nuovo accesso che lascia aperta la sessione precedente, attività che non rinnova, fine delle sessioni che non risparmia quella in uso, un endpoint che dimentica di dichiarare il ruolo, identificativo conservato in forma reversibile.
+
+L'ultimo ha mostrato un limite della prova: la prima versione chiedeva l'hash al codice stesso, e non avrebbe visto un hash reversibile. Ora lo calcola per conto proprio.
+
+Compilazione senza avvisi.
+
+### Known Impact
+
+**Il sistema in esecuzione è chiuso a tutti.** Nessun account può essere creato finché non arriva A3, quindi ogni endpoint risponde `401`. `dotnet run` e `npm run dev` funzionano e non mostrano nulla. Le prove creano gli account direttamente. È la conseguenza voluta di rifiutare per impostazione predefinita, e la soluzione è A3.
+
+**Il Frontend dice una cosa falsa.** Un `401` arriva alla schermata come «Nessun punteggio disponibile: il motore non ha ancora prodotto una valutazione». Non è vero: il motore ha il punteggio e lo nega a chi non è entrato. È la stessa classe di difetto corretta per Domini nella 1.5.1, e si chiude con gli stati dell'applicazione in A6.
+
+**`SetupRequired` non viene ancora emesso.** Senza account, la risposta è `AuthenticationRequired`. Arriva con A3.
+
+**`passwordChangeRequired` è esposto e non ancora applicato.** Nessun account può averlo vero finché A4 non crea account gestiti da un amministratore.
+
+**Nessun limite ai tentativi.** Ogni accesso costa un PBKDF2 a 210.000 iterazioni, e chi raggiunge l'API può consumare CPU. Mitigato dal fatto che l'API ascolta soltanto sul loopback. Arriva con A5.
+
+**Credenziali accettate su connessione in chiaro non locale, `Origin` e `Host` non verificati.** Anche questi in A5; per ora valgono `SameSite=Strict` e il solo ascolto sul loopback.
+
+**`EndAllFor` esiste, con prove, e nessun endpoint lo chiama.** V5 è chiuso per uscita, nuovo accesso, scadenza e disattivazione. Per il cambio di password chiude in A4, dove esiste l'endpoint.
+
+**Le soglie sono costanti.** La Specification 18 le dice modificabili senza toccare la struttura, e oggi modificarle richiede ricompilare.
+
+---
+
 ## Milestone A1 — Account, hash e persistenza — 2026-09-19
 
 Prima delle sette milestone della Specification 18. Costruisce ciò su cui l'autenticazione poggia e che non è ancora raggiungibile da nessun endpoint.

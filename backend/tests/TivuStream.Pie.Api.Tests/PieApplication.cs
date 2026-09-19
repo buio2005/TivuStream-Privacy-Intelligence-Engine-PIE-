@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -7,8 +9,46 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using TivuStream.Pie.Api.Authentication;
+using TivuStream.Pie.Storage;
 
 namespace TivuStream.Pie.Api.Tests;
+
+/// <summary>
+/// What an endpoint answered.
+/// </summary>
+internal sealed record Answer(HttpStatusCode Status, JsonElement Body, string Raw, HttpResponseHeaders Headers)
+{
+    internal void Deconstruct(out HttpStatusCode status, out JsonElement body, out string raw)
+    {
+        status = Status;
+        body = Body;
+        raw = Raw;
+    }
+}
+
+/// <summary>
+/// A clock that stands still until it is told to move.
+/// </summary>
+internal sealed class TestClock : TimeProvider
+{
+    private DateTimeOffset _now;
+
+    internal TestClock(DateTimeOffset start)
+    {
+        _now = start;
+    }
+
+    public override DateTimeOffset GetUtcNow()
+    {
+        return _now;
+    }
+
+    internal void Advance(TimeSpan by)
+    {
+        _now += by;
+    }
+}
 
 /// <summary>
 /// The real host, in memory, on a database of its own.
@@ -19,6 +59,12 @@ namespace TivuStream.Pie.Api.Tests;
 /// test must do neither. And the developer's own <c>appsettings.Local.json</c>
 /// must not be read: it holds a real token, and pointing the content root at
 /// an empty folder is what keeps it out.
+/// <para>
+/// Passwords are hashed with far fewer iterations than the real ones. What a
+/// test checks is what the endpoints do with a password, not how long the
+/// computation takes, and two hundred milliseconds per sign in would make the
+/// suite wait for nothing.
+/// </para>
 /// </remarks>
 internal sealed class PieApplication : WebApplicationFactory<Program>
 {
@@ -29,12 +75,26 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
     internal const string SourceToken = "source-token-that-must-never-leak";
 
     /// <summary>
-    /// The instant the host believes it is: half past noon.
+    /// Password every test account is given, unless a test says otherwise.
+    /// </summary>
+    internal const string Password = "a-password-for-the-tests";
+
+    /// <summary>
+    /// The instant the host believes it is at the start: half past noon.
     /// </summary>
     internal static readonly DateTimeOffset Now = new(2026, 9, 1, 12, 30, 0, TimeSpan.Zero);
 
+    private const int TestIterations = 1_000;
+
     private readonly string _directory =
         Path.Combine(Path.GetTempPath(), "pie-api-" + Guid.NewGuid().ToString("N"));
+
+    private HttpClient? _administrator;
+
+    /// <summary>
+    /// The clock the host reads. Moving it moves time for every session.
+    /// </summary>
+    internal TestClock Clock { get; } = new(Now);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -55,7 +115,10 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
         {
             services.RemoveAll<IHostedService>();
             services.RemoveAll<TimeProvider>();
-            services.AddSingleton<TimeProvider>(new FixedTimeProvider(Now));
+            services.AddSingleton<TimeProvider>(Clock);
+
+            services.RemoveAll<PasswordHasher>();
+            services.AddSingleton(new PasswordHasher(TestIterations));
         });
     }
 
@@ -68,6 +131,8 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
             return;
         }
 
+        _administrator?.Dispose();
+
         // Pooled connections hold the file open.
         SqliteConnection.ClearAllPools();
 
@@ -78,26 +143,89 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
     }
 
     /// <summary>
-    /// Calls an endpoint and returns the status with the body already parsed.
+    /// Creates an account, unless one with that name exists.
     /// </summary>
-    internal async Task<(HttpStatusCode Status, JsonElement Body, string Raw)> GetAsync(string path)
+    internal StoredAccount AddAccount(string username, AccountRole role, string password = Password)
     {
-        using HttpClient client = CreateClient();
+        AccountRepository accounts = Services.GetRequiredService<AccountRepository>();
 
-        using HttpResponseMessage response = await client.GetAsync(new Uri(path, UriKind.Relative));
+        return accounts.FindByUsername(username)
+            ?? accounts.Create(
+                username,
+                role,
+                Services.GetRequiredService<PasswordHasher>().Hash(password),
+                passwordChangeRequired: false,
+                Now)!;
+    }
+
+    /// <summary>
+    /// A client that keeps its cookies, as a browser does, and has not signed in.
+    /// </summary>
+    internal HttpClient NewClient()
+    {
+        return CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true, AllowAutoRedirect = false });
+    }
+
+    /// <summary>
+    /// A client signed in through the real endpoint, with an account created for the purpose.
+    /// </summary>
+    internal async Task<HttpClient> SignedInAsync(AccountRole role = AccountRole.Administrator, string username = "tester")
+    {
+        AddAccount(username, role);
+
+        HttpClient client = NewClient();
+
+        Answer answer = await SendAsync(client, HttpMethod.Post, "/api/v1/auth/login", new { username, password = Password });
+
+        if (answer.Status != HttpStatusCode.OK)
+        {
+            throw new InvalidOperationException($"The test account could not sign in: {answer.Raw}");
+        }
+
+        return client;
+    }
+
+    /// <summary>
+    /// Calls an endpoint as an administrator, unless told otherwise.
+    /// </summary>
+    internal async Task<Answer> GetAsync(string path, HttpClient? client = null)
+    {
+        _administrator ??= await SignedInAsync();
+
+        return await SendAsync(client ?? _administrator, HttpMethod.Get, path);
+    }
+
+    /// <summary>
+    /// Calls an endpoint the way someone would who has not signed in.
+    /// </summary>
+    internal async Task<Answer> GetAnonymouslyAsync(string path)
+    {
+        using HttpClient client = NewClient();
+
+        return await SendAsync(client, HttpMethod.Get, path);
+    }
+
+    // A session identifier can be presented by hand, for a client that keeps no cookies of its own.
+    internal static async Task<Answer> SendAsync(HttpClient client, HttpMethod method, string path, object? body = null, string? cookie = null)
+    {
+        using HttpRequestMessage request = new(method, new Uri(path, UriKind.Relative));
+
+        if (cookie is not null)
+        {
+            request.Headers.Add("Cookie", $"{SessionCookie.Name}={cookie}");
+        }
+
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body);
+        }
+
+        using HttpResponseMessage response = await client.SendAsync(request);
 
         string raw = await response.Content.ReadAsStringAsync();
 
-        using JsonDocument document = JsonDocument.Parse(raw);
+        using JsonDocument document = JsonDocument.Parse(raw.Length == 0 ? "null" : raw);
 
-        return (response.StatusCode, document.RootElement.Clone(), raw);
-    }
-
-    private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
-    {
-        public override DateTimeOffset GetUtcNow()
-        {
-            return now;
-        }
+        return new Answer(response.StatusCode, document.RootElement.Clone(), raw, response.Headers);
     }
 }

@@ -5,11 +5,13 @@
 // reaches Technitium, the result is held in memory, and the Query Flow reads
 // it. The Core does not exist yet, so no analysis takes place.
 //
-// Two deviations from the API Specification are accepted for local use only
-// and are recorded in the changelog: the host serves plain HTTP, and no
-// endpoint verifies permissions.
+// One deviation from the API Specification is accepted for local use only and
+// is recorded in the changelog: the host serves plain HTTP. Every endpoint
+// requires a signed in account, as the Authentication Specification says.
 
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using TivuStream.Pie.Adapters.Technitium;
 using TivuStream.Pie.Api.Acquisition;
@@ -47,6 +49,21 @@ builder.Services.AddSingleton<AcquisitionRepository>();
 builder.Services.AddSingleton<ScoreRepository>();
 builder.Services.AddSingleton<AccountRepository>();
 builder.Services.AddSingleton(PasswordHasher.Standard);
+builder.Services.AddSingleton<SessionRepository>();
+builder.Services.AddSingleton<SessionService>();
+builder.Services.AddSingleton<CredentialVerifier>();
+
+// Nothing answers without an identity. The framework is asked to refuse by
+// default and each endpoint says what it requires, rather than the other way
+// round.
+builder.Services
+    .AddAuthentication(SessionAuthenticationHandler.SchemeName)
+    .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(
+        SessionAuthenticationHandler.SchemeName,
+        configureOptions: null);
+
+builder.Services.AddAuthorization(AuthorizationPolicies.Configure);
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, AuthorizationResultHandler>();
 builder.Services.AddSingleton<ClassificationListRepository>();
 builder.Services.AddSingleton<ClassificationListStore>();
 builder.Services.AddSingleton<ClassificationProvider>();
@@ -102,6 +119,23 @@ ClassificationProvider classification = app.Services.GetRequiredService<Classifi
 classification.EnsureDefaults();
 classification.Reload();
 
+// Every answer of the API carries data about the network, and none of it may
+// stay in the cache of a browser or of anything between.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Response.Headers.CacheControl = "no-store";
+    }
+
+    await next();
+});
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapAuthentication();
+
 // The state reports what has just happened, including failures. The
 // repository reports what is known. The two answer different questions and
 // are kept apart on purpose.
@@ -124,7 +158,7 @@ app.MapGet("/api/v1/health", (AcquisitionState state, AcquisitionRepository repo
     };
 
     return Results.Ok(ApiResponse.Ok(report));
-});
+}).RequireAuthorization(AuthorizationPolicies.Viewer);
 
 app.MapGet("/api/v1/statistics", (AcquisitionRepository repository) =>
 {
@@ -140,7 +174,7 @@ app.MapGet("/api/v1/statistics", (AcquisitionRepository repository) =>
     }
 
     return Results.Ok(ApiResponse.Ok(stored.Statistics));
-});
+}).RequireAuthorization(AuthorizationPolicies.Viewer);
 
 app.MapGet("/api/v1/npss", (ScoreRepository scores) =>
 {
@@ -156,12 +190,12 @@ app.MapGet("/api/v1/npss", (ScoreRepository scores) =>
     }
 
     return Results.Ok(ApiResponse.Ok(score));
-});
+}).RequireAuthorization(AuthorizationPolicies.Viewer);
 
 app.MapGet("/api/v1/devices", (AcquisitionRepository repository) =>
 {
     return Results.Ok(ApiResponse.Ok(repository.GetLatestDevices()));
-});
+}).RequireAuthorization(AuthorizationPolicies.Administrator);
 
 // The window travels with the list. An empty list on its own cannot be told
 // apart from an hour that has only just begun.
@@ -185,7 +219,7 @@ app.MapGet("/api/v1/domains", (AcquisitionRepository repository, TimeProvider ti
         PeriodsRequested = RequestedHours,
         Domains = repository.GetDomainsSince(since),
     }));
-});
+}).RequireAuthorization(AuthorizationPolicies.Viewer);
 
 app.MapGet("/api/v1/domains/{domain}", (string domain, AcquisitionRepository repository) =>
 {
@@ -217,6 +251,6 @@ app.MapGet("/api/v1/domains/{domain}", (string domain, AcquisitionRepository rep
     };
 
     return Results.Ok(ApiResponse.Ok(detail));
-});
+}).RequireAuthorization(AuthorizationPolicies.Viewer);
 
 app.Run();
