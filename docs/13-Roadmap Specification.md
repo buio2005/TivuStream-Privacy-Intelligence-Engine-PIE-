@@ -242,12 +242,59 @@ Ogni nuova funzionalità deve:
 
 # Release Criteria
 
-Una release può essere considerata stabile quando:
+I criteri sono **verificabili**: ciascuno si può dichiarare soddisfatto o non
+soddisfatto senza interpretazione.
 
-* tutte le milestone previste sono completate;
-* i test sono superati;
-* la documentazione è aggiornata;
-* le API sono stabili.
+Un criterio espresso come «le API sono stabili» non è verificabile e non
+distingue un rilascio pronto da uno che sembra pronto.
+
+---
+
+## Repository Publication
+
+Rendere pubblico il codice **non** coincide con rilasciare il prodotto.
+
+| Criterio | Verifica |
+| --- | --- |
+| Documentazione in inglese | Nessun documento in `/docs` resta in italiano |
+| Licenza dichiarata | `LICENSE.md` presente, nota in testa ai sorgenti |
+| Debiti dichiarati | Il README elenca ciò che manca, compresa l'assenza di autenticazione |
+| Nessun segreto versionato | Nessun token, nessuna credenziale nella cronologia git |
+
+Il README dichiara esplicitamente che il progetto **non è pronto all'uso** e
+per quali ragioni.
+
+Un progetto che si fonda sul dichiarare ciò che non sa può dichiarare anche
+ciò che non è ancora.
+
+---
+
+## Beta Release
+
+Il prodotto è installabile e utilizzabile da qualcuno che non lo ha scritto.
+
+| Criterio | Verifica |
+| --- | --- |
+| Autenticazione | Nessun endpoint risponde senza credenziali valide |
+| Trasporto cifrato | L'interfaccia è raggiungibile in HTTPS |
+| Installazione | Una persona estranea al progetto installa seguendo la procedura documentata, su una macchina pulita |
+| Ritenzione | Il consolidamento a livelli previsto dalla Specification 16 è attivo |
+| Prove ai confini | Adapter, API e persistenza hanno ciascuno almeno una prova |
+| Nessun avviso di compilazione | Backend e Frontend compilano puliti |
+| Secondo ambiente | Il sistema è stato eseguito su Linux oltre che su Windows |
+
+---
+
+## Stable Release
+
+| Criterio | Verifica |
+| --- | --- |
+| Copertura del punteggio | Nessuna area del NPSS resta priva di definizioni calcolabili |
+| Sezioni dell'interfaccia | Ogni voce di navigazione prevista dalla Specification 09 esiste |
+| Esecuzione prolungata | Il sistema ha girato senza interruzioni per almeno trenta giorni |
+| Seconda versione della sorgente | Il Technitium Adapter è stato provato su due versioni differenti |
+| Avviso di licenza | L'interfaccia mostra copyright, assenza di garanzia e come consultare la licenza |
+| Nessun debito non dichiarato | Ogni lacuna nota compare nel README o nel CHANGELOG |
 
 ---
 

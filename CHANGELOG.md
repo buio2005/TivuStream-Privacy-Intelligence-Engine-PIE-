@@ -8,6 +8,69 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Revisione del metodo — MASTER_PROMPT 2.0.0 — 2026-09-18
+
+Le regole di lavoro vengono riviste dopo sei settimane di applicazione, sulla base di ciò che ha prodotto risultati e di ciò che è costato senza produrne.
+
+Le regole su privacy, sicurezza e onestà della presentazione **non cambiano**, e vengono anzi rese esplicite in una sezione dedicata invece di restare implicite nei principi.
+
+### Rationale
+
+**Cosa ha pagato, e resta invariato.**
+
+Documentation First ha intercettato la contraddizione fra Acquisition e Query Flow, il problema delle finestre sovrapposte, gli indicatori privi di definizione e l'autenticazione mai decisa. La scelta dei periodi fissi, nata da quella disciplina, è ciò che ha reso possibile l'aggregazione sulle ventiquattro ore: una rinuncia di agosto ha pagato a settembre.
+
+Riportare le incoerenze invece di aggirarle ha generato l'intera linea che distingue lo strumento: misure qualificate, copertura, punteggio negato.
+
+Il vincolo sulle dipendenze ha intercettato un template rotto e tenuto l'elenco minimo e pulito sul piano delle licenze.
+
+**Cosa è costato senza produrre valore.**
+
+L'obbligo di leggere tutte le Specification prima di ogni compito veniva ignorato oppure sprecava tempo: diciotto documenti non si rileggono a ogni sessione.
+
+Documentation First applicato con lo stesso peso a ogni cosa produceva cerimonia sui dettagli interni. Il valore della regola è concentrato su ciò che è costoso correggere dopo.
+
+L'attesa di conferma «quando opportuno» è diventata attesa quasi a ogni sotto-passo. Con un interlocutore che lavora a finestre interrotte, ogni attesa costa una sessione.
+
+Il divieto di inventare requisiti, applicato anche alle scelte convenzionali, trasformava in domande decisioni che avevano una risposta ovvia.
+
+**Cosa mancava.**
+
+Nessuna nozione di «abbastanza finito»: il risultato è due schermate rifinite e sette inesistenti. Nessuna regola su dove collocare i test: sessantaquattro sul Core, zero su Adapter, API e Frontend. Nessun criterio di rilascio verificabile.
+
+### Changed
+
+| Regola precedente | Regola attuale |
+| --- | --- |
+| Leggere tutte le Specification | Indice, CHANGELOG recente, e le Specification toccate |
+| Documentation First su tutto | Distinzione fra **Decisioni** e **Implementazione** |
+| Attendere conferma quando opportuno | Approvazione su un elenco dichiarato; sul resto si procede e si riferisce |
+| Non inventare requisiti | Vale per le decisioni di prodotto; le scelte convenzionali si prendono e si dichiarano |
+
+### Added
+
+**Sezione Non-Negotiable.** Privacy, sicurezza e onestà della presentazione erano implicite nei principi. Ora sono scritte come vincoli espliciti, insieme alla motivazione, perché nessuna considerazione di velocità possa eroderle per gradi.
+
+**Modo «debito dichiarato».** Consegnare qualcosa di incompleto è ammesso se la lacuna è registrata sotto `Known Impact`. Serve a costruire in larghezza oltre che in profondità.
+
+> Il debito che non viene scritto non è debito. È un difetto.
+
+**Prove ai confini.** Ogni confine attraversato — Adapter, API, persistenza — richiede almeno una prova. Erano finite tutte nel Core perché era il posto più facile e più interessante dove scriverle.
+
+**Criteri di rilascio verificabili — Specification 13.**
+
+Tre soglie distinte, ciascuna con criteri che si possono dichiarare soddisfatti senza interpretazione: pubblicazione del repository, Beta, Stabile.
+
+La prima separa esplicitamente il **rendere pubblico il codice** dal **rilasciare il prodotto**. Sono due cose che venivano trattate come una sola, e la confusione fra le due rendeva la pubblicazione molto più lontana di quanto sia.
+
+**`CLAUDE.md`.**
+
+Forma breve delle regole, dei comandi e dei debiti noti, nella radice del repository.
+
+Serve a un assistente che lavori direttamente nella cartella del progetto, dove il ciclo compila-correggi-riprova si chiude senza passare dall'utente. Il ciclo attuale consuma minuti di attesa per ogni errore del compilatore.
+
+---
+
 ## Milestone M6.2 — Domini su una giornata mobile — 2026-08-31
 
 La sezione Domini smette di mostrare l'ora corrente e mostra le ultime ventiquattro ore, dichiarando quante ne esistono davvero.
