@@ -4,11 +4,11 @@
 
 **Document:** Glossary Specification
 
-**Version:** 1.5.0
+**Version:** 1.6.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-19
 
 ---
 
@@ -408,6 +408,46 @@ Risultati prodotti dal Core
 ```
 
 Il Query Flow non attiva alcuna comunicazione verso le Data Sources.
+
+---
+
+# Account
+
+Persona che usa il Privacy Intelligence Engine.
+
+Appartiene al Backend e non al Unified Data Model, che descrive la rete osservata e non chi la osserva. Ha un nome utente, un ruolo e una password conservata soltanto come hash.
+
+---
+
+# Role
+
+Ciò che un Account può leggere e fare.
+
+I ruoli sono **Administrator** e **Viewer**. Il Viewer legge i dati aggregati e non quelli che identificano un singolo dispositivo.
+
+---
+
+# Session
+
+Periodo durante il quale un Account, dopo l'accesso, è riconosciuto senza presentare di nuovo la password.
+
+È identificata da un valore casuale di cui il Backend conserva soltanto l'hash.
+
+---
+
+# Setup Code
+
+Codice casuale mostrato sull'output standard quando l'installazione non ha alcun Account.
+
+Prova che chi crea il primo Administrator ha accesso alla macchina. Non viene conservato.
+
+---
+
+# Withheld
+
+Dato che la sorgente offre ma che il Role di chi chiede non comprende.
+
+È diverso da **Unavailable**, che la sorgente non offre, e da un elenco vuoto perché nulla è accaduto. Le tre situazioni non vengono mai presentate allo stesso modo.
 
 ---
 

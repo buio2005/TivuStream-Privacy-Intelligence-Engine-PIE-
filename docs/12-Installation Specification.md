@@ -4,11 +4,11 @@
 
 **Document:** Installation Specification
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-19
 
 ---
 
@@ -159,8 +159,13 @@ Durante la configurazione iniziale vengono definiti.
 * lingua;
 * Data Source;
 * parametri di connessione;
-* autenticazione;
 * impostazioni di rete.
+
+**Primo amministratore.** Una nuova installazione non ha alcun account, e non ne ha uno predefinito né una password di fabbrica. All'avvio il Backend mostra sull'output standard un **codice di configurazione**; inserirlo nel browser, con un nome utente e una password, crea il primo `Administrator`. La prova di possesso è l'accesso alla macchina.
+
+Chi perde l'accesso lo recupera con un comando eseguito sulla macchina che ospita l'installazione, non da remoto e non tramite posta.
+
+Il dettaglio è nell'Authentication Specification.
 
 ---
 
@@ -235,7 +240,8 @@ Durante l'installazione:
 
 * vengono generate le configurazioni iniziali;
 * vengono verificati i certificati;
-* vengono protette le credenziali.
+* vengono protette le credenziali;
+* non viene creato alcun account né alcuna password predefinita.
 
 ---
 

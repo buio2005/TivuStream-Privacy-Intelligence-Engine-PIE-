@@ -4,11 +4,11 @@
 
 **Document:** Network Privacy Specification
 
-**Version:** 1.6.0
+**Version:** 1.7.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-19
 
 ---
 
@@ -401,6 +401,8 @@ La gestione degli Alert rimane di competenza del Privacy Intelligence Engine.
 # Security
 
 Network Privacy non memorizza credenziali delle Data Sources.
+
+L'accesso richiede un account con ruolo. Ciò che il ruolo non comprende viene dichiarato come trattenuto e non presentato come assente: vedi l'Authentication Specification.
 
 Le comunicazioni avvengono esclusivamente tramite le REST API del Core.
 

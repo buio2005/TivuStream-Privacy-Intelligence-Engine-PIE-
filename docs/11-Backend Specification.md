@@ -4,11 +4,11 @@
 
 **Document:** Backend Specification
 
-**Version:** 1.3.0
+**Version:** 1.4.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-19
 
 ---
 
@@ -268,9 +268,11 @@ Comprende.
 
 # Authentication
 
-Gestisce l'autenticazione degli utenti e dei servizi autorizzati.
+Gestisce l'autenticazione degli utenti: account locali con ruolo, sessioni, configurazione iniziale e recupero. La definizione è nell'**Authentication Specification**.
 
 L'autenticazione è indipendente dalle Data Sources.
+
+I servizi autorizzati, citati in una versione precedente di questo documento, non sono previsti finché non esiste un servizio che li usi.
 
 ---
 
@@ -278,7 +280,7 @@ L'autenticazione è indipendente dalle Data Sources.
 
 Ogni richiesta viene verificata prima dell'elaborazione.
 
-Il Backend determina le autorizzazioni necessarie per ciascun endpoint.
+Ogni endpoint dichiara il ruolo minimo che richiede. Un endpoint che non lo dichiara richiede `Administrator`. Vedi l'Authentication Specification.
 
 ---
 

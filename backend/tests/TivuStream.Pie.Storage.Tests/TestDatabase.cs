@@ -33,6 +33,7 @@ internal sealed class TestDatabase : IDisposable
 
         Acquisitions = new AcquisitionRepository(Connections);
         Scores = new ScoreRepository(Connections);
+        Accounts = new AccountRepository(Connections);
     }
 
     internal SqliteConnectionFactory Connections { get; }
@@ -40,6 +41,8 @@ internal sealed class TestDatabase : IDisposable
     internal AcquisitionRepository Acquisitions { get; }
 
     internal ScoreRepository Scores { get; }
+
+    internal AccountRepository Accounts { get; }
 
     public void Dispose()
     {

@@ -4,11 +4,11 @@
 
 **Document:** Frontend Specification
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-19
 
 ---
 
@@ -105,6 +105,8 @@ L'interfaccia deve adattarsi a:
 La navigazione deve essere semplice e coerente.
 
 Le principali sezioni dell'applicazione devono essere sempre raggiungibili.
+
+La voce per la gestione degli account è visibile soltanto a un `Administrator`.
 
 ---
 
@@ -222,11 +224,29 @@ Il Frontend privilegia:
 
 ---
 
+# Authentication
+
+L'accesso è definito dall'**Authentication Specification**, che contiene anche i testi dei messaggi in entrambe le lingue.
+
+L'applicazione si trova sempre in uno di cinque stati, distinti fra loro: `Checking`, `SetupRequired`, `Unauthenticated`, `Authenticated`, `PasswordChangeRequired`.
+
+Le schermate sono: configurazione iniziale, accesso, cambio password, gestione degli account (solo `Administrator`).
+
+Regole:
+
+* **Nessun dato di rete sopravvive all'uscita.** Alla chiusura della sessione gli store svuotano ogni dato letto.
+* Una sessione terminata mentre l'utente era entrato non si presenta come un accesso fallito.
+* Credenziali sbagliate, motore non raggiungibile e connessione non sicura sono tre situazioni diverse e producono messaggi diversi. Dire «credenziali errate» quando il motore non ha risposto è un'affermazione falsa.
+* Ciò che il ruolo non comprende è mostrato come **trattenuto**: non come assenza e non come errore.
+
+---
+
 # Security
 
 Il Frontend:
 
 * non memorizza credenziali delle Data Sources;
+* non conserva password né identificativi di sessione in alcuna memoria persistente: il cookie di sessione non è leggibile dal codice della pagina;
 * non espone informazioni sensibili;
 * comunica esclusivamente tramite HTTPS.
 

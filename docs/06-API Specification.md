@@ -4,11 +4,11 @@
 
 **Document:** API Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-19
 
 ---
 
@@ -318,7 +318,19 @@ Comprende:
 * categoria;
 * reputazione;
 * frequenza;
-* dispositivi coinvolti.
+* attività per dispositivo, quando la sorgente la offre e il ruolo di chi chiede lo consente.
+
+### Activity Access
+
+Il campo `activityAccess` dichiara che cosa significa l'elenco `activities`.
+
+| Valore | Significato |
+| --- | --- |
+| `Available` | La sorgente offre l'attività e chi chiede può leggerla. `activities` è l'elenco |
+| `Unavailable` | La sorgente non offre l'attività. `activities` è vuoto e non significa nulla |
+| `Withheld` | La sorgente la offre, ma il ruolo di chi chiede non la comprende. `activities` è vuoto e non significa nulla |
+
+Un elenco vuoto per mancanza di diritto e un elenco vuoto perché nessun dispositivo ha contattato il dominio sono affermazioni diverse. Il campo esiste perché non vengano presentate allo stesso modo.
 
 ---
 
@@ -419,15 +431,19 @@ Aggiorna la configurazione del sistema.
 
 # Authentication
 
-Il sistema supporta autenticazione centralizzata.
+L'autenticazione è definita dall'**Authentication Specification**: account locali con ruolo, sessione tramite cookie, rifiuto per impostazione predefinita.
 
-Le modalità implementative vengono definite durante lo sviluppo del backend.
+Ogni endpoint richiede una sessione valida. **Fanno eccezione soltanto `POST /api/v1/setup` e `POST /api/v1/auth/login`**, che servono a ottenerla e non restituiscono alcun dato sulla rete o sul sistema.
+
+Gli endpoint che la gestiscono (`/setup`, `/auth/*`, `/accounts`) e i codici di errore che introduce (`SetupRequired`, `AuthenticationRequired`, `AuthenticationFailed`, `Forbidden`, `PasswordChangeRequired`, `TransportNotSecure`, `OriginNotAllowed`, `TooManyAttempts` e altri) sono descritti in quel documento, che ne è la fonte.
 
 ---
 
 # Authorization
 
-Ogni endpoint verifica i permessi dell'utente prima dell'elaborazione della richiesta.
+Ogni endpoint **dichiara il ruolo minimo** che richiede. Un endpoint che non lo dichiara richiede `Administrator`: dimenticare una dichiarazione produce un rifiuto, non un'apertura.
+
+Ciò che un ruolo non può leggere non viene omesso in silenzio: la risposta lo dichiara. Vedi Activity Access.
 
 ---
 

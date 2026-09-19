@@ -4,7 +4,7 @@
 
 **Document:** Project Roadmap Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
@@ -33,7 +33,7 @@ La roadmap ha i seguenti obiettivi.
 
 # Current Status
 
-**Documentation Release:** 1.5.1
+**Documentation Release:** 1.6.0
 
 **Project Status:** In Development
 
@@ -71,7 +71,7 @@ Obiettivi.
 
 **Status:** In Progress
 
-**Situazione:** Esistono il Unified Data Model, il sistema di configurazione, la persistenza e sei endpoint di lettura. Mancano l'autenticazione, HTTPS e il consolidamento a livelli della Specification 16.
+**Situazione:** Esistono il Unified Data Model, il sistema di configurazione, la persistenza e sei endpoint di lettura. Mancano l'autenticazione (definita nella Specification 18, milestone A1–A7), HTTPS (la specifica Transport Security non esiste ancora) e il consolidamento a livelli della Specification 16.
 
 ---
 
@@ -297,7 +297,7 @@ Il prodotto è installabile e utilizzabile da qualcuno che non lo ha scritto.
 
 | Criterio | Verifica |
 | --- | --- |
-| Autenticazione | Nessun endpoint risponde senza credenziali valide |
+| Autenticazione | Nessun endpoint che restituisca dati sulla rete o sul sistema risponde senza credenziali valide. Fanno eccezione `setup` e `login`, che le stabiliscono e non restituiscono nulla sulla rete (Specification 18) |
 | Trasporto cifrato | L'interfaccia è raggiungibile in HTTPS |
 | Installazione | Una persona estranea al progetto installa seguendo la procedura documentata, su una macchina pulita |
 | Ritenzione | Il consolidamento a livelli previsto dalla Specification 16 è attivo |

@@ -8,6 +8,119 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone A1 — Account, hash e persistenza — 2026-09-19
+
+Prima delle sette milestone della Specification 18. Costruisce ciò su cui l'autenticazione poggia e che non è ancora raggiungibile da nessun endpoint.
+
+### Added
+
+**Storage**
+
+* `AccountRole` (`Administrator`, `Viewer`), `StoredAccount` e `AccountRepository`, con la migrazione `0010`: la tabella `account`.
+* La migrazione impone in schema ciò che il codice promette: nome unico e ruolo limitato ai due noti. Un ruolo che il software non conosce non deve poter essere scritto, perché verrebbe riletto come qualcosa che nessuno ha deciso.
+* Il nome è conservato in minuscolo: due persone che differiscono per una maiuscola sarebbero, per chi digita il nome, una persona sola.
+
+**Api**
+
+* `PasswordHasher`: PBKDF2 con HMAC-SHA-512, 210.000 iterazioni, sale casuale di 16 byte per password. Algoritmo, iterazioni, sale e hash stanno insieme in un unico valore, così i parametri possono crescere. Un accesso riuscito con parametri più leggeri dei correnti lo segnala (`ValidButOutdated`), perché la password serve a ricalcolare l'hash soltanto in quel momento.
+* `AccountPolicy`: password da 12 a 128 **caratteri** (non byte), nessuna regola di composizione, diversa dal nome; nome da 3 a 32 caratteri fra minuscole, cifre, punto, trattino e trattino basso. La password è normalizzata in forma Unicode NFKC prima della misura della lunghezza e prima dell'hash: le due cose partono dalla stessa forma, e non possono discordare su che cosa sia la password.
+* Registrazione dei servizi nella composition root.
+
+**Prove — 51 nuove, da 128 a 179 sul backend**
+
+| Impegno (Specification 18) | Cosa si verifica |
+| --- | --- |
+| V4, nessun segreto in chiaro | La password non compare **in nessun punto del file del database**, con un controllo positivo che la ricerca guardi il file giusto |
+| V15, parametri aggiornati | Un hash fatto con meno iterazioni è riconosciuto e chiede di essere rifatto |
+| Sale per password | La stessa password non produce mai due volte lo stesso valore |
+| La stessa password su tastiere diverse | Forma composta e scomposta della stessa lettera sono la stessa password |
+| Un record danneggiato non fa entrare nessuno | Nove forme di valore illeggibile falliscono, e un hash corretto con l'etichetta dell'algoritmo cambiata è rifiutato |
+| Lunghezza in caratteri | 11 no, 12 sì, 128 sì, 129 no; nessuna regola di composizione |
+| Nomi | Doppioni rifiutati qualunque sia la maiuscola, senza sovrascrivere l'esistente |
+| Cambio password | Su un account inesistente è un fallimento e non una modifica che non modifica nulla |
+
+### Verified
+
+Mutazioni introdotte di proposito, poi annullate: nome non più portato in minuscolo, cambio password su account inesistente reso silenzioso, confronto sulle iterazioni disattivato, etichetta dell'algoritmo ignorata, sale costante, normalizzazione indebolita, lunghezza minima ridotta. Nove prove fallite in totale.
+
+La prima versione della prova sull'etichetta dell'algoritmo non distingueva: usava un hash sbagliato, che falliva comunque. Rafforzata con un hash corretto e l'etichetta cambiata.
+
+### Decided
+
+**`Create` restituisce `null` quando il nome è già preso** invece di lanciare un'eccezione. Un nome occupato è una risposta attesa, e verrà tradotta in `AccountExists`. Ogni altro guasto resta un'eccezione.
+
+**Tetto alle iterazioni accettate: dieci milioni.** Un record alterato può farlo solo chi ha già il database, ma un valore manomesso non deve trasformare un accesso in un calcolo che non finisce.
+
+**`PasswordHasher` è interno e il costruttore con iterazioni serve alle prove**, che devono produrre un hash «di una volta» senza aspettarlo. Il codice di produzione usa `PasswordHasher.Standard`.
+
+**Nell'Api e non in Storage o Core.** La Backend Specification assegna la persistenza a Storage e l'host a Api, e l'hash non è né una cosa né l'altra. Il Core analizza la rete e non ha ragione di conoscere le password.
+
+### Known Impact
+
+**Nulla è ancora raggiungibile.** Non esiste alcun endpoint di accesso: l'API risponde a chiunque, come prima. Il debito dell'autenticazione resta aperto fino ad A7.
+
+**Una password con caratteri Unicode non validi** (un surrogato spaiato) fa lanciare un'eccezione a `Normalize`. Oggi non può arrivare: il deserializzatore JSON la rifiuta prima. A2 non deve contarci in silenzio, e dovrà trattare il caso al confine.
+
+**La tabella delle sessioni non esiste** e arriverà con A2.
+
+**Costo di calcolo.** Ogni accesso richiede un PBKDF2 a 210.000 iterazioni. È voluto, ed è ciò che rallenta chi prova password; ma il rallentamento dei tentativi ripetuti (A5) non è ancora presente, e fino ad allora un flusso di richieste di accesso costa CPU.
+
+---
+
+## Documentation Release 1.6.0 — Authentication Specification — 2026-09-19
+
+La prima Specification scritta per chiudere una decisione che era rimasta aperta per scelta. La API Specification dichiarava che «il sistema supporta autenticazione centralizzata» e che «le modalità implementative vengono definite durante lo sviluppo del backend». Non lo sono mai state.
+
+### Added
+
+**Specification 18 — Authentication, alla 1.0.0, Approved**
+
+Comprende: modello delle minacce, sei principi, account con due ruoli, credenziali, sessioni, configurazione iniziale, recupero, trasporto, tentativi ripetuti, contratto API, autorizzazione, Frontend, persistenza, registrazione, quindici impegni verificabili sul backend e cinque sul Frontend, sette milestone di realizzazione (A1–A7).
+
+### Decided
+
+Sette decisioni di prodotto, approvate il 2026-09-19. Ciascuna registra l'alternativa non scelta e ciò che costava.
+
+| # | Scelta | Ragione |
+| --- | --- | --- |
+| D1 | Account locali con password e sessione | Un segreto condiviso non distingue le persone e non si revoca a una sola |
+| D2 | Due ruoli; il `Viewer` non vede i dati per dispositivo | L'attività per dispositivo è il dato più sensibile: in una casa chi guarda il quadro d'insieme non deve poter vedere che cosa ha fatto ciascuno |
+| D3 | PBKDF2-SHA-512, senza dipendenze | Argon2id resiste meglio, ma richiede una libreria di terzi |
+| D4 | Recupero solo dalla macchina | Un canale via posta o rete è un secondo modo di entrare, e un servizio esterno |
+| D5 | Nessun token per servizi, per ora | Oggi nessun servizio interroga l'API: sarebbe progettare per un bisogno che non c'è |
+| D6 | Soglie della specifica | Sono valori, modificabili senza cambiare la struttura |
+| D7 | Criterio di Beta della Roadmap riformulato | Vedi sotto |
+
+Due scelte non ovvie che discendono dai principi:
+
+* **Ciò che il ruolo non comprende è dichiarato «trattenuto»**, non omesso. Un elenco vuoto per mancanza di diritto e uno vuoto perché nessun dispositivo ha contattato il dominio sono affermazioni diverse. È la regola Absent Versus Unmeasurable applicata ai permessi.
+* **Il codice di configurazione iniziale** impedisce che chi arriva per primo all'indirizzo diventi amministratore. La prova di possesso è l'accesso alla macchina, e il codice non passa dal sistema di registrazione.
+
+### Changed
+
+| Documento | Versione | Modifica |
+| --- | --- | --- |
+| 06 - API | 1.3.0 | Authentication e Authorization rimandano alla 18; eccezione di `setup` e `login`; `activityAccess` |
+| 09 - Network Privacy | 1.7.0 | L'accesso richiede un account; ciò che il ruolo non comprende è trattenuto |
+| 10 - Frontend | 1.2.0 | Sezione Authentication: cinque stati, schermate, regole; sicurezza |
+| 11 - Backend | 1.4.0 | Authentication e Authorization rimandano alla 18. I «servizi autorizzati» non sono previsti finché non esiste un servizio che li usi |
+| 12 - Installation | 1.2.0 | Primo amministratore e recupero; nessun account né password predefiniti |
+| 13 - Roadmap | 1.3.0 | Criterio di Beta riformulato; situazione della Phase 2 |
+| 16 - Persistence | 1.2.0 | Account e sessioni; nulla di segreto in chiaro |
+| 00 - Glossary | 1.6.0 | Account, Role, Session, Setup Code, Withheld |
+
+**Incoerenza corretta nella Roadmap.** Il criterio di Beta diceva «nessun endpoint risponde senza credenziali valide». Preso alla lettera è incompatibile con l'esistenza di un modulo di accesso, che risponde per definizione a chi non ha ancora credenziali. Ora: nessun endpoint che restituisca dati sulla rete o sul sistema risponde senza credenziali; fanno eccezione `setup` e `login`, che non restituiscono nulla sulla rete.
+
+### Known Impact
+
+**Manca la specifica Transport Security.** I criteri di Beta richiedono HTTPS, e nessun documento dice come si ottiene: certificato, rinnovo, proxy davanti a PIE. La Specification 18 fissa soltanto ciò che dipende dal trasporto: le credenziali non viaggiano in chiaro fuori dal loopback. Finché non esiste, l'accesso da altri dispositivi resta rifiutato.
+
+**La documentazione descrive `activityAccess` e il codice ha ancora `activityAvailable`.** La divergenza è temporanea e dichiarata: si chiude nella milestone A4.
+
+**Il README non elenca i debiti** che il criterio di pubblicazione del repository richiede di elencare, l'assenza di autenticazione compresa. Invariato da prima di questa release.
+
+---
+
 ## Documentation Release 1.5.1 — Stato del progetto e identità dell'attività — 2026-09-19
 
 Nessun cambiamento di comportamento del prodotto: la documentazione smette di dire cose non più vere e dichiara una regola che il codice non rispettava.

@@ -31,7 +31,7 @@ stop. The qualification is the product.
 ## Where things are
 
 ```text
-docs/           18 Specifications, the authoritative source
+docs/           19 Specifications, the authoritative source
 backend/        ASP.NET Core: Model, Core, Adapters, Storage, Api
 frontend/       Vue 3, TypeScript, bilingual from the first line
 scripts/        Helpers, including DNS traffic generation for testing
@@ -47,7 +47,7 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 128 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 179 tests, all must pass
 cd frontend && npm run test:unit -- --run        # 35 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000
@@ -91,7 +91,9 @@ Every boundary crossed carries at least one test.
 
 * **No authentication.** The API is open to anyone who reaches it. Safe today
   only because it binds to loopback. This is the blocker before any use
-  beyond the local machine.
+  beyond the local machine. Specified in `docs/18-Authentication
+  Specification.md` (approved); milestones A1 to A7, of which only A1 is done
+  (accounts and password hashing, reachable from no endpoint yet).
 * HTTP, not HTTPS.
 * No installation procedure: the `installer/` directory is empty.
 * Tiered retention is designed in Specification 16 and not implemented; the

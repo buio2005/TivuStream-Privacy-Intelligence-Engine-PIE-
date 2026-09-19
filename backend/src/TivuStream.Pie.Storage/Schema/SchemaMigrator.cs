@@ -19,6 +19,7 @@ public sealed class SchemaMigrator
         new Migration0007Classification(),
         new Migration0008ScoreAlgorithm(),
         new Migration0009Factors(),
+        new Migration0010Accounts(),
     ];
 
     private readonly SqliteConnectionFactory _connectionFactory;

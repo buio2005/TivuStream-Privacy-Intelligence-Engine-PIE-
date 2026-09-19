@@ -4,11 +4,11 @@
 
 **Document:** Persistence Specification
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-03
+**Last Updated:** 2026-09-19
 
 ---
 
@@ -68,6 +68,17 @@ Non appartengono ad alcun Observation Period e **non sono soggetti a ritenzione*
 
 ---
 
+## Accounts And Sessions
+
+Chi usa PIE, non ciò che la rete ha fatto. Due entità interne al Backend, estranee al Unified Data Model.
+
+* **account**: nome utente, ruolo, attivo, hash della password con i parametri dell'algoritmo, indicazione che la password va cambiata, istante di creazione;
+* **sessione**: hash dell'identificativo, account, creazione, ultimo uso, scadenza.
+
+Non appartengono ad alcun Observation Period e **non sono soggette a ritenzione**: eliminare un account per età lascerebbe fuori chi lo possiede. Le sessioni scadute vengono invece eliminate.
+
+---
+
 ## What Is Never Persisted
 
 PIE **non conserva mai il dettaglio della singola interrogazione DNS**.
@@ -79,6 +90,7 @@ Questa è la principale misura di protezione dell'utente prevista dal progetto.
 Non vengono inoltre conservati:
 
 * credenziali delle Data Sources in chiaro;
+* password degli account in chiaro, identificativi di sessione in chiaro, codice di configurazione iniziale;
 * risposte originali dei backend nel loro formato nativo;
 * dettagli diagnostici prodotti dai backend.
 
