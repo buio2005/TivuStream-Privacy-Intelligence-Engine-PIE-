@@ -69,6 +69,22 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.0" />
+
+    <!--
+      Microsoft.AspNetCore.Mvc.Testing
+      Purpose : runs the real host in memory so that the endpoints can be
+                verified through HTTP, which is the boundary the API exposes
+      Licence : MIT
+      Approved: 2026-09-19, on the proposal recorded in the changelog entry
+                "Prove ai confini"
+
+      Referenced only by the API test project, never by the product.
+
+      Version 10.0.8 matches the ASP.NET Core runtime installed. A newer
+      package would bring newer framework assemblies into the test output
+      than the ones the product runs on.
+    -->
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.8" />
   </ItemGroup>
 
 </Project>

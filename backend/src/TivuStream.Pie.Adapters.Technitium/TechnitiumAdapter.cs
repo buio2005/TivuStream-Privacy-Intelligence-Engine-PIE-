@@ -130,24 +130,19 @@ public sealed class TechnitiumAdapter
 
             leases.TryGetValue(client.Name, out DhcpLease? lease);
 
-            bool hasHardwareAddress = !string.IsNullOrWhiteSpace(lease?.HardwareAddress);
+            // An identity founded on the hardware address survives a change
+            // of network address. One founded on the network address does
+            // not, and says so.
+            (Guid deviceId, DeviceIdentityBasis basis) = DeviceIdentity.Resolve(client.Name, lease);
 
             devices.Add(new Device
             {
-                // An identity founded on the hardware address survives a
-                // change of network address. One founded on the network
-                // address does not, and says so.
-                DeviceId = hasHardwareAddress
-                    ? DeviceIdentity.FromHardwareAddress(lease!.HardwareAddress!)
-                    : DeviceIdentity.FromAddress(client.Name),
-
-                IdentityBasis = hasHardwareAddress
-                    ? DeviceIdentityBasis.HardwareAddress
-                    : DeviceIdentityBasis.NetworkAddress,
+                DeviceId = deviceId,
+                IdentityBasis = basis,
 
                 Hostname = FirstNonEmpty(client.Domain, lease?.HostName),
                 IpAddress = client.Name,
-                MacAddress = hasHardwareAddress ? lease!.HardwareAddress : null,
+                MacAddress = basis == DeviceIdentityBasis.HardwareAddress ? lease!.HardwareAddress : null,
 
                 // Not exposed by the source. The Device Engine may enrich them.
                 Vendor = null,
@@ -324,6 +319,11 @@ public sealed class TechnitiumAdapter
                 "The Technitium instance does not provide query logs. Domain Activity is unavailable until the corresponding application is installed.");
         }
 
+        // Read before the log, so that an activity is attributed to a device
+        // on the same basis as the device itself. An address that held a
+        // lease during the period but no longer does keeps the weaker basis.
+        Dictionary<string, DhcpLease> leases = await ReadLeasesAsync(cancellationToken).ConfigureAwait(false);
+
         // Entries are grouped as they arrive, so that the individual queries
         // are never all held at once. They constitute the browsing history of
         // the devices on the network and must not travel further than this
@@ -338,7 +338,7 @@ public sealed class TechnitiumAdapter
 
             foreach (QueryLogEntry entry in logs.Entries ?? [])
             {
-                Accumulate(activities, entry);
+                Accumulate(activities, entry, leases);
             }
 
             if (page >= logs.TotalPages)
@@ -366,19 +366,24 @@ public sealed class TechnitiumAdapter
         return result;
     }
 
-    private static void Accumulate(Dictionary<ActivityKey, ActivityAccumulator> activities, QueryLogEntry entry)
+    private static void Accumulate(
+        Dictionary<ActivityKey, ActivityAccumulator> activities,
+        QueryLogEntry entry,
+        Dictionary<string, DhcpLease> leases)
     {
         if (string.IsNullOrWhiteSpace(entry.ClientIpAddress) || string.IsNullOrWhiteSpace(entry.QName))
         {
             return;
         }
 
+        leases.TryGetValue(entry.ClientIpAddress, out DhcpLease? lease);
+
         // Outcome and transport take part in the key rather than being
         // collapsed. A device that reached a domain both directly and through
         // a block produced two different facts, and merging them would state
         // something that did not happen.
         ActivityKey key = new(
-            DeviceIdentity.FromAddress(entry.ClientIpAddress),
+            DeviceIdentity.Resolve(entry.ClientIpAddress, lease).Id,
             entry.QName,
             string.Equals(entry.ResponseType, "Blocked", StringComparison.OrdinalIgnoreCase),
             entry.Protocol ?? string.Empty);

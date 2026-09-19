@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Verification of what the Technitium Adapter promises at its boundary.
+
+    The Adapter is where a product we do not control becomes the Unified Data
+    Model, and where the browsing history of every device is aggregated and
+    discarded. Each check here stands for a commitment of the Technitium
+    Integration Specification, run against canned answers of the server
+    rather than a live instance.
+  -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+
+    <!--
+      Test names are written as sentences, which reads better than the
+      alternative and is the convention of the framework.
+    -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TivuStream.Pie.Adapters.Technitium\TivuStream.Pie.Adapters.Technitium.csproj" />
+  </ItemGroup>
+
+</Project>

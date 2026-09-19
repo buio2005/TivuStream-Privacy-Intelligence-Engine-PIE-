@@ -8,6 +8,135 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Documentation Release 1.5.1 — Stato del progetto e identità dell'attività — 2026-09-19
+
+Nessun cambiamento di comportamento del prodotto: la documentazione smette di dire cose non più vere e dichiara una regola che il codice non rispettava.
+
+### Changed
+
+**Roadmap Specification alla 1.2.0**
+
+* **Stato.** Dichiarava «Documentation Completed» e «Development Status: Not Started», con ogni milestone da M2 in poi «Planned», mentre il CHANGELOG registra lavoro fino alla sezione Domini. Ora: `In Development`, milestone M2, M3, M4, M5 e M7 `In Progress`, e sotto ogni fase una riga **Situazione** che dice cosa esiste e cosa manca.
+* **Adapter Manager.** Esiste l'interfaccia `IAdapterManager` e nessuna implementazione. La Phase 3 non può dirsi completata finché non c'è.
+* **Numerazione.** Il CHANGELOG usa `M5.x` per la persistenza e `M6.x` per il Frontend, che nella Roadmap sono rispettivamente parte di M2 e M5. Scelta la tabella di corrispondenza anziché la rinumerazione: la cronologia non si riscrive, e le milestone di rilascio M8 e M9 citate nel README non cambiano.
+* **Nome di M4.** «Core Modules», come nel Glossary, nella Specification 03 e nel README. Solo la Roadmap diceva «Intelligence Modules».
+* **Intestazione.** Riportava 1.1.0 e 2026-08-02 pur contenendo i criteri di rilascio aggiunti il 2026-09-18, che non registravano la versione della Specification che li introduceva. La 1.2.0 comprende entrambe le cose.
+
+**Specification 04 alla 1.6.0 — l'identità vale anche per l'attività**
+
+`DomainActivity.deviceId` è derivato con la stessa regola di `Device.deviceId`. La regola non era scritta, e il codice la violava: vedi la voce «Prove ai confini».
+
+Un indirizzo che ha avuto un'assegnazione durante il periodo ma non ne ha più una al momento dell'acquisizione conserva la base più debole. È dichiarato come limite.
+
+**README e PROJECT_CONTEXT** allineati: stato del progetto, tabella delle milestone, Documentation Release 1.5.1.
+
+---
+
+## Prove ai confini — 2026-09-19
+
+Prima applicazione della regola introdotta con MASTER_PROMPT 2.0.0: ogni confine attraversato porta almeno una prova. Le sessantaquattro esistenti erano quarantasei sul Core e diciotto su un solo componente della persistenza, il lettore delle liste. Adapter, repository dei periodi e dei punteggi, API e Frontend non ne avevano nessuna.
+
+Ora sono 163: 128 sul backend e 35 sul Frontend.
+
+### Added
+
+**Adapter Technitium — 28 prove, progetto `TivuStream.Pie.Adapters.Technitium.Tests`**
+
+Eseguite contro risposte preparate del server, modellate sulla Technitium API Reconnaissance, senza istanza reale.
+
+| Impegno (Specification 04) | Cosa si verifica |
+| --- | --- |
+| Aggregazione dei log | Cinque interrogazioni su due pagine escono come tre fatti; prima e ultima osservazione coprono le pagine in qualunque ordine arrivino; bloccato e risolto restano separati |
+| Il registro non oltrepassa l'Adapter | Assenza del componente di log: rifiuto esplicito, non elenco vuoto |
+| Token come credenziale `Bearer` | Presente su ogni richiesta, assente da ogni messaggio d'errore |
+| Esito nel corpo, non nel codice HTTP | Un errore con HTTP 200 resta un errore; stack trace ed errore interno del server non compaiono |
+| Valori qualificati | `UniqueDomains` dichiarato limite inferiore; NXDOMAIN escluso dai fallimenti; solo Tls, Https, Quic contano come cifrati |
+| L'Adapter non classifica | Categoria `Unknown`, nessuna reputazione, istanti dichiarati `PeriodBounded` |
+| Identità del dispositivo | Base hardware con lease, indirizzo senza; stessa identità dopo un cambio di indirizzo; assenza del DHCP non è un errore; **l'attività porta l'identificativo del proprio dispositivo** |
+| Capability | Dichiarate solo se l'account può leggere la sezione e il componente è installato |
+
+**Persistenza — 19 prove, `TivuStream.Pie.Storage.Tests`**
+
+Eseguite su un file SQLite vero, migrato allo schema corrente e distrutto a fine prova.
+
+* Una misura qualificata resta qualificata dopo il giro attraverso il database.
+* Rileggere un periodo lo sostituisce senza residui; un'osservazione è registrata per intero o per nulla.
+* Le regole di aggregazione su finestra della API Specification 1.2.0: somma delle occorrenze, prima e ultima osservazione, qualità pari alla meno precisa, classificazione del periodo più recente **indipendentemente dall'ordine di scrittura**.
+* I valori dei fattori tornano come numeri; un punteggio negato torna negato e non zero; un'area non misurabile conserva il proprio stato; i decimali non dipendono dalla lingua della macchina.
+* I fattori scritti come testo da una versione precedente tornano vuoti e non interpretati.
+
+**API — 17 prove, `TivuStream.Pie.Api.Tests`**
+
+L'host vero gira in memoria con un database proprio. Sono tolti di proposito i due servizi in background, che raggiungerebbero la sorgente dati e scaricherebbero liste da Internet, e il file `appsettings.Local.json` dello sviluppatore, che contiene un token reale.
+
+Verificato con una controprova che l'esecuzione non tocchi nulla sotto `Api/data`.
+
+* Prima di qualunque acquisizione statistiche e punteggio sono un **rifiuto** (503, `AcquisitionPending`, `ScorePending`), non un insieme di zeri.
+* `/domains` dichiara periodo, ore osservate e ore richieste; senza osservazioni il periodo è assente e l'elenco vuoto non si presenta come una rete silenziosa; i periodi più vecchi della finestra non contano.
+* Un punteggio negato viaggia come `null`; un fattore viaggia come codice e numeri; le enumerazioni viaggiano come nomi.
+* L'attività di un dominio è dichiarata non disponibile, non mostrata vuota, quando la sorgente non la offre.
+* Nessuna risposta contiene la credenziale della sorgente dati.
+
+**Frontend — 35 prove, Vitest, in `__tests__`**
+
+* Dashboard: caricamento, rifiuto di giudicare e assenza di punteggio sono tre stati distinti; con il punteggio negato non compare alcun numero; un codice sconosciuto al catalogo compare con il proprio identificativo; la quota arriva come frazione e si scrive `7.1%` in inglese e `7,1%` in italiano; le note su «limite inferiore» e «non misurabile» compaiono solo quando qualcosa in pagina vi si appoggia.
+* Domini: ore osservate dichiarate contro ore richieste, al singolare e al plurale; elenco vuoto sempre accompagnato dal proprio periodo; «mai osservato» distinto da «periodo vuoto»; un dominio non riconosciuto resta non classificato e non riceve né fonte né confidenza; una lettura fallita non si presenta come elenco vuoto.
+* Catalogo: le due lingue hanno le stesse voci e gli stessi segnaposto, nessuna voce è vuota, e sei frasi che portano una qualificazione (limite inferiore, non confermato, non significa che non vi sia tracciamento, non significa che sia sicuro) la conservano in entrambe le lingue. Una voce mancante non produce un errore: l'interfaccia ricade sull'inglese, e chi legge in italiano incontra una frase in un'altra lingua senza che nulla lo dica.
+
+**Dipendenza approvata: `Microsoft.AspNetCore.Mvc.Testing` 10.0.8**
+
+| | |
+| --- | --- |
+| Scopo | Eseguire l'host reale in memoria per provare gli endpoint attraverso HTTP |
+| Licenza | MIT |
+| Riferita da | Solo `TivuStream.Pie.Api.Tests`, mai dal prodotto |
+| Versione | 10.0.8, quella del runtime ASP.NET installato: una più recente avrebbe portato nell'output di test assembly del framework diversi da quelli su cui il prodotto gira |
+| Discendenti | `Microsoft.AspNetCore.TestHost` e la famiglia `Microsoft.Extensions.*`, alla stessa versione, MIT |
+| Vulnerabilità | Nessuna: il controllo di NuGet è attivo e la build tratta gli avvisi come errori |
+
+Per raggiungere `Program` dal progetto di test, `TivuStream.Pie.Api.csproj` dichiara `InternalsVisibleTo`. Gli endpoint restano funzioni anonime in `Program.cs`, senza modifiche.
+
+### Fixed
+
+**L'attività non portava l'identificativo del proprio dispositivo.**
+
+`GetDevicesAsync` derivava l'identificativo dall'indirizzo hardware quando esisteva un lease DHCP. `GetDomainActivitiesAsync` lo derivava sempre dall'indirizzo di rete. Per un dispositivo con lease, `Device.DeviceId` e `DomainActivity.DeviceId` erano due valori diversi per lo stesso dispositivo, e nessuna correlazione fra i due era possibile.
+
+Non compariva perché nessun componente li univa: il Device Engine non esiste e lo schema non ha un vincolo fra le due tabelle. Sarebbe comparso con il primo indicatore che attribuisse un comportamento a un dispositivo.
+
+Trovato scrivendo la prova, che è stata scritta prima della correzione e ha fallito. La scelta della base sta ora in un solo punto, `DeviceIdentity.Resolve`, usato da entrambe le letture. L'acquisizione dei log legge dunque anche i lease, una chiamata in più per acquisizione. Regola registrata nella Specification 04 alla 1.6.0.
+
+**La vista Domini diceva «Nessun punteggio disponibile» quando la lettura falliva.**
+
+Era la frase del Dashboard, riutilizzata. Su una pagina di domini parlava di un punteggio che non c'entra. Ora: «Impossibile leggere i domini. Il motore non ha risposto. Questo non dice nulla su ciò che la rete ha contattato.» L'ultima frase è il punto: un fallimento non deve poter passare per una rete silenziosa. Voci nuove del catalogo, in entrambe le lingue.
+
+### Verified
+
+Ogni gruppo è stato messo alla prova introducendo di proposito il difetto che dovrebbe intercettare, poi annullato:
+
+* Adapter: bloccato fuso con risposto, NXDOMAIN contato come fallimento. Quattro prove fallite.
+* Persistenza: qualità aggregata calcolata sulla più precisa invece che sulla meno precisa, classificazione presa dal periodo più vecchio, decimali scritti secondo la lingua corrente. Quattro prove fallite.
+* API: ore osservate uguali a quelle richieste, attività letta anche quando la sorgente non la offre, enumerazioni non più scritte come nomi. Otto prove fallite.
+* Frontend: fattore sconosciuto omesso, nota «non misurabile» mostrata sempre, elenco vuoto senza periodo. Tre prove fallite.
+
+Compilazione senza avvisi, `vue-tsc` pulito, build del Frontend riuscita.
+
+### Known Impact
+
+**Le attività già registrate mantengono gli identificativi vecchi.** Quelle dei dispositivi con lease sono nel database con l'identificativo fondato sull'indirizzo di rete. Non vengono migrate: il loro solo uso oggi è la lettura dell'ultimo periodo, che si rinnova a ogni acquisizione, e il consolidamento a livelli non esiste ancora. Chi userà lo storico per attribuire comportamenti dovrà tenerne conto.
+
+**`/health` dichiara `Core: NotImplemented`.** Il Core esiste da M4.1: il campo è rimasto com'era quando non c'era. È un'affermazione falsa in una risposta che descrive lo stato del sistema. Non corretto: il valore va scelto (per esempio `Online`, o derivato da uno stato reale del Core) ed è testo dichiarato a chi legge. Le prove dell'API non lo fissano di proposito.
+
+**`/devices` e `/statistics` non dichiarano il periodo** (già annotato in M6.2). Le prove dell'API non lo verificano perché la regola non è ancora implementata per quei due endpoint.
+
+**Nessuna prova sull'autenticazione, che non esiste.** È il blocco della Beta, e resta il prossimo passo che richiede una Specification prima del codice.
+
+**Le prove sull'Adapter non toccano un'istanza reale.** Verificano la lettura di ciò che la Reconnaissance ha registrato, non che la versione installata risponda ancora così. È il criterio «seconda versione della sorgente» della Stabile.
+
+**Un indirizzo con lease durante il periodo e senza al momento dell'acquisizione** produce attività sulla base più debole, mentre il suo dispositivo, se ha cambiato indirizzo, compare con un altro. Limite dichiarato nella Specification 04.
+
+---
+
 ## Revisione del metodo — MASTER_PROMPT 2.0.0 — 2026-09-18
 
 Le regole di lavoro vengono riviste dopo sei settimane di applicazione, sulla base di ciò che ha prodotto risultati e di ciò che è costato senza produrne.

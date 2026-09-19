@@ -39,8 +39,13 @@ function day(value: string): string {
 
     <p v-if="loading">{{ $t('dashboard.loading') }}</p>
 
+    <!--
+      A read that failed is not a network that contacted nothing, and the page
+      says so instead of falling silent.
+    -->
     <p v-else-if="failure">
-      <strong>{{ $t('dashboard.unavailable') }}</strong>
+      <strong>{{ $t('domains.unavailable') }}</strong><br />
+      {{ $t('domains.unavailableReason') }}
     </p>
 
     <!--

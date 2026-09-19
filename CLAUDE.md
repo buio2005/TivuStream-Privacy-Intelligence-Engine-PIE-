@@ -47,7 +47,8 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 64 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 128 tests, all must pass
+cd frontend && npm run test:unit -- --run        # 35 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000
 cd frontend && npm run dev                        # proxies /api to :5000

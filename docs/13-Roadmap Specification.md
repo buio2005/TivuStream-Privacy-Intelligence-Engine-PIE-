@@ -4,11 +4,11 @@
 
 **Document:** Project Roadmap Specification
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-19
 
 ---
 
@@ -33,11 +33,11 @@ La roadmap ha i seguenti obiettivi.
 
 # Current Status
 
-**Documentation Release:** 1.5.0
+**Documentation Release:** 1.5.1
 
-**Project Status:** Documentation Completed
+**Project Status:** In Development
 
-**Development Status:** Not Started
+**Development Status:** In Progress. Il repository non è pubblico e nessun criterio di Beta è soddisfatto: vedi Release Criteria.
 
 ---
 
@@ -69,7 +69,9 @@ Obiettivi.
 * implementazione delle REST API;
 * implementazione del sistema di configurazione.
 
-**Status:** Planned
+**Status:** In Progress
+
+**Situazione:** Esistono il Unified Data Model, il sistema di configurazione, la persistenza e sei endpoint di lettura. Mancano l'autenticazione, HTTPS e il consolidamento a livelli della Specification 16.
 
 ---
 
@@ -84,13 +86,15 @@ Obiettivi.
 * comunicazione con le HTTP API;
 * normalizzazione dei dati.
 
-**Status:** Planned
+**Status:** In Progress
+
+**Situazione:** Esistono il Technitium Adapter (livello base, Domain Activity, configurazione della sorgente) e la comunicazione con le HTTP API. Mancano l'implementazione dell'Adapter Manager, di cui esiste la sola interfaccia, e la prova su una seconda versione di Technitium.
 
 ---
 
 ## Phase 4
 
-### Intelligence Modules
+### Core Modules
 
 Obiettivi.
 
@@ -100,7 +104,9 @@ Obiettivi.
 * Recommendation Engine;
 * NPSS Engine.
 
-**Status:** Planned
+**Status:** In Progress
+
+**Situazione:** Esistono il motore di classificazione e il motore NPSS. Mancano Device, Alert e Recommendation Engine: per questo l'area Device Health non è misurabile e quindici punti del punteggio restano esclusi.
 
 ---
 
@@ -118,7 +124,9 @@ Obiettivi.
 * Recommendations;
 * Statistics.
 
-**Status:** Planned
+**Status:** In Progress
+
+**Situazione:** Esistono Dashboard e Domini. Mancano Devices, Threats, Alerts, Recommendations e Statistics.
 
 ---
 
@@ -148,7 +156,9 @@ Obiettivi.
 * performance test;
 * security test.
 
-**Status:** Planned
+**Status:** In Progress
+
+**Situazione:** Esistono le prove ai confini di Adapter, persistenza, API e Frontend, oltre a quelle del Core. Mancano le prove di integrazione, di prestazioni e di sicurezza.
 
 ---
 
@@ -186,14 +196,26 @@ Obiettivi.
 | Milestone | Description           | Status    |
 | --------- | --------------------- | --------- |
 | M1        | Documentation Release | Completed |
-| M2        | Backend Core          | Planned   |
-| M3        | Technitium Adapter    | Planned   |
-| M4        | Intelligence Modules  | Planned   |
-| M5        | Frontend              | Planned   |
+| M2        | Backend Core          | In Progress |
+| M3        | Technitium Adapter    | In Progress |
+| M4        | Core Modules          | In Progress |
+| M5        | Frontend              | In Progress |
 | M6        | Reports               | Planned   |
-| M7        | Testing               | Planned   |
+| M7        | Testing               | In Progress |
 | M8        | Beta Release          | Planned   |
 | M9        | Stable Release        | Planned   |
+
+## Corrispondenza con il CHANGELOG
+
+Le voci del CHANGELOG numerate `M5.x` (storage, schema e persistenza) e `M6.x` (Frontend) precedono l'allineamento con questa Roadmap e non coincidono con i suoi numeri.
+
+| Voce del CHANGELOG | Milestone della Roadmap |
+| --- | --- |
+| `M2.x`, `M3.x`, `M4.x` | M2, M3, M4 |
+| `M5.x` (persistenza) | M2, Backend Core |
+| `M6.x` (Frontend) | M5, Frontend |
+
+La cronologia non viene riscritta. Le voci future usano i numeri di questa Roadmap.
 
 ---
 

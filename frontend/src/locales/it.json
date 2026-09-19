@@ -73,6 +73,8 @@
   },
   "domains": {
     "title": "Domini osservati",
+    "unavailable": "Impossibile leggere i domini",
+    "unavailableReason": "Il motore non ha risposto. Questo non dice nulla su ciò che la rete ha contattato.",
     "empty": "Nessun dominio registrato nell'ultimo periodo osservato.",
     "occurrences": "{count} interrogazione | {count} interrogazioni",
     "unclassifiedTitle": "Non classificato",

@@ -21,4 +21,12 @@
     <ProjectReference Include="..\TivuStream.Pie.Storage\TivuStream.Pie.Storage.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      The endpoints live in the top level statements of Program.cs, whose type
+      is internal. The test project runs the real host, and needs to see it.
+    -->
+    <InternalsVisibleTo Include="TivuStream.Pie.Api.Tests" />
+  </ItemGroup>
+
 </Project>

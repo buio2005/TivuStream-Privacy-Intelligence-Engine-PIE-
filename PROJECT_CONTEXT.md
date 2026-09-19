@@ -323,7 +323,7 @@ Prima di iniziare qualsiasi attività di sviluppo consultare:
 
 - README.md
 - AI_DEVELOPMENT_GUIDE.md
-- Documentation Release 1.5.0 (/docs)
+- Documentation Release 1.5.1 (/docs)
 - CHANGELOG.md
 
 Questi documenti costituiscono il riferimento ufficiale del progetto.

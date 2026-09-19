@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using TivuStream.Pie.Adapters.Technitium.Responses;
+using TivuStream.Pie.Model.Enums;
 
 namespace TivuStream.Pie.Adapters.Technitium;
 
@@ -28,6 +30,26 @@ internal static class DeviceIdentity
     private const string NetworkNamespace = "TivuStream.Pie.Adapters.Technitium.Device";
 
     private const string HardwareNamespace = "TivuStream.Pie.Adapters.Technitium.Device.Hardware";
+
+    /// <summary>
+    /// Identifies the device behind a network address, on the strongest basis
+    /// the source allows.
+    /// </summary>
+    /// <remarks>
+    /// The single place where the basis is chosen. A device and the activity
+    /// it produced come from different calls of the source, and both must
+    /// arrive at the same identifier for the same device: were each to choose
+    /// on its own, a device with a lease would carry one identifier and its
+    /// activity another, and the two could never be put together.
+    /// </remarks>
+    /// <param name="ipAddress">Network address the source reported.</param>
+    /// <param name="lease">Assignment currently in force for that address, when there is one.</param>
+    internal static (Guid Id, DeviceIdentityBasis Basis) Resolve(string ipAddress, DhcpLease? lease)
+    {
+        return string.IsNullOrWhiteSpace(lease?.HardwareAddress)
+            ? (FromAddress(ipAddress), DeviceIdentityBasis.NetworkAddress)
+            : (FromHardwareAddress(lease.HardwareAddress), DeviceIdentityBasis.HardwareAddress);
+    }
 
     /// <summary>
     /// Derives the identifier of a device from its network address.

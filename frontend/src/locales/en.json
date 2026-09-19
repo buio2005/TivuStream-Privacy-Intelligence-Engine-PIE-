@@ -73,6 +73,8 @@
   },
   "domains": {
     "title": "Observed domains",
+    "unavailable": "Domains could not be read",
+    "unavailableReason": "The engine did not answer. This says nothing about what the network contacted.",
     "empty": "No domain was recorded in the last observed period.",
     "occurrences": "{count} query | {count} queries",
     "unclassifiedTitle": "Unclassified",

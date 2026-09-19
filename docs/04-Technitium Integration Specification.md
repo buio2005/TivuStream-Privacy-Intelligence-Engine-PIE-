@@ -4,11 +4,11 @@
 
 **Document:** Technitium Integration Specification
 
-**Version:** 1.5.0
+**Version:** 1.6.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-19
 
 ---
 
@@ -434,6 +434,10 @@ Il campo `identityBasis` del dispositivo dichiara quale base è stata utilizzata
 | Nessuna assegnazione corrispondente  | `NetworkAddress`  |
 
 Le due basi possono coesistere nella stessa acquisizione: un dispositivo con indirizzo statico convive con altri gestiti dal DHCP, e ciascuno dichiara la propria.
+
+**L'identità vale anche per l'attività.** L'identificativo di `DomainActivity` è derivato con la stessa regola di quello di `Device`: un'attività riferita a un indirizzo che ha un'assegnazione DHCP in corso porta l'identificativo fondato sull'indirizzo hardware, non quello fondato sull'indirizzo di rete. Se dispositivo e attività scegliessero ciascuno per conto proprio, lo stesso dispositivo comparirebbe con due identificativi e le due informazioni non si potrebbero mai mettere in relazione.
+
+Un indirizzo che ha avuto un'assegnazione durante il periodo ma non ne ha più una al momento dell'acquisizione conserva la base più debole: è un limite dichiarato, non un errore.
 
 Attribuire un comportamento a un dispositivo è un'affermazione forte. Il sistema rende esplicito quanto sia solida invece di lasciarlo intendere.
 

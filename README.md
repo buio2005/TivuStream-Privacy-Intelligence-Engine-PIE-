@@ -183,12 +183,12 @@ Ogni dipendenza introdotta nel progetto viene documentata con nome, versione, li
 | Milestone | Descrizione           | Stato     |
 | --------- | --------------------- | --------- |
 | M1        | Documentation Release | Completed |
-| M2        | Backend Core          | Planned   |
-| M3        | Technitium Adapter    | Planned   |
-| M4        | Core Modules          | Planned   |
-| M5        | Frontend              | Planned   |
+| M2        | Backend Core          | In Progress |
+| M3        | Technitium Adapter    | In Progress |
+| M4        | Core Modules          | In Progress |
+| M5        | Frontend              | In Progress |
 | M6        | Reports               | Planned   |
-| M7        | Testing               | Planned   |
+| M7        | Testing               | In Progress |
 | M8        | Beta Release          | Planned   |
 | M9        | Stable Release        | Planned   |
 
@@ -198,11 +198,11 @@ Il dettaglio delle fasi è contenuto nella Roadmap Specification.
 
 # Stato del progetto
 
-**Documentation Release:** 1.5.0
+**Documentation Release:** 1.5.1
 
-**Project Status:** Documentation Completed
+**Project Status:** In Development
 
-**Development Status:** Not Started
+**Development Status:** In Progress. Il progetto non è pronto all'uso: vedi la Roadmap Specification per ciò che manca.
 
 ---
 
