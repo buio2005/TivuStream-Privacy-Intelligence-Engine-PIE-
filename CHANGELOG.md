@@ -8,6 +8,84 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone A6 — Frontend: stati, schermate, catalogo — 2026-09-26
+
+Sesta delle sette milestone della Specification 18. L'interfaccia torna utilizzabile: una nuova installazione si configura dal browser, si accede, si cambia la password, e un amministratore gestisce gli account.
+
+### Added
+
+**Stati**
+
+* `stores/session.ts` tiene i cinque stati della specifica (`Checking`, `SetupRequired`, `Unauthenticated`, `Authenticated`, `PasswordChangeRequired`), sempre uno solo. `App.vue` mostra una schermata per stato, e **le schermate dei dati non vengono montate** in nessuno stato tranne `Authenticated`: prima di entrare, e con la password da cambiare, il punteggio non viene neppure chiesto.
+* Un motore che non risponde durante la verifica della sessione **non** porta a `Unauthenticated`: si resta in `Checking`, con il messaggio `auth.engineUnreachable` e un pulsante per riprovare. Non si sa ancora se una sessione esista.
+* Un `401 AuthenticationRequired`, da qualunque schermata, porta a `Unauthenticated` con «La sessione è terminata», ma solo se si era dentro. Un `403 PasswordChangeRequired` a metà sessione porta al cambio password. Le due reazioni stanno in un solo punto: il client dell'API le notifica, lo store decide.
+
+**Client dell'API**
+
+* `call()` distingue una risposta di rifiuto da un motore che non ha risposto (`EngineUnreachable`), comprese le risposte che non sono del motore, come la pagina d'errore di un proxy. `read()`, usata dagli store esistenti, ne è costruita sopra.
+* `api/messages.ts` traduce un rifiuto in una voce del catalogo **partendo dal solo codice e dal motivo**, mai dal testo del motore. Un motore che non ha risposto ha due frasi diverse: nell'accesso «le credenziali non sono state verificate», in una modifica «non si può sapere se la modifica sia stata applicata». Un codice sconosciuto si mostra con il proprio nome.
+
+**Schermate**
+
+* Configurazione iniziale, accesso, cambio password (obbligato o volontario, dal nome dell'utente nell'intestazione), gestione degli account (solo `Administrator`, voce di menu e rotta).
+* La gestione degli account rilegge l'elenco dopo ogni operazione invece di correggerlo localmente: si mostra ciò che è, non ciò che si sperava. La rimozione si conferma sulla pagina, non con una finestra del browser.
+* Ogni modulo che porta una password è `method="post"`: se lo script mancasse, un invio in `GET` metterebbe la password nell'indirizzo. Le password si svuotano dal modulo dopo ogni invio, riuscito o no, e non toccano alcuna memoria persistente. I campi dichiarano `autocomplete` corretti, così un gestore di password distingue la password attuale da una nuova.
+* Due password nuove diverse fra loro non vengono inviate: è l'unica regola che l'interfaccia controlla da sé, perché i due campi sono una sua idea. Tutte le regole sulla password restano del motore.
+
+**Uscita (F2)**
+
+* All'uscita, e quando la sessione finisce da sola, gli store del punteggio, dei domini e degli account vengono svuotati (`reset()` in ciascuno). Anche se il motore non risponde all'uscita, il browser dimentica comunque.
+
+**Catalogo**
+
+* Le frasi di A6, approvate il 2026-09-26, in italiano e in inglese; le sei della Specification 18 riportate identiche. Il ruolo `Viewer` è «Lettore» in italiano.
+
+**Prove — 41 nuove, da 35 a 76 sul frontend**
+
+| Impegno | Cosa si verifica |
+| --- | --- |
+| Stati | Installazione senza account: solo la configurazione. Nessuna sessione: accesso senza «sessione terminata». Motore muto: nessun modulo, pulsante per riprovare. Password da cambiare: nessuna sezione e **nessuna richiesta del punteggio**. Voce Account solo per un amministratore |
+| F1 | Credenziali sbagliate, motore muto, sessione terminata e connessione non sicura danno **quattro messaggi diversi, in entrambe le lingue**; «credenziali errate» solo quando il motore lo dice, non per la pagina d'errore di un proxy; i secondi di `Retry-After` compaiono nel messaggio |
+| F2 | All'uscita, alla fine spontanea della sessione e con un motore che non risponde all'uscita: nessuno store conserva dati, e i domini non compaiono più sulla pagina |
+| F3 | Tre rifiuti con tre testi diversi del motore producono la stessa frase |
+| F5 | Parità del catalogo, e cinque nuove qualificazioni che devono sopravvivere alla traduzione: il motore muto non ha verificato nulla, non si sa se la modifica sia applicata, il trattenuto non dice nulla, il `Viewer` non vede i dispositivi, chi crea un account ne conosce la password |
+| Account | Elenco con ruolo, stato e cambio password in attesa; creazione con il corpo giusto e password svuotata; rifiuto con il suo motivo; motore muto senza verdetto; codice sconosciuto mostrato; rimozione solo dopo conferma; reimpostazione con il corpo che il motore legge come tale; un `Viewer` che chiede la rotta viene riportato alla dashboard |
+| Password | Viaggia nel corpo di un `POST` e non resta nel modulo né in `localStorage`; dal cambio obbligato si arriva ai dati; due password diverse non vengono inviate; il motivo di un rifiuto è detto nella lingua di chi legge |
+
+Il finto motore delle prove risponde per metodo e percorso, può non rispondere affatto, e fa fallire la prova per ogni richiesta non prevista invece di inventare una risposta.
+
+### Verified
+
+Diciassette difetti introdotti di proposito, tutti intercettati, e una modifica innocua come controllo che non ha fatto fallire nulla: motore muto trattato come credenziali errate; secondi fissi nel messaggio dei tentativi; domini o account non svuotati all'uscita; «sessione terminata» mostrato anche senza sessione; obbligo di cambio ignorato a metà sessione; dati mostrati con la password da cambiare; password lasciata nel modulo; controllo delle due password tolto; uscita che dimentica solo se il motore risponde; elenco degli account non riletto; guardia della rotta tolta; voce Account per tutti; modulo senza `POST`; motore muto alla verifica trattato come uscita; stessa frase per il motore muto in accesso e in modifica; `AuthenticationFailed` non tradotto.
+
+Attraverso il proxy di Vite, contro il backend vero su un database temporaneo: configurazione iniziale, creazione di un account e rifiuto di un `Origin` estraneo si comportano come previsto. `Host` e `Origin` che il proxy inoltra coincidono, quindi i controlli di A5 non ostacolano lo sviluppo.
+
+Controllo dei tipi pulito, compilazione di produzione riuscita, 76 prove sul frontend.
+
+### Known Impact
+
+**Nessuna verifica visiva in un browser.** L'estensione del browser non era collegata. Le schermate sono provate montate con il catalogo vero e contro il backend attraverso il proxy, ma nessuno le ha ancora guardate.
+
+**F4 non è verificato.** Il Frontend non ha una pagina di dettaglio del dominio, quindi l'attività per dispositivo, e con essa `Withheld`, non compare da nessuna parte. Il messaggio `domains.activityWithheld` è nel catalogo. La pagina di dettaglio è un lavoro a sé: richiede frasi nuove per l'attività disponibile e per quella non offerta dalla sorgente.
+
+**La sessione scade senza preavviso.** L'interfaccia non conta il tempo: se ne accorge alla prima richiesta rifiutata, e allora dice che la sessione è terminata.
+
+**La gestione degli account non ha ricerca né paginazione.** Adatta a una casa, non a un'organizzazione.
+
+**Le schermate non sono state provate con la tastiera né con un lettore di schermo.** Hanno etichette, ruoli `alert` e `status` e un contorno di focus visibile, ma nessuno le ha usate così.
+
+---
+
+## Documentation Release 1.7.1 — Dove si verifica F4 — 2026-09-26
+
+### Changed
+
+**Specification 18 alla 1.3.1:** la milestone A6 verifica F1–F3 e F5. F4 si verifica con la pagina di dettaglio del dominio, che il Frontend non ha ancora. Rimandarla è stato deciso il 2026-09-26.
+
+**Roadmap 1.3.4, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.7.1.
+
+---
+
 ## Milestone A5 — Tentativi, trasporto, `Origin`, `Host` — 2026-09-26
 
 Quinta delle sette milestone della Specification 18. Le protezioni che non dipendono da chi chiede: chi prova password a ripetizione viene rallentato, una password non viaggia in chiaro fuori dalla macchina, e una pagina di un altro sito non può usare il browser dell'amministratore.

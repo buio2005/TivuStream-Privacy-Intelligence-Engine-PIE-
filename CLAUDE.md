@@ -48,7 +48,7 @@ only the Specifications your task touches.
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
 dotnet test  backend/TivuStream.Pie.sln          # 362 tests, all must pass
-cd frontend && npm run test:unit -- --run        # 35 tests, all must pass
+cd frontend && npm run test:unit -- --run        # 76 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000; a fresh database
                                                   # prints a one-time setup code
@@ -92,10 +92,10 @@ Every boundary crossed carries at least one test.
 
 ## Known debts
 
-* **No authentication.** The API is open to anyone who reaches it. Safe today
-  only because it binds to loopback. This is the blocker before any use
-  beyond the local machine. Specified in `docs/18-Authentication
-  Specification.md` (approved); milestones A1 to A7. A1 to A5 are done: every
+* **Authentication not finished.** Logs are not yet checked for secrets
+  (A7), and without HTTPS a password can only be sent from this machine.
+  Specified in `docs/18-Authentication
+  Specification.md` (approved); milestones A1 to A7. A1 to A6 are done: every
   endpoint requires a signed in account, and the first one is created with the
   setup code printed by a fresh instance (`POST /api/v1/setup`), or with
   `dotnet run -- reset-password <name>`. Administrators manage accounts
@@ -104,9 +104,13 @@ Every boundary crossed carries at least one test.
   failures are slowed down; passwords are refused over plain HTTP from another
   machine; requests that change data from another `Origin` are refused; only
   the names in `AllowedHosts` are served (loopback by default, `*` stops the
-  start). **The frontend has no sign in or setup screen until A6**, so it
-  shows no data. Tests create accounts directly, and requests in tests come
+  start). The frontend has setup, sign in, password change and account
+  screens (`stores/session.ts` holds the five states). Left: A7, logs without
+  secrets. Backend tests create accounts directly, and requests in tests come
   from the loopback unless they set `X-Test-Remote-Address`.
+* No domain detail page in the frontend: per-device activity and
+  `activityAccess` are not shown anywhere yet (F4 of Specification 18 waits
+  for it).
 * HTTP, not HTTPS.
 * No installation procedure: the `installer/` directory is empty.
 * Tiered retention is designed in Specification 16 and not implemented; the

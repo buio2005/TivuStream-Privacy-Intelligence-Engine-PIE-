@@ -14,6 +14,9 @@ export interface ApiResponse<T> {
 export interface ApiError {
   code: string
   message: string
+
+  /** Precise cause, for the interface to say in the reader's language. */
+  reason?: string
 }
 
 /** A reason that determined the score of an area. */
@@ -78,4 +81,23 @@ export interface ObservedDomains {
   periodsRequested: number
 
   domains: Domain[]
+}
+
+export type AccountRole = 'Administrator' | 'Viewer'
+
+/** Who is signed in, as `auth/session` describes it. */
+export interface SessionInfo {
+  username: string
+  role: AccountRole
+  passwordChangeRequired: boolean
+  expiresAt: string
+}
+
+/** An account, as an administrator sees it. The password never travels back. */
+export interface AccountSummary {
+  username: string
+  role: AccountRole
+  enabled: boolean
+  passwordChangeRequired: boolean
+  createdAt: string
 }

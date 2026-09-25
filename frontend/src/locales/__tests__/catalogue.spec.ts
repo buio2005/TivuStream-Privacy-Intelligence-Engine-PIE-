@@ -61,6 +61,18 @@ describe('Qualifications survive translation', () => {
       it: 'non significa che non vi sia tracciamento',
     },
     'domains.unclassifiedNote': { en: 'does not mean it is safe', it: 'non significa che sia sicuro' },
+
+    // An engine that did not answer checked nothing and may or may not have
+    // changed anything. Neither sentence may turn into a verdict.
+    'auth.engineUnreachable': { en: 'were not checked', it: 'non sono state verificate' },
+    'error.EngineUnreachable': { en: 'no way to know', it: 'non si può sapere' },
+
+    // What is withheld is not an absence.
+    'domains.activityWithheld': { en: 'says nothing about whether', it: 'non dice se' },
+
+    // The cost of the role is stated with it, and so is who knows a password.
+    'role.note.Viewer': { en: 'does not see which device', it: 'non vede quale dispositivo' },
+    'accounts.initialPasswordNote': { en: 'you know it too', it: 'la conosci anche tu' },
   }
 
   for (const [key, expected] of Object.entries(mustSay)) {

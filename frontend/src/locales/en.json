@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "Network Privacy",
-    "language": "Language"
+    "language": "Language",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {name}"
   },
   "dashboard": {
     "title": "Network status",
@@ -69,7 +71,9 @@
   },
   "nav": {
     "dashboard": "Network status",
-    "domains": "Domains"
+    "domains": "Domains",
+    "accounts": "Accounts",
+    "password": "Change password"
   },
   "domains": {
     "title": "Observed domains",
@@ -98,7 +102,8 @@
     "hoursObserved": "{observed} hour observed out of the {requested} requested | {observed} hours observed out of the {requested} requested",
     "inProgress": "The last hour is still in progress.",
     "seen": "First seen {from}, last {to}",
-    "seenOnce": "Seen in the hour of {from}"
+    "seenOnce": "Seen in the hour of {from}",
+    "activityWithheld": "Activity per device is visible to administrators only. This says nothing about whether any device contacted the domain."
   },
   "category": {
     "Malware": "Malware",
@@ -135,5 +140,91 @@
       "label": "What “not measurable” means",
       "note": "We could not observe that area: the data is missing, not the result. It is different from a bad result, and it is why those points count neither for nor against the total."
     }
+  },
+  "auth": {
+    "checking": "Checking your session",
+    "failed": "Username or password incorrect.",
+    "engineUnreachable": "The engine did not answer. Your credentials were not checked.",
+    "sessionEnded": "Your session has ended. Sign in again.",
+    "tooManyAttempts": "Too many attempts. Try again in {seconds} seconds.",
+    "notSecure": "Credentials cannot be sent over an unencrypted connection. Open the address over HTTPS.",
+    "retry": "Try again"
+  },
+  "setup": {
+    "title": "First run setup",
+    "intro": "This installation has no account yet. Enter the code the service wrote to its output when it started, then choose the administrator's name and password.",
+    "code": "Setup code",
+    "submit": "Create the administrator",
+    "codeRejected": "The code was not accepted. It changes every time the service starts: use the one from the latest start.",
+    "alreadyCompleted": "Setup has already been completed. Sign in with an existing account."
+  },
+  "login": {
+    "title": "Sign in",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in"
+  },
+  "password": {
+    "title": "Change password",
+    "required": "This password was chosen by someone else. Choose a new one before continuing.",
+    "current": "Current password",
+    "new": "New password",
+    "repeat": "Repeat the new password",
+    "rules": "At least 12 characters. Length is what counts, not symbols or capitals.",
+    "mismatch": "The two passwords differ.",
+    "submit": "Change password",
+    "done": "Password changed. The other sessions of this account have been closed.",
+    "currentRejected": "The current password is not correct."
+  },
+  "reason": {
+    "TooShort": "Too short: at least 12 characters are needed.",
+    "TooLong": "Too long: at most 128 characters.",
+    "EqualsUsername": "It cannot be the same as the username.",
+    "Unchanged": "It must differ from the current password."
+  },
+  "role": {
+    "Administrator": "Administrator",
+    "Viewer": "Viewer",
+    "note": {
+      "Administrator": "Sees all data, including the activity of each device, and manages the accounts.",
+      "Viewer": "Sees aggregated data: score, statistics, domains. Does not see which device contacted what."
+    }
+  },
+  "accounts": {
+    "title": "Accounts",
+    "you": "(you)",
+    "role": "Role",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "pendingPassword": "Must change the password",
+    "create": "New account",
+    "initialPassword": "Initial password",
+    "initialPasswordNote": "The person will have to change it at the first sign in. Until then, you know it too.",
+    "submit": "Create the account",
+    "created": "Account {name} created.",
+    "disable": "Disable",
+    "enable": "Enable",
+    "makeAdministrator": "Make administrator",
+    "makeViewer": "Make viewer",
+    "resetPassword": "Reset password",
+    "resetNote": "The person will have to change it at the next sign in, and their open sessions are closed. If it is your own account, you are signed out too.",
+    "resetSubmit": "Set",
+    "remove": "Remove",
+    "confirmRemove": "Remove the account {name}? Its sessions are closed and this cannot be undone.",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "changed": "Account {name} updated.",
+    "removed": "Account {name} removed."
+  },
+  "error": {
+    "UsernameRejected": "The name must have 3 to 32 characters among lower case letters, digits, dot, hyphen and underscore.",
+    "RoleRejected": "The role is not valid.",
+    "AccountExists": "An account with this name already exists.",
+    "AccountNotFound": "The account no longer exists. Reload the list.",
+    "LastAdministrator": "Refused: the installation would be left without an administrator able to sign in.",
+    "Forbidden": "Your role does not allow this.",
+    "OriginNotAllowed": "The request was refused because it does not come from this service's own address.",
+    "EngineUnreachable": "The engine did not answer: there is no way to know whether the change was applied. Reload the list to check.",
+    "unexpected": "The engine answered unexpectedly ({code})."
   }
 }

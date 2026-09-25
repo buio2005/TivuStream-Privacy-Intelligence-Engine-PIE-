@@ -29,5 +29,12 @@ export const useScoreStore = defineStore('score', () => {
     }
   }
 
-  return { score, loading, failure, load }
+  /** Forgets everything read. Called when the session ends. */
+  function reset() {
+    score.value = null
+    loading.value = false
+    failure.value = null
+  }
+
+  return { score, loading, failure, load, reset }
 })

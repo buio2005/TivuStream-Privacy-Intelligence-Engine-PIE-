@@ -38,5 +38,15 @@ export const useDomainsStore = defineStore('domains', () => {
     }
   }
 
-  return { domains, period, periodsObserved, periodsRequested, loading, failure, load }
+  /** Forgets everything read. Called when the session ends. */
+  function reset() {
+    domains.value = []
+    period.value = null
+    periodsObserved.value = 0
+    periodsRequested.value = 0
+    loading.value = false
+    failure.value = null
+  }
+
+  return { domains, period, periodsObserved, periodsRequested, loading, failure, load, reset }
 })

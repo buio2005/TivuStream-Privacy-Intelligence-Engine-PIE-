@@ -4,7 +4,7 @@
 
 **Document:** Authentication Specification
 
-**Version:** 1.3.0
+**Version:** 1.3.1
 
 **Status:** Approved
 
@@ -506,7 +506,7 @@ Una funzionalità di questa portata non si realizza in un solo passo. Ogni miles
 | A3 | Configurazione iniziale e recupero | V10 |
 | A4 | Ruoli, gestione degli account, ciò che viene trattenuto | V6, V7 |
 | A5 | Tentativi, trasporto, `Origin`, `Host` | V8, V9, V13, V14 |
-| A6 | Frontend: stati, schermate, catalogo | F1–F5 |
+| A6 | Frontend: stati, schermate, catalogo | F1–F3, F5. F4 si verifica con la pagina di dettaglio del dominio, che il Frontend non ha ancora |
 | A7 | Registrazione senza segreti | V11 |
 
 Le prove dell'API esistenti dovranno ottenere una sessione: la loro fabbrica di test dovrà crearne una.

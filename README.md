@@ -198,7 +198,7 @@ Il dettaglio delle fasi è contenuto nella Roadmap Specification.
 
 # Stato del progetto
 
-**Documentation Release:** 1.7.0
+**Documentation Release:** 1.7.1
 
 **Project Status:** In Development
 

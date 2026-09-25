@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "Network Privacy",
-    "language": "Lingua"
+    "language": "Lingua",
+    "signOut": "Esci",
+    "signedInAs": "Accesso come {name}"
   },
   "dashboard": {
     "title": "Stato della rete",
@@ -69,7 +71,9 @@
   },
   "nav": {
     "dashboard": "Stato della rete",
-    "domains": "Domini"
+    "domains": "Domini",
+    "accounts": "Account",
+    "password": "Cambia password"
   },
   "domains": {
     "title": "Domini osservati",
@@ -98,7 +102,8 @@
     "hoursObserved": "{observed} ora osservata su {requested} richieste | {observed} ore osservate su {requested} richieste",
     "inProgress": "L'ultima ora è ancora in corso.",
     "seen": "Prima osservazione {from}, ultima {to}",
-    "seenOnce": "Osservato nell'ora delle {from}"
+    "seenOnce": "Osservato nell'ora delle {from}",
+    "activityWithheld": "L'attività per dispositivo è visibile solo agli amministratori. Questo non dice se qualche dispositivo abbia contattato il dominio."
   },
   "category": {
     "Malware": "Malware",
@@ -135,5 +140,91 @@
       "label": "Che cosa significa «non misurabile»",
       "note": "Non abbiamo potuto osservare quell'area: manca il dato, non il risultato. È diverso da un risultato negativo, ed è il motivo per cui quei punti non entrano nel totale né in positivo né in negativo."
     }
+  },
+  "auth": {
+    "checking": "Verifica della sessione in corso",
+    "failed": "Nome utente o password non corretti.",
+    "engineUnreachable": "Il motore non ha risposto. Le credenziali non sono state verificate.",
+    "sessionEnded": "La sessione è terminata. Accedi di nuovo.",
+    "tooManyAttempts": "Troppi tentativi. Riprova fra {seconds} secondi.",
+    "notSecure": "Le credenziali non possono essere inviate su una connessione non cifrata. Apri l'indirizzo in HTTPS.",
+    "retry": "Riprova"
+  },
+  "setup": {
+    "title": "Configurazione iniziale",
+    "intro": "Questa installazione non ha ancora un account. Inserisci il codice che il servizio ha scritto nel proprio output all'avvio, poi scegli nome e password dell'amministratore.",
+    "code": "Codice di configurazione",
+    "submit": "Crea l'amministratore",
+    "codeRejected": "Il codice non è stato accettato. Cambia a ogni avvio del servizio: usa quello dell'avvio più recente.",
+    "alreadyCompleted": "La configurazione iniziale è già stata fatta. Accedi con un account esistente."
+  },
+  "login": {
+    "title": "Accesso",
+    "username": "Nome utente",
+    "password": "Password",
+    "submit": "Accedi"
+  },
+  "password": {
+    "title": "Cambio password",
+    "required": "Questa password è stata scelta da qualcun altro. Scegline una nuova prima di continuare.",
+    "current": "Password attuale",
+    "new": "Nuova password",
+    "repeat": "Ripeti la nuova password",
+    "rules": "Almeno 12 caratteri. Conta la lunghezza, non la presenza di simboli o maiuscole.",
+    "mismatch": "Le due password non coincidono.",
+    "submit": "Cambia password",
+    "done": "Password cambiata. Le altre sessioni di questo account sono state chiuse.",
+    "currentRejected": "La password attuale non è corretta."
+  },
+  "reason": {
+    "TooShort": "Troppo corta: servono almeno 12 caratteri.",
+    "TooLong": "Troppo lunga: al massimo 128 caratteri.",
+    "EqualsUsername": "Non può coincidere con il nome utente.",
+    "Unchanged": "Deve essere diversa dalla password attuale."
+  },
+  "role": {
+    "Administrator": "Amministratore",
+    "Viewer": "Lettore",
+    "note": {
+      "Administrator": "Vede tutti i dati, compresa l'attività di ciascun dispositivo, e gestisce gli account.",
+      "Viewer": "Vede i dati aggregati: punteggio, statistiche, domini. Non vede quale dispositivo ha contattato che cosa."
+    }
+  },
+  "accounts": {
+    "title": "Account",
+    "you": "(tu)",
+    "role": "Ruolo",
+    "enabled": "Attivo",
+    "disabled": "Disattivato",
+    "pendingPassword": "Deve cambiare la password",
+    "create": "Nuovo account",
+    "initialPassword": "Password iniziale",
+    "initialPasswordNote": "La persona dovrà cambiarla al primo accesso. Fino ad allora la conosci anche tu.",
+    "submit": "Crea l'account",
+    "created": "Account {name} creato.",
+    "disable": "Disattiva",
+    "enable": "Riattiva",
+    "makeAdministrator": "Rendi amministratore",
+    "makeViewer": "Rendi lettore",
+    "resetPassword": "Reimposta password",
+    "resetNote": "La persona dovrà cambiarla al prossimo accesso, e le sue sessioni aperte vengono chiuse. Se è il tuo account, esci anche tu.",
+    "resetSubmit": "Imposta",
+    "remove": "Rimuovi",
+    "confirmRemove": "Rimuovere l'account {name}? Le sue sessioni vengono chiuse e non si può annullare.",
+    "confirm": "Conferma",
+    "cancel": "Annulla",
+    "changed": "Account {name} aggiornato.",
+    "removed": "Account {name} rimosso."
+  },
+  "error": {
+    "UsernameRejected": "Il nome deve avere da 3 a 32 caratteri fra lettere minuscole, cifre, punto, trattino e trattino basso.",
+    "RoleRejected": "Ruolo non valido.",
+    "AccountExists": "Esiste già un account con questo nome.",
+    "AccountNotFound": "L'account non esiste più. Ricarica l'elenco.",
+    "LastAdministrator": "Operazione rifiutata: l'installazione resterebbe senza un amministratore in grado di accedere.",
+    "Forbidden": "Il tuo ruolo non consente questa operazione.",
+    "OriginNotAllowed": "La richiesta è stata rifiutata perché non proviene dall'indirizzo di questo servizio.",
+    "EngineUnreachable": "Il motore non ha risposto: non si può sapere se la modifica sia stata applicata. Ricarica l'elenco per verificarlo.",
+    "unexpected": "Il motore ha risposto in modo inatteso ({code})."
   }
 }
