@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { i18n } from '@/i18n'
 import router from '@/router'
@@ -15,6 +15,10 @@ import { answer, refused, stubEngine, type Received } from './support'
 afterEach(() => {
   vi.unstubAllGlobals()
 })
+
+// The router is shared by every test. An application left mounted would go on
+// reacting to its navigations, with a store of its own.
+enableAutoUnmount(afterEach)
 
 function summary(username: string, overrides: Partial<AccountSummary> = {}): AccountSummary {
   return {

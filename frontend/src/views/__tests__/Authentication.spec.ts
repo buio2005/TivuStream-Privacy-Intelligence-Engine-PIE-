@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
+import { enableAutoUnmount, flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import App from '@/App.vue'
 import { i18n } from '@/i18n'
@@ -20,6 +20,10 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+// The router is shared by every test. An application left mounted would go on
+// reacting to its navigations, with a store of its own.
+enableAutoUnmount(afterEach)
+
 const score = answer({
   overallScore: 62,
   status: 'Fair',
@@ -30,7 +34,7 @@ const score = answer({
   breakdown: [],
 })
 
-async function start(routes: Parameters<typeof stubEngine>[0], locale: 'en' | 'it' = 'en') {
+async function start(routes: Parameters<typeof stubEngine>[0], locale: 'en' | 'it' = 'en', path = '/') {
   i18n.global.locale.value = locale
 
   const received = stubEngine({ 'GET npss': score, ...routes })
@@ -39,7 +43,7 @@ async function start(routes: Parameters<typeof stubEngine>[0], locale: 'en' | 'i
   const pinia = createPinia()
   setActivePinia(pinia)
 
-  await router.push('/')
+  await router.push(path)
 
   const app = mount(App, { global: { plugins: [pinia, router, i18n] } })
 
@@ -384,5 +388,62 @@ describe('Setup', () => {
 
     expect(useSessionStore().state).toBe('Unauthenticated')
     expect(app.text()).toContain('Setup has already been completed.')
+  })
+})
+
+describe('The page a session leaves behind', () => {
+  const list = answer([{ username: 'root', role: 'Administrator', enabled: true, passwordChangeRequired: false, createdAt: '2026-09-01T12:00:00Z' }])
+
+  it('is not where the next person arrives', async () => {
+    const { app } = await start({
+      'GET auth/session': sessionOf('root'),
+      'GET accounts': list,
+      'POST auth/logout': answer(null),
+      'POST auth/login': sessionOf('maria', 'Viewer'),
+    })
+
+    await router.push('/accounts')
+    await flushPromises()
+
+    await app.find('.who button').trigger('click')
+    await flushPromises()
+
+    await signIn(app, 'maria')
+
+    // Found by the person who reported it: a viewer signing in after an
+    // administrator was left on the accounts screen, refused and still
+    // offering its forms.
+    expect(router.currentRoute.value.name).toBe('dashboard')
+    expect(app.find('input[name=password]').exists()).toBe(false)
+    expect(app.text()).not.toContain('Your role does not allow this.')
+  })
+
+  it('is checked against the role once the role is known, as after a reload', async () => {
+    const { app, received } = await start({ 'GET auth/session': sessionOf('maria', 'Viewer') }, 'en', '/accounts')
+
+    expect(router.currentRoute.value.name).toBe('dashboard')
+    expect(app.find('.overall').exists()).toBe(true)
+
+    // Not mounted even for an instant: nothing was asked on its behalf.
+    expect(received.some((request) => request.path === 'accounts')).toBe(false)
+  })
+
+  it('is not kept for whoever signs in next, even with the same role', async () => {
+    const { app } = await start({
+      'GET auth/session': sessionOf('root'),
+      'GET domains': answer({ period: null, periodsObserved: 0, periodsRequested: 24, domains: [] }),
+      'POST auth/logout': answer(null),
+      'POST auth/login': sessionOf('giulia'),
+    })
+
+    await router.push('/domains')
+    await flushPromises()
+
+    await app.find('.who button').trigger('click')
+    await flushPromises()
+
+    await signIn(app, 'giulia')
+
+    expect(router.currentRoute.value.name).toBe('dashboard')
   })
 })

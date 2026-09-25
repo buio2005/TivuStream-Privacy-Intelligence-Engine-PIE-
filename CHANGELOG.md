@@ -8,6 +8,26 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## A6.1 — La pagina che una sessione lascia dietro di sé — 2026-09-26
+
+Difetto trovato dalla prima prova nel browser, fatta dalla persona che lavora al progetto.
+
+### Fixed
+
+**Un Lettore che entrava dopo un amministratore si ritrovava sulla pagina Account**, con il rifiuto «Il tuo ruolo non consente questa operazione» e i moduli compilabili. Nessun dato è uscito: il motore rifiutava. Lo stesso accadeva ricaricando `/accounts` da Lettore. Causa: la guardia del router agisce solo quando l'indirizzo cambia, e una sessione comincia e finisce sullo stesso indirizzo.
+
+* Quando la sessione finisce, l'interfaccia torna alla pagina iniziale: chi entra dopo non si ritrova sulla pagina lasciata aperta dal precedente, qualunque sia il suo ruolo.
+* Quando la sessione è stabilita, la pagina corrente si ricontrolla con la stessa regola della guardia (`mayShow`, ora un solo punto per entrambi).
+* La vista non viene montata, neppure per un istante, dove il ruolo sarebbe rifiutato: dopo un ricaricamento l'elenco degli account non viene chiesto.
+
+**Le prove lasciavano montate le applicazioni.** Il router è condiviso, e un'applicazione rimasta montata continuava a reagire alle navigazioni delle prove successive con uno store suo. Il difetto era latente; la navigazione aggiunta sopra lo ha fatto emergere come un falso fallimento di F2, che per un momento ho scambiato per una richiesta di dati dopo l'uscita. Ora ogni applicazione viene smontata alla fine della sua prova, e la verifica con i difetti introdotti conferma che quella richiesta non avviene: la precauzione introdotta per evitarla è stata tolta, perché non evitava nulla.
+
+### Verified
+
+Tre prove nuove, da 76 a 79: il caso segnalato, il ricaricamento da Lettore senza alcuna richiesta dell'elenco, e il ritorno alla pagina iniziale per chi entra dopo, anche con lo stesso ruolo. Prima della correzione le prime due fallivano. Ciascuna delle tre parti della correzione, tolta, fa fallire una prova; una modifica innocua non fa fallire nulla.
+
+---
+
 ## Milestone A6 — Frontend: stati, schermate, catalogo — 2026-09-26
 
 Sesta delle sette milestone della Specification 18. L'interfaccia torna utilizzabile: una nuova installazione si configura dal browser, si accede, si cambia la password, e un amministratore gestisce gli account.

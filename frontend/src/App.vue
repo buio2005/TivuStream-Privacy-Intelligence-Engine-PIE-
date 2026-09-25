@@ -1,19 +1,37 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { supportedLocales } from '@/i18n'
+import router, { mayShow } from '@/router'
 import { useSessionStore } from '@/stores/session'
 import LoginView from '@/views/LoginView.vue'
 import PasswordView from '@/views/PasswordView.vue'
 import SetupView from '@/views/SetupView.vue'
 
 const { locale } = useI18n()
+const route = useRoute()
 
 const session = useSessionStore()
 const { state, account, unreachable, isAdministrator } = storeToRefs(session)
 
 onMounted(session.check)
+
+// The guard of the router acts only when the address changes, and a session
+// can begin or end on the same address.
+watch(state, (next) => {
+  // Whoever signs in next starts from the beginning, not on the screen the
+  // previous person left open.
+  if (next === 'Unauthenticated' || next === 'SetupRequired') {
+    router.replace({ name: 'dashboard' })
+  }
+
+  // The role is known only now, after a reload or a sign in.
+  if (next === 'Authenticated' && !mayShow(router.currentRoute.value)) {
+    router.replace({ name: 'dashboard' })
+  }
+})
 
 /** Remembers the choice, so the interface does not forget it on reload. */
 function choose(next: string) {
@@ -71,7 +89,8 @@ function choose(next: string) {
     <SetupView v-else-if="state === 'SetupRequired'" />
     <LoginView v-else-if="state === 'Unauthenticated'" />
     <PasswordView v-else-if="state === 'PasswordChangeRequired'" />
-    <RouterView v-else />
+    <!-- Not mounted, not even for an instant, where the role would be refused. -->
+    <RouterView v-else-if="mayShow(route)" />
   </main>
 </template>
 
