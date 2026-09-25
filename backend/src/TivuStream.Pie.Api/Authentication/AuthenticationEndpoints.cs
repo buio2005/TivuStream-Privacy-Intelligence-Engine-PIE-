@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Net;
 using TivuStream.Pie.Api.Contracts;
 using TivuStream.Pie.Storage;
 
@@ -77,13 +79,28 @@ internal static class AuthenticationEndpoints
         SetupRequest? request,
         HttpContext context,
         SetupService setup,
-        SessionService sessions)
+        SessionService sessions,
+        AttemptLimiter attempts)
     {
+        if (!CredentialTransport.IsSuitable(context))
+        {
+            return CredentialTransport.Refusal();
+        }
+
+        IPAddress? source = context.Connection.RemoteIpAddress;
+
+        if (attempts.RetryAfter(source, account: null) is TimeSpan wait)
+        {
+            return TooManyAttempts(context, wait);
+        }
+
         SetupResult result = setup.Complete(request?.SetupCode, request?.Username, request?.Password);
 
         switch (result.Outcome)
         {
             case SetupOutcome.CodeRejected:
+                attempts.RecordFailure(source, account: null);
+
                 return Results.Json(
                     ApiResponse.Failed<AccountInfo>("SetupCodeRejected", "The setup code was not accepted."),
                     statusCode: StatusCodes.Status401Unauthorized);
@@ -122,8 +139,27 @@ internal static class AuthenticationEndpoints
         HttpContext context,
         SetupService setup,
         CredentialVerifier credentials,
-        SessionService sessions)
+        SessionService sessions,
+        AttemptLimiter attempts)
     {
+        if (!CredentialTransport.IsSuitable(context))
+        {
+            return CredentialTransport.Refusal();
+        }
+
+        IPAddress? source = context.Connection.RemoteIpAddress;
+
+        // Counted under the name tried, whether or not it exists: slowing down
+        // only the names that exist would tell which ones do.
+        string name = AccountPolicy.CanonicalUsername(request?.Username);
+
+        // While the delay lasts the credentials are not checked, not even
+        // right ones: otherwise the delay would slow nobody down.
+        if (attempts.RetryAfter(source, name) is TimeSpan wait)
+        {
+            return TooManyAttempts(context, wait);
+        }
+
         // Nobody can sign in to an installation that has no account, and
         // saying that the credentials were wrong would be untrue.
         if (setup.IsRequired)
@@ -137,10 +173,14 @@ internal static class AuthenticationEndpoints
 
         if (account is null)
         {
+            attempts.RecordFailure(source, name);
+
             return Results.Json(
                 ApiResponse.Failed<AccountInfo>("AuthenticationFailed", RefusedMessage),
                 statusCode: StatusCodes.Status401Unauthorized);
         }
+
+        attempts.RecordSuccess(name);
 
         // Signing in again where a session is already open replaces it. The
         // identifier changes at every sign in, and the old one stops working.
@@ -172,10 +212,24 @@ internal static class AuthenticationEndpoints
         HttpContext context,
         PasswordHasher hasher,
         AccountRepository accounts,
-        SessionService sessions)
+        SessionService sessions,
+        AttemptLimiter attempts)
     {
+        if (!CredentialTransport.IsSuitable(context))
+        {
+            return CredentialTransport.Refusal();
+        }
+
         SessionContext session = CurrentSession(context);
         StoredAccount account = session.Account;
+        IPAddress? source = context.Connection.RemoteIpAddress;
+
+        // Whoever finds a session left open must not be able to try passwords
+        // on it without limit.
+        if (attempts.RetryAfter(source, account.Username) is TimeSpan wait)
+        {
+            return TooManyAttempts(context, wait);
+        }
 
         string newPassword = request?.NewPassword ?? string.Empty;
 
@@ -184,10 +238,15 @@ internal static class AuthenticationEndpoints
         // 401 as the session having ended.
         if (hasher.Verify(request?.CurrentPassword ?? string.Empty, account.PasswordHash) == PasswordVerification.Failed)
         {
+            attempts.RecordFailure(source, account.Username);
+
             return Results.Json(
                 ApiResponse.Failed<AccountInfo>("CurrentPasswordRejected", "The current password was not accepted."),
                 statusCode: StatusCodes.Status403Forbidden);
         }
+
+        // The secret was proven, as by a sign in.
+        attempts.RecordSuccess(account.Username);
 
         // Putting back the same password would satisfy the obligation to
         // change it while leaving it known to whoever set it.
@@ -217,6 +276,17 @@ internal static class AuthenticationEndpoints
         SessionContext session = CurrentSession(context);
 
         return Results.Ok(ApiResponse.Ok(ToInfo(session.Account, session.ExpiresAt)));
+    }
+
+    private static IResult TooManyAttempts(HttpContext context, TimeSpan wait)
+    {
+        int seconds = Math.Max(1, (int)Math.Ceiling(wait.TotalSeconds));
+
+        context.Response.Headers.RetryAfter = seconds.ToString(CultureInfo.InvariantCulture);
+
+        return Results.Json(
+            ApiResponse.Failed<AccountInfo>("TooManyAttempts", "Too many attempts. Try again later."),
+            statusCode: StatusCodes.Status429TooManyRequests);
     }
 
     private static AccountInfo ToInfo(StoredAccount account, DateTimeOffset expiresAt)

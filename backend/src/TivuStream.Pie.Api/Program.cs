@@ -13,6 +13,7 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.Extensions.Options;
 using TivuStream.Pie.Adapters.Technitium;
 using TivuStream.Pie.Api.Acquisition;
@@ -30,6 +31,12 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Credentials never belong to a versioned file.
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
+
+// Read here, so that a configuration accepting any name stops the start
+// rather than being discovered later.
+string[] allowedHosts = HostPolicy.AllowedHosts(builder.Configuration);
+
+builder.Services.PostConfigure<HostFilteringOptions>(options => options.AllowedHosts = allowedHosts);
 
 builder.Services.Configure<TechnitiumOptions>(builder.Configuration.GetSection("Technitium"));
 builder.Services.Configure<AcquisitionOptions>(builder.Configuration.GetSection("Acquisition"));
@@ -53,6 +60,7 @@ builder.Services.AddSingleton(PasswordHasher.Standard);
 builder.Services.AddSingleton<SessionRepository>();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<CredentialVerifier>();
+builder.Services.AddSingleton<AttemptLimiter>();
 builder.Services.AddSingleton(new SetupOutput(Console.Out));
 builder.Services.AddSingleton<SetupService>();
 builder.Services.AddSingleton<RecoveryCommand>();
@@ -138,17 +146,9 @@ ClassificationProvider classification = app.Services.GetRequiredService<Classifi
 classification.EnsureDefaults();
 classification.Reload();
 
-// Every answer of the API carries data about the network, and none of it may
-// stay in the cache of a browser or of anything between.
-app.Use(async (context, next) =>
-{
-    if (context.Request.Path.StartsWithSegments("/api"))
-    {
-        context.Response.Headers.CacheControl = "no-store";
-    }
-
-    await next();
-});
+// Before anything recognises the person: a request from another site is
+// refused whoever it claims to be.
+app.UseRequestProtection();
 
 app.UseAuthentication();
 app.UseAuthorization();

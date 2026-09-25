@@ -79,10 +79,17 @@ internal static class AccountEndpoints
 
     private static IResult Create(
         AccountCreationRequest? request,
+        HttpContext context,
         AccountRepository accounts,
         PasswordHasher hasher,
         TimeProvider time)
     {
+        // The initial password is a password like any other (D9).
+        if (!CredentialTransport.IsSuitable(context))
+        {
+            return CredentialTransport.Refusal();
+        }
+
         string name = AccountPolicy.CanonicalUsername(request?.Username);
 
         if (!AccountPolicy.IsValidUsername(name))
@@ -119,10 +126,16 @@ internal static class AccountEndpoints
     private static IResult Change(
         string username,
         AccountChangeRequest? request,
+        HttpContext context,
         AccountRepository accounts,
         PasswordHasher hasher,
         SessionService sessions)
     {
+        if (request?.Password is not null && !CredentialTransport.IsSuitable(context))
+        {
+            return CredentialTransport.Refusal();
+        }
+
         string name = AccountPolicy.CanonicalUsername(username);
 
         AccountRole? role = null;

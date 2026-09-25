@@ -4,11 +4,11 @@
 
 **Document:** Authentication Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-25
+**Last Updated:** 2026-09-26
 
 ---
 
@@ -207,15 +207,27 @@ Chi può eseguirlo ha già accesso al database. Il recupero non concede nulla ch
 
 # Transport
 
-Le credenziali (`setup`, `login`, cambio password) sono accettate **soltanto su una connessione cifrata oppure quando il client è sul loopback**. Altrimenti la risposta è `403` con codice `TransportNotSecure`.
+Le credenziali sono accettate **soltanto su una connessione cifrata oppure quando il client è sul loopback**. Altrimenti la risposta è `403` con codice `TransportNotSecure`.
+
+Una credenziale è **qualunque password**: `setup`, `login`, cambio della propria password, creazione di un account (`POST /accounts`) e reimpostazione (`PATCH /accounts/{username}` con `password`). La password iniziale scelta da un amministratore è una password come le altre (D9).
+
+Il controllo precede ogni altro: una richiesta respinta per il trasporto non viene valutata e non conta come tentativo. Un indirizzo remoto sconosciuto non è il loopback.
 
 Il criterio è l'indirizzo remoto della connessione, non l'intestazione `Host`, che chi scrive la richiesta controlla.
 
 Il cookie di sessione porta `Secure` quando la connessione è cifrata. Sul loopback in chiaro non lo porta: alcuni browser lo rifiutano su un indirizzo non cifrato anche locale.
 
-L'impostazione `AllowedHosts`, oggi `*`, deve elencare i nomi con cui l'installazione è raggiungibile. Con `*` un sito malevolo che rimappi il proprio nome sull'indirizzo locale (DNS rebinding) raggiunge l'API con il browser dell'amministratore.
+L'impostazione `AllowedHosts` deve elencare i nomi con cui l'installazione è raggiungibile. Con `*` un sito malevolo che rimappi il proprio nome sull'indirizzo locale (DNS rebinding) raggiunge l'API con il browser dell'amministratore.
 
-Su una connessione cifrata le risposte portano `Strict-Transport-Security`.
+Il valore predefinito è `localhost;127.0.0.1;[::1]`, i soli nomi del loopback, e vale anche quando l'impostazione manca: una riga assente da un file di configurazione non deve aprire nulla. Chi raggiunge l'installazione con un altro nome lo aggiunge in `appsettings.Local.json`. Il valore `*` **impedisce l'avvio**, con un messaggio che dice perché: è esattamente l'impostazione che spegne una protezione, vietata dal secondo principio. Una richiesta con un `Host` non elencato riceve `400` dal filtro del framework, senza corpo: non è rivolta a questo servizio.
+
+Su una connessione cifrata le risposte portano `Strict-Transport-Security: max-age=31536000`.
+
+## Origin
+
+Una richiesta che modifica dati (ogni metodo tranne `GET`, `HEAD`, `OPTIONS` e `TRACE`) con un `Origin` diverso da schema, nome e porta della richiesta stessa riceve `403 OriginNotAllowed`. Vale anche per `setup` e `login`. `Origin: null` è diverso da qualunque indirizzo.
+
+Una richiesta **senza** `Origin` è accettata. I browser lo mandano su ogni richiesta che modifica dati; chi non lo manda è un client che non è un browser, e non porta con sé la sessione di nessuno.
 
 Come si ottiene la connessione cifrata, e come si tratta un proxy che la termina davanti a PIE, appartiene alla specifica Transport Security.
 
@@ -231,6 +243,23 @@ Contro chi prova password a ripetizione.
 | Per account | 10 fallimenti | Lo stesso rifiuto |
 
 Il ritardo parte da 30 secondi e **raddoppia** ad ogni ulteriore fallimento, fino a un massimo di **15 minuti**. Un accesso riuscito azzera il contatore dell'account. I contatori vivono in memoria e si azzerano al riavvio.
+
+Che cosa è un fallimento:
+
+| Richiesta | Contatori |
+| --- | --- |
+| `login` rifiutato con `AuthenticationFailed` | Indirizzo e account |
+| `setup` rifiutato con `SetupCodeRejected` | Indirizzo |
+| Cambio della propria password rifiutato con `CurrentPasswordRejected` (D10) | Indirizzo e account |
+
+Un nome o una password non conformi non sono un fallimento: non mettono alla prova alcun segreto. Una richiesta respinta con `429` non viene valutata e non conta. La password attuale giusta, nel cambio password, azzera il contatore dell'account come un accesso riuscito.
+
+Regole dei contatori:
+
+* **Durante il ritardo le credenziali non vengono verificate**, neppure se sono giuste: altrimenti il ritardo non rallenterebbe nessuno.
+* Il contatore dell'account è indicizzato dal **nome tentato**, che l'account esista o no. Rallentare soltanto i nomi esistenti rivelerebbe quali esistono.
+* Un indirizzo IPv6 si conta per il suo **prefisso /64**, che è ciò che una rete domestica assegna a un solo dispositivo: contarlo per indirizzo lascerebbe a chiunque miliardi di contatori. Un indirizzo IPv4 scritto come IPv6 si conta come IPv4.
+* **Oblio (D11).** Un contatore senza fallimenti per 15 minuti **dopo la fine del suo ritardo** si azzera. Contare dall'ultimo fallimento farebbe coincidere l'oblio con la fine del ritardo più lungo, e chi insiste troverebbe il contatore vuoto proprio quando torna a provare. Così un errore occasionale viene dimenticato, un avversario continuo resta rallentato, e la memoria non cresce senza limite.
 
 Non esiste un blocco permanente: renderebbe possibile a chiunque chiudere fuori il proprietario. Il tetto di 15 minuti è la misura di quanto un avversario può rallentare l'amministratore legittimo, ed è dichiarato come compromesso.
 
@@ -318,8 +347,9 @@ Un account, nelle risposte, è `username`, `role`, `enabled`, `passwordChangeReq
 ## Intestazioni
 
 * Ogni risposta autenticata porta `Cache-Control: no-store`: contiene dati di rete e non deve restare nella cache del browser né di un intermediario.
-* Le richieste che modificano dati verificano `Origin`, oltre a `SameSite=Strict`.
-* Nessuna pagina servita da PIE può essere inserita in un frame di un altro sito (`frame-ancestors 'none'`).
+* Le richieste che modificano dati verificano `Origin`, oltre a `SameSite=Strict`. Vedi Transport, Origin.
+* Nessuna pagina servita da PIE può essere inserita in un frame di un altro sito: ogni risposta porta `Content-Security-Policy: frame-ancestors 'none'`.
+* Un rifiuto `429` porta `Retry-After` in secondi interi, arrotondati per eccesso.
 
 ---
 
@@ -443,7 +473,7 @@ Ogni impegno è **verificabile**, e ciascuno corrisponde ad almeno una prova, co
 | V6 | Ciò che è trattenuto è dichiarato | Un `Viewer` non legge `/devices` e ottiene `Withheld`, non un elenco vuoto, su `/domains/{domain}` |
 | V7 | Esiste sempre un amministratore | L'ultimo non si può disattivare, rimuovere né retrocedere |
 | V8 | I tentativi ripetuti rallentano | Dopo la soglia si ottiene `429`; un accesso riuscito azzera; il ritardo ha il tetto dichiarato |
-| V9 | Credenziali solo su canale idoneo | Su connessione in chiaro non locale `setup`, `login` e cambio password rispondono `TransportNotSecure` |
+| V9 | Credenziali solo su canale idoneo | Su connessione in chiaro non locale ogni richiesta che porta una password risponde `TransportNotSecure` |
 | V10 | La configurazione iniziale si fa una volta | Senza codice o con codice errato fallisce; con il codice giusto ha successo; la seconda richiesta fallisce |
 | V11 | Nessun segreto in uscita | Nessuna risposta e nessuna riga di registro contiene una password, un identificativo di sessione o il codice |
 | V12 | Nessuna cache | Le risposte autenticate portano `Cache-Control: no-store` |
@@ -520,6 +550,9 @@ Scelte di prodotto, approvate il 2026-09-19 insieme ai messaggi del Frontend. Pe
 | **D6** | Valori: sessione 8 ore di inattività e 14 giorni al massimo, ritardo da 30 secondi a 15 minuti, password da 12 caratteri, 210.000 iterazioni | **Quelli scritti qui** | Sono soglie: si possono cambiare senza toccare la struttura. Una sessione più lunga è più comoda e lascia più tempo a un browser dimenticato aperto |
 | **D7** | Riformulazione del criterio di Beta nella Roadmap | **Sì**, come proposto | Lasciarlo com'è mantiene un criterio che nessuna implementazione può soddisfare alla lettera |
 | **D8** | Nuova password uguale all'attuale, approvata il 2026-09-25 | **Rifiutata**, con `Unchanged` | *Accettarla*: nessuna regola in più, ma l'obbligo di cambio diventa un invito e l'amministratore resta a conoscenza della password che ha assegnato |
+| **D9** | Trasporto delle password, approvata il 2026-09-26 | **Ogni** richiesta che porta una password, comprese creazione e reimpostazione di un account | *Solo `setup`, `login` e cambio password*: la password iniziale scelta dall'amministratore viaggerebbe in chiaro sulla rete locale |
+| **D10** | Password attuale sbagliata nel cambio password, approvata il 2026-09-26 | **Conta** come fallimento, per indirizzo e account | *Non contarla*: chi trova una sessione aperta proverebbe password senza limiti |
+| **D11** | Oblio dei contatori, approvata il 2026-09-26 | **15 minuti** senza fallimenti dopo la fine del ritardo | *24 ore*: più severo con chi sbaglia per errore. *Solo al riavvio*: chi sbaglia cinque volte in mesi resta rallentato per sempre, e la memoria cresce con ogni nome tentato |
 
 ---
 

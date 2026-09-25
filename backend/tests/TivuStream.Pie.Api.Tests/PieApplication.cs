@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
@@ -136,6 +137,12 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
     internal const string Password = "a-password-for-the-tests";
 
     /// <summary>
+    /// Header with which a test says where its request comes from. Without it
+    /// a request comes from the loopback, as the real host sees a local browser.
+    /// </summary>
+    internal const string RemoteAddressHeader = "X-Test-Remote-Address";
+
+    /// <summary>
     /// The instant the host believes it is at the start: half past noon.
     /// </summary>
     internal static readonly DateTimeOffset Now = new(2026, 9, 1, 12, 30, 0, TimeSpan.Zero);
@@ -190,6 +197,8 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
 
             services.RemoveAll<PasswordHasher>();
             services.AddSingleton(new PasswordHasher(TestIterations));
+
+            services.AddSingleton<IStartupFilter, RemoteAddressFilter>();
         });
     }
 
@@ -329,13 +338,31 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
     }
 
     // A session identifier can be presented by hand, for a client that keeps no cookies of its own.
-    internal static async Task<Answer> SendAsync(HttpClient client, HttpMethod method, string path, object? body = null, string? cookie = null)
+    // A request can say which address it comes from, and which site sent it.
+    internal static async Task<Answer> SendAsync(
+        HttpClient client,
+        HttpMethod method,
+        string path,
+        object? body = null,
+        string? cookie = null,
+        string? from = null,
+        string? origin = null)
     {
         using HttpRequestMessage request = new(method, new Uri(path, UriKind.Relative));
 
         if (cookie is not null)
         {
             request.Headers.Add("Cookie", $"{SessionCookie.Name}={cookie}");
+        }
+
+        if (from is not null)
+        {
+            request.Headers.Add(RemoteAddressHeader, from);
+        }
+
+        if (origin is not null)
+        {
+            request.Headers.Add("Origin", origin);
         }
 
         if (body is not null)
@@ -350,5 +377,39 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
         using JsonDocument document = JsonDocument.Parse(raw.Length == 0 ? "null" : raw);
 
         return new Answer(response.StatusCode, document.RootElement.Clone(), raw, response.Headers);
+    }
+}
+
+/// <summary>
+/// Gives each request the remote address a real connection would have.
+/// </summary>
+/// <remarks>
+/// The in-memory server leaves the address unknown, and an unknown address is
+/// not the loopback: every password would be refused. Placed before anything
+/// else in the pipeline, so that what the host sees is what Kestrel would
+/// have given it.
+/// </remarks>
+internal sealed class RemoteAddressFilter : IStartupFilter
+{
+    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+    {
+        return app =>
+        {
+            app.Use(async (context, following) =>
+            {
+                string? declared = context.Request.Headers[PieApplication.RemoteAddressHeader];
+
+                context.Connection.RemoteIpAddress = declared switch
+                {
+                    null => IPAddress.Loopback,
+                    "unknown" => null,
+                    _ => IPAddress.Parse(declared),
+                };
+
+                await following(context);
+            });
+
+            next(app);
+        };
     }
 }

@@ -7,7 +7,13 @@
 // Il token si genera in Technitium da Administration, creando un utente
 // dedicato con permesso di sola lettura sulla sezione Dashboard e poi un
 // API Token per quell'utente.
+//
+// AllowedHosts elenca i nomi con cui l'installazione viene raggiunta. Il
+// valore predefinito comprende solo il loopback; chi usa un altro nome lo
+// aggiunge qui, separato da punto e virgola. Mai "*": aprirebbe l'API al
+// DNS rebinding.
 {
+  "AllowedHosts": "localhost;127.0.0.1;[::1]",
   "Technitium": {
     "DataSourceId": "11111111-2222-3333-4444-555555555555",
     "BaseAddress": "http://localhost:5380",

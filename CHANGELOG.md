@@ -8,6 +8,92 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone A5 — Tentativi, trasporto, `Origin`, `Host` — 2026-09-26
+
+Quinta delle sette milestone della Specification 18. Le protezioni che non dipendono da chi chiede: chi prova password a ripetizione viene rallentato, una password non viaggia in chiaro fuori dalla macchina, e una pagina di un altro sito non può usare il browser dell'amministratore.
+
+### Added
+
+**Tentativi (V8)**
+
+* `AttemptLimiter`: 5 fallimenti per indirizzo, 10 per nome. Il ritardo è di 30 secondi e raddoppia a ogni fallimento successivo, fino a 15 minuti. Durante il ritardo si risponde `429 TooManyAttempts` con `Retry-After`, **senza verificare le credenziali**, nemmeno quelle giuste.
+* Contano come fallimenti: un `login` rifiutato, un codice di `setup` sbagliato (solo per indirizzo) e una password attuale sbagliata nel cambio password (D10). Un nome o una password non conformi non contano, perché non mettono alla prova alcun segreto.
+* Il contatore del nome vale per il nome **tentato**, che esista o no: rallentare solo i nomi esistenti rivelerebbe quali esistono. Un accesso riuscito azzera il contatore del nome, non quello dell'indirizzo.
+* Un indirizzo IPv6 si conta per il suo prefisso /64, e un IPv4 scritto come IPv6 si conta come IPv4. Gli indirizzi sconosciuti condividono un solo contatore.
+* **Oblio (D11):** un contatore si dimentica dopo 15 minuti senza fallimenti **dalla fine del suo ritardo**.
+
+**Trasporto (V9)**
+
+* Ogni richiesta che porta una password (D9) risponde `403 TransportNotSecure` se non arriva su connessione cifrata o dal loopback. Il criterio è l'indirizzo remoto della connessione. Tutto 127.0.0.0/8 è loopback, anche scritto come IPv6; un indirizzo sconosciuto non lo è. Il controllo precede ogni altro, e un rifiuto per il trasporto non conta come tentativo.
+* Su connessione cifrata le risposte portano `Strict-Transport-Security: max-age=31536000`.
+
+**Origin (V13)**
+
+* Una richiesta che modifica dati con un `Origin` diverso da schema, nome e porta del servizio riceve `403 OriginNotAllowed`, anche su `login` e `setup`. Una richiesta senza `Origin` passa: la mandano solo i client che non sono browser.
+
+**Host (V14)**
+
+* `AllowedHosts` ha nel codice il valore predefinito `localhost;127.0.0.1;[::1]`, che vale anche quando l'impostazione manca. **`*` impedisce l'avvio**, con un messaggio che spiega perché. `appsettings.Local.json.example` mostra come aggiungere un nome.
+
+**Intestazioni**
+
+* Ogni risposta porta `Content-Security-Policy: frame-ancestors 'none'`.
+
+**Prove — 48 nuove, da 314 a 362 sul backend**
+
+| Impegno | Cosa si verifica |
+| --- | --- |
+| V8, unità | Soglie, raddoppio fino al tetto, azzeramento dopo un accesso riuscito solo per il nome, oblio a 15 minuti dalla fine del ritardo e non prima, ritardo più lungo che non finisce con un contatore vuoto, chiavi IPv6 e IPv4 |
+| V8, API | Cinque errori bloccano anche la password giusta per 30 secondi, con `Retry-After: 30` e senza cookie, mentre un altro dispositivo non è bloccato. Dieci errori su un nome lo bloccano da ovunque, **con la stessa risposta per un nome inesistente**. Un codice di `setup` giusto funziona dopo il ritardo. Una password non conforme non conta. Una password attuale sbagliata conta |
+| V9 | Tutte e cinque le richieste che portano una password sono rifiutate da un altro dispositivo in chiaro, senza cambiare nulla; un `PATCH` senza password passa; il loopback è accettato in ogni forma, un indirizzo sconosciuto no; su HTTPS si entra da ovunque, con `Secure` e `Strict-Transport-Security` |
+| V13 | Un `Origin` estraneo, con un'altra porta, con un altro schema o `null` è rifiutato e non cambia nulla; lo stesso vale per `login`; la lettura non è toccata; l'`Origin` del servizio e l'assenza di `Origin` passano |
+| V14 | Un nome non elencato riceve `400`; i nomi del loopback passano senza configurazione; un nome aggiunto passa; `*` impedisce l'avvio |
+
+L'host di prova dà a ogni richiesta l'indirizzo del loopback, o quello che la prova dichiara: il server in memoria lo lascerebbe sconosciuto, e ora conta.
+
+### Verified
+
+Diciannove difetti introdotti di proposito, tutti intercettati, e un controllo con una modifica innocua che non ha fatto fallire nulla.
+
+Uno di questi, la conversione degli indirizzi IPv4 scritti come IPv6, inizialmente **non era intercettato**. Il framework riconosce `::ffff:127.0.0.1` come loopback ma non il resto di 127.0.0.0/8 scritto allo stesso modo: la prova usava proprio l'unico indirizzo che non serviva a nulla. È stata aggiunta `::ffff:127.5.6.7`, e il codice spiega perché la conversione esiste.
+
+Verifica sull'eseguibile vero, avviato con la configurazione di produzione: `Host` estraneo `400`, `Origin` estraneo `403 OriginNotAllowed`, e le intestazioni presenti.
+
+Compilazione senza avvisi. 362 prove sul backend e 35 sul frontend, tre esecuzioni complete consecutive senza fallimenti.
+
+### Known Impact
+
+**Un proxy sulla stessa macchina rende ogni client locale.** Se un proxy davanti a PIE accetta connessioni in chiaro e le inoltra dal loopback, il controllo del trasporto lo considera idoneo, e tutti i client condividono il contatore dell'indirizzo del proxy. Un proxy che termina HTTPS, al contrario, fa vedere a PIE `http` mentre il browser dichiara `https` nell'`Origin`: le richieste che modificano dati sarebbero rifiutate. Le intestazioni inoltrate non sono lette. Tutto questo appartiene alla Transport Security Specification, che ancora non esiste.
+
+**Chi raggiunge l'installazione con un nome diverso dal loopback** deve aggiungerlo ad `AllowedHosts` in `appsettings.Local.json`. Senza, riceve un `400` senza spiegazione. La procedura di installazione dovrà dirlo.
+
+**Il `400` per un `Host` non elencato non ha la struttura comune delle risposte.** Lo produce il filtro del framework prima che l'applicazione veda la richiesta, ed è destinato a chi non si sta rivolgendo a questo servizio.
+
+**Il limite raggiunto non viene registrato.** Arriva con A7.
+
+**Il Frontend non mostra ancora `auth.tooManyAttempts` né `auth.notSecure`.** Arrivano con A6; i secondi da mostrare sono in `Retry-After`.
+
+---
+
+## Documentation Release 1.7.0 — Tentativi, trasporto, Origin e Host — 2026-09-26
+
+### Changed
+
+**Specification 18 alla 1.3.0**
+
+* **D9, approvata:** il canale idoneo vale per ogni password, comprese la creazione e la reimpostazione di un account. La specifica elencava solo `setup`, `login` e cambio password.
+* **D10, approvata:** una password attuale sbagliata nel cambio password conta come fallimento.
+* **D11, approvata:** un contatore si dimentica dopo 15 minuti senza fallimenti dalla fine del ritardo. La specifica li azzerava solo al riavvio: chi sbagliava cinque volte in mesi restava rallentato per sempre, e la memoria cresceva con ogni nome tentato.
+* Che cosa è un fallimento; le credenziali non si verificano durante il ritardo; il contatore del nome vale per il nome tentato; conteggio IPv6 per /64.
+* `Origin`: che cosa è una richiesta che modifica dati, il confronto con schema, nome e porta, l'`Origin` assente accettato.
+* `AllowedHosts`: il valore predefinito, e `*` che impedisce l'avvio, in applicazione del secondo principio.
+* Valori di `Strict-Transport-Security`, `Content-Security-Policy` e `Retry-After`.
+* V9 esteso a ogni richiesta che porta una password.
+
+**Roadmap 1.3.3, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.7.0.
+
+---
+
 ## Milestone A4 — Ruoli, gestione degli account, ciò che viene trattenuto — 2026-09-26
 
 Quarta delle sette milestone della Specification 18. Da qui i due ruoli leggono cose diverse, un amministratore gestisce gli account dall'API, e una password scelta da qualcun altro va cambiata prima di fare qualunque altra cosa.
