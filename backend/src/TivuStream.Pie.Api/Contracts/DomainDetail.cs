@@ -3,6 +3,35 @@ using TivuStream.Pie.Model.Entities;
 namespace TivuStream.Pie.Api.Contracts;
 
 /// <summary>
+/// What the list of activities of a domain means.
+/// </summary>
+/// <remarks>
+/// An empty list because the reader may not see it, and an empty list because
+/// no device reached the domain, are different statements. Presented alike,
+/// the first would read as the second.
+/// </remarks>
+public enum ActivityAccess
+{
+    /// <summary>
+    /// The Data Source offers the activity and whoever asks may read it. The
+    /// list is the activity.
+    /// </summary>
+    Available,
+
+    /// <summary>
+    /// The Data Source does not offer the activity. The list is empty and
+    /// means nothing.
+    /// </summary>
+    Unavailable,
+
+    /// <summary>
+    /// The Data Source offers it, but the role of whoever asks does not cover
+    /// it. The list is empty and means nothing.
+    /// </summary>
+    Withheld,
+}
+
+/// <summary>
 /// A domain together with the devices that reached it.
 /// </summary>
 /// <remarks>
@@ -25,14 +54,13 @@ public sealed record DomainDetail
     /// Interactions recorded between devices and this domain.
     /// </summary>
     /// <remarks>
-    /// Empty when the Data Source does not provide the correlation, which is
-    /// not the same as no device having reached the domain.
+    /// Meaningful only when <see cref="ActivityAccess"/> is
+    /// <see cref="Contracts.ActivityAccess.Available"/>.
     /// </remarks>
     public IReadOnlyList<DomainActivity> Activities { get; init; } = [];
 
     /// <summary>
-    /// Indicates whether the correlation between devices and domains is
-    /// available at all.
+    /// What <see cref="Activities"/> means.
     /// </summary>
-    public required bool ActivityAvailable { get; init; }
+    public required ActivityAccess ActivityAccess { get; init; }
 }

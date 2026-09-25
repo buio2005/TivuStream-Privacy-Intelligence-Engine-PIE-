@@ -42,17 +42,17 @@ public sealed class AuthenticationTests : IDisposable
         // different one, checked with the setup tests.
         _app.AddAccount("someone", AccountRole.Viewer);
 
-        List<RouteEndpoint> endpoints = Endpoints();
+        List<RouteEndpoint> endpoints = _app.Endpoints();
 
         // A host that reports no endpoints would make every check below pass
         // by having nothing to check.
         Assert.True(endpoints.Count >= 8, "the host should expose its endpoints");
 
-        foreach (RouteEndpoint endpoint in endpoints.Where(endpoint => !IsAnonymous(endpoint)))
+        foreach (RouteEndpoint endpoint in endpoints.Where(endpoint => !PieApplication.IsAnonymous(endpoint)))
         {
             using HttpClient client = _app.NewClient();
 
-            Answer answer = await PieApplication.SendAsync(client, MethodOf(endpoint), ConcretePath(endpoint));
+            Answer answer = await PieApplication.SendAsync(client, PieApplication.MethodOf(endpoint), PieApplication.ConcretePath(endpoint));
 
             Assert.True(answer.Status == HttpStatusCode.Unauthorized, $"{endpoint.RoutePattern.RawText} answered {answer.Status}");
             Assert.Equal("AuthenticationRequired", answer.Body.GetProperty("error").GetProperty("code").GetString());
@@ -62,8 +62,8 @@ public sealed class AuthenticationTests : IDisposable
     [Fact]
     public void The_only_endpoint_reachable_without_credentials_is_the_one_that_obtains_them()
     {
-        string[] open = Endpoints()
-            .Where(IsAnonymous)
+        string[] open = _app.Endpoints()
+            .Where(PieApplication.IsAnonymous)
             .Select(endpoint => endpoint.RoutePattern.RawText!)
             .Order()
             .ToArray();
@@ -76,9 +76,9 @@ public sealed class AuthenticationTests : IDisposable
     [Fact]
     public void Every_endpoint_declares_the_role_it_requires()
     {
-        foreach (RouteEndpoint endpoint in Endpoints())
+        foreach (RouteEndpoint endpoint in _app.Endpoints())
         {
-            bool declared = IsAnonymous(endpoint) || endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>().Count > 0;
+            bool declared = PieApplication.IsAnonymous(endpoint) || endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>().Count > 0;
 
             Assert.True(declared, $"{endpoint.RoutePattern.RawText} declares neither a role nor that it is open");
         }
@@ -98,6 +98,12 @@ public sealed class AuthenticationTests : IDisposable
         Assert.False((await authorization.AuthorizeAsync(new ClaimsPrincipal(new ClaimsIdentity()), null, fallback)).Succeeded);
         Assert.False((await authorization.AuthorizeAsync(Principal("Viewer"), null, fallback)).Succeeded);
         Assert.True((await authorization.AuthorizeAsync(Principal("Administrator"), null, fallback)).Succeeded);
+
+        // Nor may it become the way around a password that must be changed.
+        ClaimsPrincipal pending = Principal("Administrator");
+        ((ClaimsIdentity)pending.Identity!).AddClaim(new Claim(PasswordSettledRequirement.PendingClaim, "true"));
+
+        Assert.False((await authorization.AuthorizeAsync(pending, null, fallback)).Succeeded);
     }
 
     // ------------------------------------------------------------------
@@ -466,29 +472,6 @@ public sealed class AuthenticationTests : IDisposable
     private static ClaimsPrincipal Principal(string role)
     {
         return new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], "test"));
-    }
-
-    private List<RouteEndpoint> Endpoints()
-    {
-        return _app.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>().ToList();
-    }
-
-    private static bool IsAnonymous(RouteEndpoint endpoint)
-    {
-        return endpoint.Metadata.GetMetadata<IAllowAnonymous>() is not null;
-    }
-
-    private static HttpMethod MethodOf(RouteEndpoint endpoint)
-    {
-        string method = endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods[0];
-
-        return new HttpMethod(method);
-    }
-
-    private static string ConcretePath(RouteEndpoint endpoint)
-    {
-        // "/api/v1/domains/{domain}" becomes "/api/v1/domains/x".
-        return System.Text.RegularExpressions.Regex.Replace(endpoint.RoutePattern.RawText!, @"\{[^}]+\}", "x");
     }
 
     private static string TokenFrom(Answer login)

@@ -302,7 +302,7 @@ public sealed class EndpointTests : IDisposable
 
         JsonElement data = body.GetProperty("data");
 
-        Assert.True(data.GetProperty("activityAvailable").GetBoolean());
+        Assert.Equal("Available", data.GetProperty("activityAccess").GetString());
         Assert.Equal(1, data.GetProperty("activities").GetArrayLength());
     }
 
@@ -325,7 +325,7 @@ public sealed class EndpointTests : IDisposable
         JsonElement data = body.GetProperty("data");
 
         // An empty list would read as "no device contacted it".
-        Assert.False(data.GetProperty("activityAvailable").GetBoolean());
+        Assert.Equal("Unavailable", data.GetProperty("activityAccess").GetString());
         Assert.Equal(0, data.GetProperty("activities").GetArrayLength());
     }
 

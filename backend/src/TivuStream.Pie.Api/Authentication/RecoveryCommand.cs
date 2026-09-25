@@ -123,7 +123,7 @@ internal sealed class RecoveryCommand
     /// <returns>An exit code: <see cref="Done"/>, <see cref="Refused"/> or <see cref="NotAcceptable"/>.</returns>
     internal int Run(string username, IPasswordPrompt prompt, TextWriter output)
     {
-        string name = username.Trim().ToLowerInvariant();
+        string name = AccountPolicy.CanonicalUsername(username);
 
         if (!AccountPolicy.IsValidUsername(name))
         {

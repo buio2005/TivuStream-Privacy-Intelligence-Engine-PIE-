@@ -4,11 +4,11 @@
 
 **Document:** Authentication Specification
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-19
+**Last Updated:** 2026-09-25
 
 ---
 
@@ -272,7 +272,10 @@ Tutte le risposte usano la struttura comune della API Specification.
 | 401 | `SetupCodeRejected` | Il codice di configurazione iniziale è assente o errato. Identico nei due casi |
 | 409 | `SetupAlreadyCompleted` | Esiste già un account: la configurazione iniziale non è più disponibile |
 | 422 | `UsernameRejected` | Nome non conforme |
-| 422 | `PasswordRejected` | Password non conforme, con il motivo: `TooShort`, `TooLong`, `EqualsUsername` |
+| 422 | `PasswordRejected` | Password non conforme, con il motivo: `TooShort`, `TooLong`, `EqualsUsername`, `Unchanged` |
+| 422 | `RoleRejected` | Ruolo diverso da `Administrator` e `Viewer`, o assente nella creazione di un account |
+| 403 | `CurrentPasswordRejected` | Nel cambio della propria password, la password attuale non è quella giusta |
+| 404 | `AccountNotFound` | Nessun account ha il nome indicato nel percorso |
 | 429 | `TooManyAttempts` | Vedi Attempts |
 
 Il motivo di `PasswordRejected` viaggia nel campo `reason` della risposta di errore e non nel testo: l'interfaccia lo traduce nella lingua di chi legge.
@@ -281,7 +284,36 @@ Le risposte di rifiuto non riportano mai una `WWW-Authenticate` di tipo `Basic`:
 
 `AuthenticationRequired` non distingue una sessione scaduta da una mai aperta: non è un'informazione che il Backend debba fornire. Il Frontend sa da sé se l'utente era entrato.
 
-Mentre `passwordChangeRequired` è vero, ogni endpoint tranne `auth/session`, `auth/password` e `auth/logout` risponde `PasswordChangeRequired`.
+Mentre `passwordChangeRequired` è vero, ogni endpoint tranne `auth/session`, `auth/password` e `auth/logout` risponde `PasswordChangeRequired`. Vale anche dove il ruolo non basterebbe: la password da cambiare viene prima di ogni altra cosa, e dire `Forbidden` a chi non può ancora fare nulla sarebbe un'indicazione inutile.
+
+## Richieste e risposte
+
+| Endpoint | Corpo | Risposta riuscita |
+| --- | --- | --- |
+| `POST /auth/password` | `currentPassword`, `newPassword` | `200`, la sessione come la descrive `auth/session` |
+| `GET /accounts` | — | `200`, l'elenco degli account |
+| `POST /accounts` | `username`, `role`, `password` | `201`, l'account creato |
+| `PATCH /accounts/{username}` | `role`, `enabled`, `password`, ciascuno facoltativo | `200`, l'account come è dopo la modifica |
+| `DELETE /accounts/{username}` | — | `200` |
+
+Un account, nelle risposte, è `username`, `role`, `enabled`, `passwordChangeRequired` e `createdAt`. L'hash della password non esce mai dal Backend.
+
+## Cambio della propria password
+
+* Richiede la **password attuale**. Una sessione lasciata aperta su un browser non deve bastare a impadronirsi dell'account.
+* Una password attuale sbagliata risponde `403 CurrentPasswordRejected`, **non** `401`: il Frontend legge un `401` come sessione terminata, e la sessione è invece valida.
+* La nuova password segue le regole di sempre e in più **non può coincidere con quella attuale** (`Unchanged`). Senza questa regola l'obbligo di cambiarla dopo una reimpostazione si aggirerebbe rimettendo la stessa, e l'amministratore continuerebbe a conoscerla.
+* A cambio riuscito `passwordChangeRequired` diventa falso, la sessione da cui è stato fatto resta aperta, **tutte le altre** dell'account cadono.
+
+## Gestione degli account
+
+* Un account creato da un amministratore nasce con `passwordChangeRequired` vero.
+* Il nome segue le regole di Accounts And Roles, e il ruolo è scritto per nome: `Administrator` o `Viewer`.
+* In `PATCH` i campi presenti si applicano **tutti o nessuno**. Un corpo senza campi non cambia nulla e restituisce l'account.
+* `password` in `PATCH` è una reimpostazione: `passwordChangeRequired` torna vero e **tutte** le sessioni dell'account cadono, anche quella di chi la esegue se l'account è il proprio.
+* `enabled: false` fa cadere tutte le sessioni dell'account.
+* Un amministratore agisce sul proprio account come su quello di un altro. Il solo limite è il vincolo dell'ultimo amministratore.
+* Il vincolo è verificato **nella stessa transazione** della modifica. Due amministratori che si disattivano a vicenda nello stesso istante non devono poter lasciare l'installazione senza nessuno dei due.
 
 ## Intestazioni
 
@@ -487,6 +519,7 @@ Scelte di prodotto, approvate il 2026-09-19 insieme ai messaggi del Frontend. Pe
 | **D5** | Token per servizi | **Rimandati** finché non esiste un servizio che li usi | *Prevederli ora*: aggiunge una superficie da proteggere per un bisogno che non c'è |
 | **D6** | Valori: sessione 8 ore di inattività e 14 giorni al massimo, ritardo da 30 secondi a 15 minuti, password da 12 caratteri, 210.000 iterazioni | **Quelli scritti qui** | Sono soglie: si possono cambiare senza toccare la struttura. Una sessione più lunga è più comoda e lascia più tempo a un browser dimenticato aperto |
 | **D7** | Riformulazione del criterio di Beta nella Roadmap | **Sì**, come proposto | Lasciarlo com'è mantiene un criterio che nessuna implementazione può soddisfare alla lettera |
+| **D8** | Nuova password uguale all'attuale, approvata il 2026-09-25 | **Rifiutata**, con `Unchanged` | *Accettarla*: nessuna regola in più, ma l'obbligo di cambio diventa un invito e l'amministratore resta a conoscenza della password che ha assegnato |
 
 ---
 

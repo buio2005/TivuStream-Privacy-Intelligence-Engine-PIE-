@@ -19,6 +19,13 @@ internal sealed record LoginRequest(string? Username, string? Password);
 internal sealed record SetupRequest(string? SetupCode, string? Username, string? Password);
 
 /// <summary>
+/// Body of a request to change one's own password.
+/// </summary>
+/// <param name="CurrentPassword">The password in use.</param>
+/// <param name="NewPassword">The password that replaces it.</param>
+internal sealed record PasswordChangeRequest(string? CurrentPassword, string? NewPassword);
+
+/// <summary>
 /// Who is signed in, as the interface needs to know it.
 /// </summary>
 internal sealed record AccountInfo
@@ -57,9 +64,13 @@ internal static class AuthenticationEndpoints
 
         group.MapPost("/login", SignIn).AllowAnonymous();
 
-        group.MapPost("/logout", SignOut).RequireAuthorization(AuthorizationPolicies.Viewer);
+        // Reachable while the password must be changed: they are how it gets
+        // changed, how the person learns that it must be, and how they leave.
+        group.MapPost("/logout", SignOut).RequireAuthorization(AuthorizationPolicies.SignedIn);
 
-        group.MapGet("/session", Describe).RequireAuthorization(AuthorizationPolicies.Viewer);
+        group.MapGet("/session", Describe).RequireAuthorization(AuthorizationPolicies.SignedIn);
+
+        group.MapPost("/password", ChangePassword).RequireAuthorization(AuthorizationPolicies.SignedIn);
     }
 
     private static IResult Setup(
@@ -154,6 +165,51 @@ internal static class AuthenticationEndpoints
         SessionCookie.Clear(context);
 
         return Results.Ok(ApiResponse.Ok<object?>(null));
+    }
+
+    private static IResult ChangePassword(
+        PasswordChangeRequest? request,
+        HttpContext context,
+        PasswordHasher hasher,
+        AccountRepository accounts,
+        SessionService sessions)
+    {
+        SessionContext session = CurrentSession(context);
+        StoredAccount account = session.Account;
+
+        string newPassword = request?.NewPassword ?? string.Empty;
+
+        // An open session left on a browser must not be enough to take the
+        // account. Not a 401: the session is valid, and the interface reads a
+        // 401 as the session having ended.
+        if (hasher.Verify(request?.CurrentPassword ?? string.Empty, account.PasswordHash) == PasswordVerification.Failed)
+        {
+            return Results.Json(
+                ApiResponse.Failed<AccountInfo>("CurrentPasswordRejected", "The current password was not accepted."),
+                statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        // Putting back the same password would satisfy the obligation to
+        // change it while leaving it known to whoever set it.
+        PasswordProblem? problem = AccountPolicy.CheckPassword(newPassword, account.Username)
+            ?? (hasher.Verify(newPassword, account.PasswordHash) == PasswordVerification.Failed
+                ? null
+                : PasswordProblem.Unchanged);
+
+        if (problem is not null)
+        {
+            return Results.Json(
+                ApiResponse.Failed<AccountInfo>("PasswordRejected", "The password is not acceptable.", problem.ToString()),
+                statusCode: StatusCodes.Status422UnprocessableEntity);
+        }
+
+        accounts.ReplacePasswordHash(account.Id, hasher.Hash(newPassword), passwordChangeRequired: false);
+
+        // Every other place the account was signed in stops working. This one,
+        // where the change was made, goes on.
+        sessions.EndAllFor(account.Id, session.SessionId);
+
+        return Results.Ok(ApiResponse.Ok(ToInfo(account with { PasswordChangeRequired = false }, session.ExpiresAt)));
     }
 
     private static IResult Describe(HttpContext context)

@@ -160,7 +160,7 @@ internal sealed class SetupService
             return new SetupResult(SetupOutcome.CodeRejected);
         }
 
-        string name = (username ?? string.Empty).Trim().ToLowerInvariant();
+        string name = AccountPolicy.CanonicalUsername(username);
 
         if (!AccountPolicy.IsValidUsername(name))
         {

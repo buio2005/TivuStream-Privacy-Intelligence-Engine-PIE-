@@ -93,13 +93,19 @@ internal sealed class SessionAuthenticationHandler : AuthenticationHandler<Authe
         // Kept for the endpoints that act on the session itself.
         Context.Items[SessionItem] = session;
 
-        ClaimsIdentity identity = new(
-            [
-                new Claim(ClaimTypes.NameIdentifier, session.Account.Id.ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                new Claim(ClaimTypes.Name, session.Account.Username),
-                new Claim(ClaimTypes.Role, session.Account.Role.ToString()),
-            ],
-            SchemeName);
+        List<Claim> claims =
+        [
+            new Claim(ClaimTypes.NameIdentifier, session.Account.Id.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+            new Claim(ClaimTypes.Name, session.Account.Username),
+            new Claim(ClaimTypes.Role, session.Account.Role.ToString()),
+        ];
+
+        if (session.Account.PasswordChangeRequired)
+        {
+            claims.Add(new Claim(PasswordSettledRequirement.PendingClaim, "true"));
+        }
+
+        ClaimsIdentity identity = new(claims, SchemeName);
 
         return Task.FromResult(
             AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));

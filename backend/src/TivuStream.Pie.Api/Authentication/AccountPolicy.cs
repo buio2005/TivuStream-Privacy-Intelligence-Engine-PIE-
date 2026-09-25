@@ -1,4 +1,5 @@
 using System.Text;
+using TivuStream.Pie.Storage;
 
 namespace TivuStream.Pie.Api.Authentication;
 
@@ -21,6 +22,11 @@ internal enum PasswordProblem
     /// The same as the name of the account.
     /// </summary>
     EqualsUsername,
+
+    /// <summary>
+    /// The same as the password it was to replace.
+    /// </summary>
+    Unchanged,
 }
 
 /// <summary>
@@ -90,6 +96,41 @@ internal static class AccountPolicy
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Brings a name as it was typed to the form in which it is kept.
+    /// </summary>
+    internal static string CanonicalUsername(string? username)
+    {
+        return (username ?? string.Empty).Trim().ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Reads a role written by name.
+    /// </summary>
+    /// <remarks>
+    /// Only the two names are accepted. The parser of the framework would also
+    /// take a number, and "0" would silently mean an administrator.
+    /// </remarks>
+    /// <param name="value">Name of the role, as <c>Administrator</c> or <c>Viewer</c>.</param>
+    /// <param name="role">The role, when the name is one.</param>
+    internal static bool TryParseRole(string? value, out AccountRole role)
+    {
+        switch (value)
+        {
+            case nameof(AccountRole.Administrator):
+                role = AccountRole.Administrator;
+                return true;
+
+            case nameof(AccountRole.Viewer):
+                role = AccountRole.Viewer;
+                return true;
+
+            default:
+                role = default;
+                return false;
+        }
     }
 
     /// <summary>

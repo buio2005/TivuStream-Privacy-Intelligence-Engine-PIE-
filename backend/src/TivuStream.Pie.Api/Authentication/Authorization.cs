@@ -12,9 +12,20 @@ namespace TivuStream.Pie.Api.Authentication;
 /// Authentication Specification, Authorization. Every endpoint declares the
 /// role it requires. One that does not requires <c>Administrator</c>:
 /// forgetting a declaration produces a refusal, never an opening.
+/// <para>
+/// A password that must be changed blocks every policy but one. The
+/// requirement is part of the fallback too, so that an endpoint added without
+/// a declaration cannot become the way around it.
+/// </para>
 /// </remarks>
 internal static class AuthorizationPolicies
 {
+    /// <summary>
+    /// Any signed in account, even one whose password must be changed first:
+    /// what is needed to change it, to see the session and to leave.
+    /// </summary>
+    internal const string SignedIn = "SignedIn";
+
     /// <summary>
     /// Any signed in account: the aggregated data.
     /// </summary>
@@ -28,17 +39,54 @@ internal static class AuthorizationPolicies
     internal static void Configure(AuthorizationOptions options)
     {
         options.AddPolicy(
-            Viewer,
+            SignedIn,
             policy => policy.RequireRole(nameof(AccountRole.Viewer), nameof(AccountRole.Administrator)));
 
         options.AddPolicy(
+            Viewer,
+            policy => policy
+                .RequireRole(nameof(AccountRole.Viewer), nameof(AccountRole.Administrator))
+                .AddRequirements(PasswordSettledRequirement.Instance));
+
+        options.AddPolicy(
             Administrator,
-            policy => policy.RequireRole(nameof(AccountRole.Administrator)));
+            policy => policy
+                .RequireRole(nameof(AccountRole.Administrator))
+                .AddRequirements(PasswordSettledRequirement.Instance));
 
         // Applies to every endpoint that declares nothing.
         options.FallbackPolicy = new AuthorizationPolicyBuilder()
             .RequireRole(nameof(AccountRole.Administrator))
+            .AddRequirements(PasswordSettledRequirement.Instance)
             .Build();
+    }
+}
+
+/// <summary>
+/// Met when the account signed in has no password waiting to be changed.
+/// </summary>
+internal sealed class PasswordSettledRequirement : AuthorizationHandler<PasswordSettledRequirement>, IAuthorizationRequirement
+{
+    /// <summary>
+    /// Claim present on the identity of an account that must change its
+    /// password before anything else.
+    /// </summary>
+    internal const string PendingClaim = "pie:password_change_required";
+
+    internal static readonly PasswordSettledRequirement Instance = new();
+
+    private PasswordSettledRequirement()
+    {
+    }
+
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PasswordSettledRequirement requirement)
+    {
+        if (context.User.Identity?.IsAuthenticated == true && !context.User.HasClaim(claim => claim.Type == PendingClaim))
+        {
+            context.Succeed(requirement);
+        }
+
+        return Task.CompletedTask;
     }
 }
 
@@ -74,8 +122,17 @@ internal sealed class AuthorizationResultHandler : IAuthorizationMiddlewareResul
 
         if (authorizeResult.Forbidden)
         {
+            // The password comes before anything else, including what the
+            // role would not allow: "forbidden" tells someone who can do
+            // nothing yet nothing useful.
+            bool passwordPending = authorizeResult.AuthorizationFailure?.FailedRequirements
+                .OfType<PasswordSettledRequirement>()
+                .Any() == true;
+
             return Results.Json(
-                ApiResponse.Failed<object>("Forbidden", "The role of this account does not allow this."),
+                passwordPending
+                    ? ApiResponse.Failed<object>("PasswordChangeRequired", "The password must be changed first.")
+                    : ApiResponse.Failed<object>("Forbidden", "The role of this account does not allow this."),
                 statusCode: StatusCodes.Status403Forbidden).ExecuteAsync(context);
         }
 

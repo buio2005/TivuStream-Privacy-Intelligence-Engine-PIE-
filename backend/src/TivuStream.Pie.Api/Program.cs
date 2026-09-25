@@ -9,6 +9,7 @@
 // is recorded in the changelog: the host serves plain HTTP. Every endpoint
 // requires a signed in account, as the Authentication Specification says.
 
+using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -153,6 +154,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAuthentication();
+app.MapAccounts();
 
 // The state reports what has just happened, including failures. The
 // repository reports what is known. The two answer different questions and
@@ -239,7 +241,7 @@ app.MapGet("/api/v1/domains", (AcquisitionRepository repository, TimeProvider ti
     }));
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
 
-app.MapGet("/api/v1/domains/{domain}", (string domain, AcquisitionRepository repository) =>
+app.MapGet("/api/v1/domains/{domain}", (string domain, ClaimsPrincipal user, AcquisitionRepository repository) =>
 {
     Domain? found = repository.GetLatestDomains()
         .FirstOrDefault(candidate => string.Equals(candidate.Name, domain, StringComparison.OrdinalIgnoreCase));
@@ -255,17 +257,25 @@ app.MapGet("/api/v1/domains/{domain}", (string domain, AcquisitionRepository rep
 
     StoredAcquisition? stored = repository.GetLatest();
 
-    bool activityAvailable =
+    bool offered =
         stored?.DataSource.Capabilities.Contains(nameof(DomainActivity), StringComparer.Ordinal) == true;
+
+    // What the source does not offer is unavailable to everyone. Saying it was
+    // withheld would claim that the source offers it.
+    ActivityAccess access =
+        !offered ? ActivityAccess.Unavailable
+        : user.IsInRole(nameof(AccountRole.Administrator)) ? ActivityAccess.Available
+        : ActivityAccess.Withheld;
 
     DomainDetail detail = new()
     {
         Domain = found,
 
-        // Read only when the Data Source declares the capability, so that an
-        // empty list never gets mistaken for an absence of activity.
-        Activities = activityAvailable ? repository.GetLatestActivitiesFor(found.Name) : [],
-        ActivityAvailable = activityAvailable,
+        // Read only when it may be shown, so that what is withheld is never
+        // read at all, and an empty list is never mistaken for an absence of
+        // activity.
+        Activities = access == ActivityAccess.Available ? repository.GetLatestActivitiesFor(found.Name) : [],
+        ActivityAccess = access,
     };
 
     return Results.Ok(ApiResponse.Ok(detail));

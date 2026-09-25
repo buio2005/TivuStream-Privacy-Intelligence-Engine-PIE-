@@ -3,8 +3,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -228,7 +230,7 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
     /// <summary>
     /// Creates an account, unless one with that name exists.
     /// </summary>
-    internal StoredAccount AddAccount(string username, AccountRole role, string password = Password)
+    internal StoredAccount AddAccount(string username, AccountRole role, string password = Password, bool passwordChangeRequired = false)
     {
         AccountRepository accounts = Services.GetRequiredService<AccountRepository>();
 
@@ -237,8 +239,24 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
                 username,
                 role,
                 Services.GetRequiredService<PasswordHasher>().Hash(password),
-                passwordChangeRequired: false,
+                passwordChangeRequired,
                 Now)!;
+    }
+
+    /// <summary>
+    /// The account with that name as it is kept now, when there is one.
+    /// </summary>
+    internal StoredAccount? Account(string username)
+    {
+        return Services.GetRequiredService<AccountRepository>().FindByUsername(username);
+    }
+
+    /// <summary>
+    /// The administrator client the tests share, signed in on first use.
+    /// </summary>
+    internal async Task<HttpClient> AdministratorAsync()
+    {
+        return _administrator ??= await SignedInAsync();
     }
 
     /// <summary>
@@ -273,9 +291,7 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
     /// </summary>
     internal async Task<Answer> GetAsync(string path, HttpClient? client = null)
     {
-        _administrator ??= await SignedInAsync();
-
-        return await SendAsync(client ?? _administrator, HttpMethod.Get, path);
+        return await SendAsync(client ?? await AdministratorAsync(), HttpMethod.Get, path);
     }
 
     /// <summary>
@@ -286,6 +302,30 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
         using HttpClient client = NewClient();
 
         return await SendAsync(client, HttpMethod.Get, path);
+    }
+
+    /// <summary>
+    /// Every endpoint the host exposes.
+    /// </summary>
+    internal List<RouteEndpoint> Endpoints()
+    {
+        return Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>().ToList();
+    }
+
+    internal static bool IsAnonymous(RouteEndpoint endpoint)
+    {
+        return endpoint.Metadata.GetMetadata<IAllowAnonymous>() is not null;
+    }
+
+    internal static HttpMethod MethodOf(RouteEndpoint endpoint)
+    {
+        return new HttpMethod(endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods[0]);
+    }
+
+    internal static string ConcretePath(RouteEndpoint endpoint)
+    {
+        // "/api/v1/domains/{domain}" becomes "/api/v1/domains/x".
+        return Regex.Replace(endpoint.RoutePattern.RawText!, @"\{[^}]+\}", "x");
     }
 
     // A session identifier can be presented by hand, for a client that keeps no cookies of its own.

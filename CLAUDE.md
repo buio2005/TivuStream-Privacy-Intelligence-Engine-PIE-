@@ -47,7 +47,7 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 252 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 314 tests, all must pass
 cd frontend && npm run test:unit -- --run        # 35 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000; a fresh database
@@ -95,10 +95,13 @@ Every boundary crossed carries at least one test.
 * **No authentication.** The API is open to anyone who reaches it. Safe today
   only because it binds to loopback. This is the blocker before any use
   beyond the local machine. Specified in `docs/18-Authentication
-  Specification.md` (approved); milestones A1 to A7. A1 to A3 are done: every
+  Specification.md` (approved); milestones A1 to A7. A1 to A4 are done: every
   endpoint requires a signed in account, and the first one is created with the
   setup code printed by a fresh instance (`POST /api/v1/setup`), or with
-  `dotnet run -- reset-password <name>`. **The frontend has no sign in or setup
+  `dotnet run -- reset-password <name>`. Administrators manage accounts
+  through `/api/v1/accounts`; a `Viewer` reads aggregated data only; a
+  password set by someone else must be changed before anything else. Next is
+  A5: attempts, transport, `Origin`, `Host`. **The frontend has no sign in or setup
   screen until A6**, so it shows no data. Tests create accounts directly.
 * HTTP, not HTTPS.
 * No installation procedure: the `installer/` directory is empty.

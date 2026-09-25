@@ -8,6 +8,103 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone A4 — Ruoli, gestione degli account, ciò che viene trattenuto — 2026-09-26
+
+Quarta delle sette milestone della Specification 18. Da qui i due ruoli leggono cose diverse, un amministratore gestisce gli account dall'API, e una password scelta da qualcun altro va cambiata prima di fare qualunque altra cosa.
+
+### Added
+
+**Ruoli**
+
+* Un `Viewer` legge `/health`, `/statistics`, `/npss`, `/domains` e `/domains/{domain}`, e riceve `403 Forbidden` su `/devices` e sugli endpoint degli account. Il ruolo si legge dall'account a ogni richiesta, quindi una retrocessione vale dalla richiesta successiva, sulla stessa sessione.
+* **`activityAccess`** sostituisce `activityAvailable` su `/domains/{domain}`, con tre valori: `Available`, `Unavailable`, `Withheld`. Per un `Viewer` l'attività **non viene neppure letta** dal database: quello che si trattiene non passa per la memoria del processo che risponde.
+* `Unavailable` precede `Withheld`. Dire «trattenuta» quando la sorgente non la offre significherebbe affermare che la offre.
+
+**Gestione degli account**
+
+* `GET /api/v1/accounts`, `POST /api/v1/accounts`, `PATCH /api/v1/accounts/{username}` e `DELETE /api/v1/accounts/{username}`, solo per `Administrator`. Un account nelle risposte è `username`, `role`, `enabled`, `passwordChangeRequired` e `createdAt`; l'hash non esce mai.
+* Un account creato da un amministratore nasce con `passwordChangeRequired`. Una reimpostazione via `PATCH` lo rimette e fa cadere **tutte** le sessioni dell'account, anche quella di chi la esegue, se l'account è il suo. Anche la disattivazione fa cadere tutte le sessioni, e le sessioni di un account rimosso se ne vanno con lui.
+* **Il vincolo dell'ultimo amministratore** (`409 LastAdministrator`) è verificato nella stessa transazione della modifica. Un amministratore disattivato non conta. Finché non esiste un amministratore attivo (è la situazione a cui serve il recupero), gli altri account restano modificabili: il vincolo vieta di peggiorare lo stato, non di toccarlo.
+* In `PATCH` i campi si applicano tutti o nessuno. Un ruolo valido accompagnato da una password troppo corta non passa da solo, e la password che accompagna una retrocessione rifiutata non viene scritta.
+
+**Cambio della propria password**
+
+* `POST /api/v1/auth/password`, con `currentPassword` e `newPassword`. Se la password attuale è sbagliata risponde `403 CurrentPasswordRejected`, non `401`, perché la sessione è valida.
+* La nuova password non può coincidere con l'attuale (`Unchanged`, decisione D8). Il confronto passa dalla normalizzazione NFKC: la stessa password scritta con una legatura resta la stessa.
+* A cambio riuscito l'obbligo cade, la sessione da cui è stato fatto resta aperta e tutte le altre dell'account cadono. Questo chiude V5 anche per il cambio di password.
+
+**Obbligo di cambio password**
+
+* Finché `passwordChangeRequired` è vero, ogni endpoint tranne `auth/session`, `auth/password` e `auth/logout` risponde `403 PasswordChangeRequired`, anche dove il ruolo non basterebbe.
+* L'obbligo è un **requisito di autorizzazione** presente in ogni policy, **compresa quella predefinita**. Un endpoint aggiunto senza dichiarazione non diventa quindi il modo di aggirarlo. Le tre eccezioni usano una policy a parte, `SignedIn`.
+
+**Storage**
+
+* `AccountRepository`: `List`, `Change` e `Delete`, con esito `Changed`, `NotFound` o `LastAdministrator`.
+
+**Prove — 62 nuove, da 252 a 314 sul backend**
+
+| Impegno | Cosa si verifica |
+| --- | --- |
+| V6 | Un `Viewer` legge i dati aggregati, riceve `Forbidden` su `/devices` e sugli account prima che qualcosa venga fatto, ottiene `Withheld` con un elenco vuoto e **nessuna traccia del dispositivo nel testo della risposta**; con una sorgente che non offre l'attività ottiene `Unavailable` |
+| V7 | L'ultimo amministratore non si disattiva, non si retrocede e non si rimuove, né dall'API né dal repository; un amministratore disattivato non conta; con un secondo amministratore attivo si può |
+| V7, concorrenza | Venti volte di seguito, due amministratori che si disattivano a vicenda nello stesso istante: ne resta sempre uno, e uno solo dei due riceve il rifiuto |
+| V5 | Cambio della propria password: la sessione corrente resta, l'altra cade, la vecchia password non apre più. Reimpostazione, disattivazione e rimozione fanno cadere le sessioni; una riattivazione non le riporta |
+| Obbligo di cambio | Si enumerano **tutti** gli endpoint dell'host: con la password da cambiare ciascuno risponde `PasswordChangeRequired`, tranne i tre previsti; la policy predefinita rifiuta un amministratore con la password da cambiare |
+| Contratto | Nome, ruolo e password non conformi sono `422` con il codice giusto e non creano nulla; il ruolo `"0"` o `"viewer"` è rifiutato; un nome già usato è `409` in qualunque maiuscola; un account inesistente è `404`; un `PATCH` vuoto non cambia nulla |
+
+### Fixed
+
+**La creazione di un account poteva fallire se un'altra scrittura arrivava nello stesso istante.** È un difetto di A3. `INSERT … SELECT … RETURNING` in autocommit comincia come lettura; quando trova un'altra connessione che scrive, SQLite rifiuta subito il passaggio a scrittura invece di metterlo in attesa. Il risultato era un `500` al posto di un `409`, per esempio con due configurazioni iniziali contemporanee. Il difetto si è manifestato a intermittenza con la suite intera, quando le nuove classi di prove hanno aumentato il carico. Adesso la creazione prende il lock di scrittura **prima** di leggere, in una transazione `IMMEDIATE`, come fanno `Change` e `Delete`. Una prova nuova crea 160 account in parallelo: senza la correzione fallisce tre volte su tre.
+
+### Verified
+
+Tredici difetti introdotti di proposito, tutti intercettati, poi annullati: obbligo di cambio password tolto dalla policy predefinita; `Withheld` che precede `Unavailable`; attività letta anche per un `Viewer`; disattivazione che non fa cadere le sessioni; cambio password che fa cadere anche la sessione corrente; password attuale non verificata; `PasswordChangeRequired` restituito come `Forbidden`; account creato senza obbligo di cambio; reimpostazione senza obbligo di cambio; obbligo non riportato nell'identità della sessione; password uguale all'attuale accettata; rimozione dell'ultimo amministratore consentita; ruolo numerico accettato. Una modifica innocua, come controllo, non ha fatto fallire nulla.
+
+La prima tornata ha rivelato una **trappola del metodo**. Un file ripristinato con la sua data di modifica originale è più vecchio dei binari compilati con il difetto, e la compilazione incrementale non lo ricompila: i difetti successivi giravano sopra quello precedente. Dopo ogni ripristino il file va toccato. Le verifiche inquinate sono state ripetute.
+
+Compilazione senza avvisi. 314 prove sul backend e 35 sul frontend, tre esecuzioni complete consecutive senza fallimenti.
+
+### Decided
+
+**Il ruolo si scrive per nome, esattamente.** Il parser del framework accetterebbe anche un numero, e `"0"` vorrebbe dire in silenzio `Administrator`.
+
+**La forma canonica del nome** (spazi tolti, minuscole) è una funzione sola, usata da configurazione iniziale, recupero e gestione degli account. Prima era ripetuta.
+
+**Gli strumenti per enumerare gli endpoint** passano dalle prove di autenticazione all'host di prova, perché ora li usano due classi.
+
+### Known Impact
+
+**Il Frontend non ha ancora nulla di tutto questo.** Mancano la gestione degli account, il cambio password e il messaggio `domains.activityWithheld`: arrivano con A6. Oggi il Frontend non legge `/domains/{domain}`, quindi il cambio di campo non rompe nulla.
+
+**Una password attuale sbagliata nel cambio password non conta come tentativo.** I contatori arrivano con A5, e la specifica li definisce soltanto per l'accesso. Che contino anche qui è da decidere in A5.
+
+**Le operazioni sugli account non vengono registrate.** La specifica chiede chi ha fatto che cosa e su quale account. Arriva con A7, insieme al resto della registrazione.
+
+**Un corpo con un tipo sbagliato** (per esempio `"enabled": "sì"`) riceve il `400` del framework e non la struttura comune delle risposte. Vale per tutti gli endpoint con un corpo, non solo per quelli nuovi.
+
+---
+
+## Documentation Release 1.6.2 — Contratto della gestione degli account — 2026-09-25
+
+La Specification 18 elencava gli endpoint degli account e il cambio password, ma non ne diceva i corpi, le risposte, alcuni codici di errore né il comportamento nei casi di confine.
+
+### Changed
+
+**Specification 18 alla 1.2.0**
+
+* Corpi e risposte di `auth/password` e degli endpoint `/accounts`.
+* Codici `RoleRejected` (422), `CurrentPasswordRejected` (403) e `AccountNotFound` (404); motivo `Unchanged` per `PasswordRejected`.
+* `CurrentPasswordRejected` è un `403` e non un `401`, perché il Frontend legge un `401` come sessione terminata.
+* **D8, approvata:** la nuova password non può coincidere con l'attuale. Altrimenti l'obbligo di cambio si aggira e l'amministratore continua a conoscere la password.
+* `PasswordChangeRequired` precede `Forbidden`.
+* `PATCH` applica tutto o niente. Una reimpostazione fa cadere tutte le sessioni dell'account, anche quella di chi la esegue; una disattivazione le fa cadere tutte.
+* Un amministratore agisce sul proprio account come su quello di un altro, nel limite del vincolo, che si verifica nella stessa transazione della modifica.
+
+**Roadmap 1.3.2, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.6.2.
+
+---
+
 ## Milestone A3 — Configurazione iniziale e recupero — 2026-09-19
 
 Terza delle sette milestone della Specification 18. Restituisce all'installazione la possibilità di avere un primo account, e a chi perde l'accesso quella di riaverlo. L'istanza torna utilizzabile da un client dell'API; per il Frontend serve A6.

@@ -4,11 +4,11 @@
 
 **Document:** Project Roadmap Specification
 
-**Version:** 1.3.1
+**Version:** 1.3.2
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-19
+**Last Updated:** 2026-09-25
 
 ---
 
@@ -33,7 +33,7 @@ La roadmap ha i seguenti obiettivi.
 
 # Current Status
 
-**Documentation Release:** 1.6.1
+**Documentation Release:** 1.6.2
 
 **Project Status:** In Development
 
