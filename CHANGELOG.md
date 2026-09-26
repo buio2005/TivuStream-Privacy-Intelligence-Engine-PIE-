@@ -56,7 +56,7 @@ Una modifica innocua non ha fatto fallire nulla.
 
 **Lo storico** contiene punteggi della versione 3, calcolati su un'ora, e della 4. La versione è conservata con ciascuno.
 
-**Le due prove del comando `reset-password`** restano da rieseguire con la compilazione normale: il backend della persona era in esecuzione.
+**Le due prove del comando `reset-password`**, rimaste in sospeso da S3, sono state rieseguite a backend fermo, dopo che la persona ha visto il nuovo punteggio: compilazione normale senza avvisi, 437 prove su 437 sul backend, 121 su 121 sul frontend.
 
 ---
 
