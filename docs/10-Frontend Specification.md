@@ -4,7 +4,7 @@
 
 **Document:** Frontend Specification
 
-**Version:** 1.3.0
+**Version:** 1.3.1
 
 **Status:** Approved
 
@@ -131,6 +131,7 @@ Le righe non si sommano in un totale per dispositivo: il totale del dominio è g
 
 * I dati del dettaglio stanno in uno store proprio, svuotato alla fine della sessione come gli altri (Authentication Specification, F2).
 * Cambiando dominio senza lasciare la pagina, il dettaglio precedente non resta visibile mentre si legge il nuovo.
+* **L'indirizzo della pagina contiene il nome del dominio, e la cronologia del browser lo conserva dopo l'uscita.** È un limite dichiarato della regola «nessun dato di rete sopravvive all'uscita»: gli store si svuotano, la cronologia del browser non è dell'interfaccia. Chi entra dopo, con qualunque ruolo, vede comunque l'elenco dei domini; chi usa lo stesso browser senza entrare può leggerli nella cronologia. L'interfaccia non distingue i collegamenti già visitati, così la pagina non segnala quali domini ha aperto chi c'era prima. Se il computer è condiviso, la procedura d'installazione consiglierà un profilo del browser dedicato. Scelta del 2026-09-26: togliere il dominio dall'indirizzo avrebbe impedito il ricaricamento e i preferiti per proteggere da chi ha già il browser in mano.
 
 ## Messaggi
 

@@ -8,6 +8,32 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## D2.2 — La cronologia del browser — 2026-09-26
+
+Trovato dalla prova come Lettore: il dominio aperto poco prima da un amministratore, nello stesso browser, compariva come collegamento già visitato.
+
+### Changed
+
+**I collegamenti già visitati non si distinguono dagli altri** (`a:visited` in `main.css`). La pagina non segnala più, a chi entra dopo, quali domini ha aperto chi c'era prima.
+
+### Known Impact
+
+**La cronologia del browser conserva i domini aperti anche dopo l'uscita**, perché l'indirizzo della pagina di dettaglio contiene il nome del dominio. È un limite della regola «nessun dato di rete sopravvive all'uscita», ora dichiarato nella Specification 10. Chi entra dopo, con qualunque ruolo, vede comunque l'elenco; chi usa lo stesso browser senza entrare può leggerli nella cronologia. La procedura d'installazione, quando esisterà, consiglierà un profilo del browser dedicato se il computer è condiviso. Togliere il dominio dall'indirizzo avrebbe impedito ricaricamento e preferiti: scelta della persona del 2026-09-26.
+
+Lo stile non ha una prova: l'ambiente delle prove non applica `:visited`, che i browser limitano di proposito.
+
+---
+
+## Documentation Release 1.9.1 — La cronologia del browser — 2026-09-26
+
+### Changed
+
+**Specification 10 alla 1.3.1:** la cronologia del browser come limite dichiarato della regola sull'uscita, e i collegamenti visitati non distinti.
+
+**Roadmap 1.3.7, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.9.1.
+
+---
+
 ## D2.1 — La sorgente si raggiunge direttamente — 2026-09-26
 
 Difetti trovati dalla prima prova nel browser della pagina di dettaglio, fatta dalla persona che lavora al progetto: l'elenco dei domini era vuoto con il container di Technitium acceso.

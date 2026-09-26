@@ -16,3 +16,10 @@ body {
   margin: 0 auto;
   padding: 0 1.5rem 3rem;
 }
+
+/* A link already visited looks like any other. The address of a domain's page
+   carries its name, so the browser's history would otherwise mark, for the
+   next person at the same browser, which domains the previous one opened. */
+a:visited {
+  color: LinkText;
+}
