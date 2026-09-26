@@ -8,6 +8,78 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone S3 — Certificato proprio e proxy fidati — 2026-09-26
+
+Terza delle quattro milestone della Specification 19. Chi vuole evitare l'avviso del browser fornisce un certificato proprio; chi mette un proxy davanti a PIE lo dichiara, e nient'altro diventa fidato.
+
+Dopo S2 la persona che lavora al progetto ha fatto la prova sul campo (T11): dal portatile, via HTTPS, impronta confrontata e coincidente, accesso da amministratore sia dal portatile sia dal desktop, nessun errore.
+
+### Added
+
+**Certificato dell'operatore** (`OperatorCertificate`, `Transport:Certificate:*`):
+* **Formati:** PFX con password, oppure PEM con la chiave a parte. Il PEM viene esportato e riletto, perché lo stack TLS di Windows non accetta una chiave tenuta solo in memoria.
+* **All'avvio:** con un certificato fornito PIE non genera nulla e lo annuncia come «provided by the operator».
+* **Certificato inutilizzabile:** file assente, illeggibile, password sbagliata, senza chiave, scaduto o non ancora valido **ferma l'avvio**, con il motivo e mai con la password.
+
+**HSTS solo con il certificato dell'operatore** (`TransportPolicy`): torna su ogni risposta cifrata quando il certificato è dell'operatore. Mai su una risposta in chiaro, mai con quello generato.
+
+**Proxy fidati** (`Transport:TrustedProxies`, `TrustedProxies`):
+* **Solo quelli elencati:** da un proxy elencato si credono `X-Forwarded-For` e `X-Forwarded-Proto`. Le regole sulle password si applicano al client e al canale che il proxy dichiara.
+* **Il loopback non è fidato per impostazione predefinita**, contrariamente al framework: solo se è elencato.
+* **Indirizzi, non nomi:** un nome nell'elenco ferma l'avvio, perché chi controlla il risolutore sceglierebbe di chi PIE si fida.
+
+**Regola S6** (`CredentialTransport`): una richiesta dal loopback che porta ancora `X-Forwarded-For`, `X-Forwarded-Proto` o `Forwarded` non è locale, e una password vi riceve `TransportNotSecure`. Chiude il caso di un proxy su questa macchina che serve la rete in chiaro. Prima una password arrivata così veniva accettata come locale.
+
+### Verified
+
+Sedici prove nuove, da 415 a 431:
+
+| Impegno | Cosa si verifica |
+| --- | --- |
+| T6 | Certificato assente, scaduto, con password sbagliata (che non compare nel messaggio), senza chiave: avvio fermato con il motivo; PEM con chiave: usato |
+| T7 | Con il certificato dell'operatore: HSTS sulle risposte cifrate, non su quelle in chiaro |
+| T9 | Dal loopback con ciascuna delle tre intestazioni di inoltro: `TransportNotSecure`; senza intestazioni: accesso riuscito |
+| T10 | Proxy fidato con canale cifrato: accesso riuscito, cookie `Secure`. Proxy fidato con canale in chiaro dalla rete: rifiutato. Intestazioni da un indirizzo non fidato: ignorate. Un proxy dichiarato altrove non rende fidato il loopback. Proxy indicato per nome: avvio fermato |
+
+**Sul motore vero**, su porte a parte, con un certificato PEM creato per la prova:
+* **Annuncio:** PIE lo presenta come certificato dell'operatore.
+* **Risposte:** invia HSTS.
+* **Impronta:** quella vista dal client coincide con quella del certificato fornito.
+* **File assente:** l'avvio si ferma con «the file does not exist».
+
+Undici difetti introdotti di proposito, tutti intercettati:
+* HSTS mai inviata;
+* HSTS anche in chiaro;
+* intestazioni di inoltro ignorate sul loopback;
+* `Forwarded` non riconosciuta;
+* loopback fidato per impostazione predefinita;
+* intestazioni sempre applicate con i valori del framework;
+* certificato scaduto accettato;
+* certificato senza chiave accettato;
+* proxy per nome accettati.
+
+Il quinto sopravviveva: le prove usavano solo il loopback come proxy fidato. La prova aggiunta dichiara un proxy altrove. Una modifica innocua non ha fatto fallire nulla.
+
+Le prove sono state eseguite in una cartella di compilazione separata, perché il backend della persona era in esecuzione. Le due prove del comando `reset-password`, che richiedono la compilazione normale, non sono state eseguite in questa milestone: non toccano il trasporto.
+
+### Known Impact
+
+**L'intestazione standard `Forwarded` non è letta.** Un proxy che manda solo quella non passa il client: le richieste arrivano come dal proxy e, se il proxy è sul loopback, le password vengono rifiutate. È il lato sicuro dell'errore. Scritto nella specifica.
+
+**Un certificato dell'operatore non si rinnova da solo.** Alla sua scadenza PIE non parte più e dice perché: sostituirlo è compito di chi l'ha fornito.
+
+---
+
+## Documentation Release 1.12.1 — Proxy — 2026-09-26
+
+### Changed
+
+**Specification 19 alla 1.0.2:** un proxy fidato usa `X-Forwarded-For` e `X-Forwarded-Proto`, `Forwarded` non è letta; dichiarare un proxy non rende fidato il loopback.
+
+**Roadmap 1.3.11, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.12.1.
+
+---
+
 ## Milestone S2 — HTTPS con il certificato generato — 2026-09-26
 
 Seconda delle quattro milestone della Specification 19. PIE è raggiungibile in HTTPS dagli altri dispositivi della rete, senza configurazione.

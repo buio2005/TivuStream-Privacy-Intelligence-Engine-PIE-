@@ -13,6 +13,9 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.Extensions.Options;
 using TivuStream.Pie.Adapters.Technitium;
@@ -43,9 +46,35 @@ MachineNames? machine = transport.HttpsPort > 0 ? MachineNames.Discover(transpor
 // rather than being discovered later.
 string[] allowedHosts = HostPolicy.AllowedHosts(builder.Configuration, machine);
 
+// A certificate of the operator's that cannot be used stops the start here,
+// with the reason, before anything else happens.
+X509Certificate2? provided = transport.Certificate.IsProvided
+    ? OperatorCertificate.Load(transport.Certificate, TimeProvider.System.GetUtcNow())
+    : null;
+
+builder.Services.AddSingleton(new TransportPolicy(StrictTransportSecurity: provided is not null));
+
+// Forwarding headers are believed only from the proxies the operator names.
+// A proxy is never trusted by default, the loopback included: on this
+// machine, any process could otherwise say which client and which channel a
+// request came from.
+IPAddress[] trustedProxies = TrustedProxies.Parse(transport.TrustedProxies);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+
+    foreach (IPAddress proxy in trustedProxies)
+    {
+        options.KnownProxies.Add(proxy);
+    }
+});
+
 if (machine is not null)
 {
-    builder.WebHost.UseTransport(transport, machine);
+    builder.WebHost.UseTransport(transport, machine, provided);
 }
 else
 {
@@ -172,6 +201,13 @@ ClassificationProvider classification = app.Services.GetRequiredService<Classifi
 
 classification.EnsureDefaults();
 classification.Reload();
+
+// First, so that everything below sees the client and the channel a trusted
+// proxy declared. With no proxy named it changes nothing.
+if (trustedProxies.Length > 0)
+{
+    app.UseForwardedHeaders();
+}
 
 // Outermost: whatever fails below answers in the common structure.
 app.UseFailureAnswers();

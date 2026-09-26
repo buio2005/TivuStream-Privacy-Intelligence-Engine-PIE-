@@ -47,7 +47,7 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 415 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 431 tests, all must pass
 cd frontend && npm run test:unit -- --run        # 113 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # :5000 on this machine, https :5443 on the
@@ -114,9 +114,9 @@ they set `X-Test-Remote-Address`.
 
 ## Known debts
 
-* Transport Security (Specification 19) is half done: HTTPS with the
-  generated certificate works (S1, S2). A certificate provided by the
-  operator, trusted proxies and the field test (S3, S4) are not done.
+* Transport Security (Specification 19): S1 to S3 done, and the field test
+  from a laptop passed. S4, the README and the Beta criterion in the
+  Roadmap, is not done.
 * No installation procedure: the `installer/` directory is empty.
 * Tiered retention is designed in Specification 16 and not implemented; the
   database grows without limit.

@@ -1,7 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Diagnostics;
 using TivuStream.Pie.Api.Contracts;
-
 using TivuStream.Pie.Api.Transport;
 
 namespace TivuStream.Pie.Api.Authentication;
@@ -34,8 +33,23 @@ internal static class CredentialTransport
 
         // The framework recognises ::ffff:127.0.0.1 but not the rest of
         // 127.0.0.0/8 written as IPv6, which is the loopback just the same.
-        return IPAddress.IsLoopback(remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote);
+        if (!IPAddress.IsLoopback(remote.IsIPv4MappedToIPv6 ? remote.MapToIPv4() : remote))
+        {
+            return false;
+        }
+
+        // A browser on this machine never sends forwarding headers. A request
+        // from the loopback that still carries them came through a proxy no
+        // one declared trusted, and the password may have crossed the network
+        // in clear before reaching it (Transport Security Specification, S6).
+        return !ForwardingHeaders.Any(context.Request.Headers.ContainsKey);
     }
+
+    /// <summary>
+    /// Headers by which a proxy says where a request came from. A trusted
+    /// proxy's are consumed before this check; any left were not believed.
+    /// </summary>
+    private static readonly string[] ForwardingHeaders = ["X-Forwarded-For", "X-Forwarded-Proto", "Forwarded"];
 
     /// <summary>
     /// The answer to a password sent where it should not have been.
@@ -177,11 +191,11 @@ internal static class RequestProtection
         // Nothing served here may be framed by another site.
         context.Response.Headers.ContentSecurityPolicy = "frame-ancestors 'none'";
 
-        // No Strict-Transport-Security. With the certificate PIE generates, a
-        // browser that had received it would no longer let the person accept
-        // the warning, and at the first renewal PIE would be out of reach from
-        // that device (Transport Security Specification, S2). It returns with
-        // a certificate provided by the operator.
+        if (context.Request.IsHttps
+            && context.RequestServices.GetService<TransportPolicy>()?.StrictTransportSecurity == true)
+        {
+            context.Response.Headers.StrictTransportSecurity = "max-age=31536000";
+        }
 
         // Every answer of the API carries data about the network, and none of
         // it may stay in the cache of a browser or of anything between.

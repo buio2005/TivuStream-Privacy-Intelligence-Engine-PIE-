@@ -371,9 +371,15 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
         object? body = null,
         string? cookie = null,
         string? from = null,
-        string? origin = null)
+        string? origin = null,
+        IReadOnlyDictionary<string, string>? headers = null)
     {
         using HttpRequestMessage request = new(method, new Uri(path, UriKind.Relative));
+
+        foreach ((string name, string value) in headers ?? new Dictionary<string, string>())
+        {
+            request.Headers.TryAddWithoutValidation(name, value);
+        }
 
         if (cookie is not null)
         {

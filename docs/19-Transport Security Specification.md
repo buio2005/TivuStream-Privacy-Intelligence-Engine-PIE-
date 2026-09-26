@@ -4,7 +4,7 @@
 
 **Document:** Transport Security Specification
 
-**Version:** 1.0.1
+**Version:** 1.0.2
 
 **Status:** Approved
 
@@ -150,6 +150,8 @@ HSTS è inviata **solo con un certificato fornito dall'operatore**, che si presu
 Un proxy che termina la connessione cifrata e inoltra a PIE in chiaro sulla stessa macchina fa arrivare ogni richiesta dal loopback. Senza altre regole, PIE accetterebbe come locale una password che dal telefono al proxy ha viaggiato in chiaro, se il proxy è configurato in chiaro.
 
 * `Transport:TrustedProxies` elenca gli indirizzi dei proxy di cui PIE si fida. Solo da quegli indirizzi PIE legge `X-Forwarded-For` e `X-Forwarded-Proto`: l'indirizzo del client e la cifratura sono quelli che il proxy dichiara, e le regole della Authentication Specification si applicano a quelli.
+* Un proxy fidato deve usare `X-Forwarded-For` e `X-Forwarded-Proto`. L'intestazione standard `Forwarded` non è letta: una richiesta che porta solo quella resta con l'indirizzo del proxy e ricade nella regola seguente.
+* Dichiarare un proxy non rende fidato nient'altro. In particolare il loopback, che il framework considera fidato per impostazione predefinita, lo è solo se è elencato.
 * **Una richiesta dal loopback che porta un'intestazione di inoltro** (`X-Forwarded-For`, `X-Forwarded-Proto` o `Forwarded`), quando nessun proxy è dichiarato fidato, **non è trattata come locale**: una password vi riceve `TransportNotSecure`. Un browser su questo computer non manda mai quelle intestazioni. Chi le manda è un proxy, e un proxy non dichiarato non è una ragione per fidarsi.
 
 ---
