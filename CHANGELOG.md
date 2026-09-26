@@ -8,6 +8,40 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## S3.1 — Quando un dominio è stato visto, detto in modo semplice — 2026-09-26
+
+Due difetti trovati dalla persona che lavora al progetto guardando la pagina dei domini dal portatile.
+
+### Fixed
+
+**Un dominio visto in una sola ora sembrava visto due volte.** «Prima osservazione 13:00, ultima 14:00» per un dominio contattato solo fra le 13 e le 14. La sorgente riporta per ora, quindi PIE conserva l'inizio e la fine dell'ora, e la pagina leggeva la fine come un secondo avvistamento. La frase per l'ora singola esisteva, ma scattava solo quando inizio e fine coincidevano, cosa che con dati orari non accade mai. Per un dominio visto per ultimo fra le 16 e le 17, la pagina avrebbe detto «ultima 17:00».
+
+**«3 ore osservate» sotto «dalle 13:00 alle 18:00» sembrava un errore di conto.** Era giusto: per due ore PIE era spento. La pagina non lo diceva.
+
+### Changed
+
+**Frasi più semplici**, approvate il 2026-09-26, pensate per chi non è tecnico:
+
+| Caso | Italiano | Inglese |
+| --- | --- | --- |
+| Visto in una sola ora | Visto: 26 set, 13:00–14:00 | Seen: 26 Sept, 13:00–14:00 |
+| Visto in più ore | Prima volta: 26 set, 13:00–14:00 · Ultima volta: 26 set, 16:00–17:00 | First time: … · Last time: … |
+| Ore mancanti nell'intervallo | Le ore mancanti sono quelle in cui PIE era spento o non riusciva a raccogliere i dati. | The missing hours are those when PIE was off or could not collect data. |
+
+La fascia oraria scritta per intera toglie il dubbio su che cosa indichi «ultima». È coerente con la nota «Perché vedi un intervallo e non un orario». Un dato noto al minuto, come l'attività di un dispositivo letta dal registro delle interrogazioni, si mostra con l'orario esatto.
+
+`SeenLine` è il solo punto che rende queste frasi, per l'elenco e per le righe dei dispositivi nel dettaglio.
+
+### Verified
+
+Sei prove nuove sul frontend, da 113 a 119: un'ora singola come un'ora; più ore con la prima e l'ultima fascia intere; la frase sulle ore mancanti presente quando mancano ore, assente quando non ne mancano; un istante esatto come istante; due istanti esatti senza fasce.
+
+Cinque difetti introdotti di proposito, tutti intercettati: ora singola letta come due avvistamenti, ultima ora letta dalla sua fine, istanti esatti mostrati come ore, ore mancanti mai spiegate, spiegate sempre. Una modifica innocua non ha fatto fallire nulla.
+
+L'interfaccia è stata ricompilata nel motore: basta ricaricare la pagina.
+
+---
+
 ## Milestone S3 — Certificato proprio e proxy fidati — 2026-09-26
 
 Terza delle quattro milestone della Specification 19. Chi vuole evitare l'avviso del browser fornisce un certificato proprio; chi mette un proxy davanti a PIE lo dichiara, e nient'altro diventa fidato.

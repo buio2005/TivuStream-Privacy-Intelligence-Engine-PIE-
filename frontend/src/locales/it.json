@@ -101,8 +101,9 @@
     "hourly": "L'elenco copre le ultime ventiquattro ore, o quelle osservate finora se l'installazione è più recente.",
     "hoursObserved": "{observed} ora osservata su {requested} richieste | {observed} ore osservate su {requested} richieste",
     "inProgress": "L'ultima ora è ancora in corso.",
-    "seen": "Prima osservazione {from}, ultima {to}",
-    "seenOnce": "Osservato nell'ora delle {from}",
+    "hoursMissing": "Le ore mancanti sono quelle in cui PIE era spento o non riusciva a raccogliere i dati.",
+    "seen": "Prima volta: {first} · Ultima volta: {last}",
+    "seenOnce": "Visto: {when}",
     "activityWithheld": "L'attività per dispositivo è visibile solo agli amministratori. Questo non dice se qualche dispositivo abbia contattato il dominio."
   },
   "domainDetail": {

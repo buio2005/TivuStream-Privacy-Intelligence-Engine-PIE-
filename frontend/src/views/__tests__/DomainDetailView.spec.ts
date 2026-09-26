@@ -219,6 +219,29 @@ describe('Domain detail: activity by device', () => {
   })
 })
 
+describe('Domain detail: when a device was seen', () => {
+  it('shows an instant known exactly as an instant, not as an hour', async () => {
+    const view = await show(
+      answer(detail({ activities: [activity({ firstSeen: '2026-09-01T08:07:00Z', lastSeen: '2026-09-01T08:07:00Z', observationQuality: 'Exact' })] })),
+    )
+
+    const cell = view.find('.activities .seen').text()
+
+    expect(cell).toBe(`Seen: ${i18n.global.d(new Date('2026-09-01T08:07:00Z'), 'stamp')}`)
+  })
+
+  it('shows two exact instants as the first and the last time', async () => {
+    const view = await show(
+      answer(detail({ activities: [activity({ firstSeen: '2026-09-01T08:07:00Z', lastSeen: '2026-09-01T10:42:00Z', observationQuality: 'Exact' })] })),
+    )
+
+    const cell = view.find('.activities .seen').text()
+
+    expect(cell).toContain(i18n.global.d(new Date('2026-09-01T10:42:00Z'), 'stamp'))
+    expect(cell).not.toContain('–')
+  })
+})
+
 describe('Domain detail: when there is no detail', () => {
   it('says the domain was not observed in the interval', async () => {
     const view = await show(refusal('DomainNotObserved'))

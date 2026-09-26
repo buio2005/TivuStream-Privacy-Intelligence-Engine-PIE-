@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import SeenLine from '@/components/SeenLine.vue'
 import type { Domain } from '@/api/types'
 
 defineProps<{ domain: Domain }>()
 
 const { d } = useI18n()
-
-function moment(value: string): string {
-  return d(new Date(value), 'stamp')
-}
 
 function day(value: string): string {
   return d(new Date(value), 'day')
@@ -37,20 +34,8 @@ function day(value: string): string {
     </p>
   </template>
 
-  <!--
-    Two facts, not a span. Saying "observed between ten and nine" would
-    suggest a presence throughout, while the domain may have been contacted in
-    two of those hours and in none of the others.
-
-    The instants are bounded to the hour, so neither is a moment.
-  -->
   <p class="note observation">
-    <template v-if="domain.firstSeen === domain.lastSeen">
-      {{ $t('domains.seenOnce', { from: moment(domain.firstSeen) }) }}
-    </template>
-    <template v-else>
-      {{ $t('domains.seen', { from: moment(domain.firstSeen), to: moment(domain.lastSeen) }) }}
-    </template>
+    <SeenLine :first-seen="domain.firstSeen" :last-seen="domain.lastSeen" :quality="domain.observationQuality" />
   </p>
 </template>
 

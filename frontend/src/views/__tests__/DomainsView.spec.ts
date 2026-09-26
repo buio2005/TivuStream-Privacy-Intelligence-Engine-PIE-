@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RouterLinkStub } from '@vue/test-utils'
 import DomainsView from '@/views/DomainsView.vue'
 import type { Domain, ObservedDomains } from '@/api/types'
+import { i18n } from '@/i18n'
 import { answer, mountView, refusal } from './support'
 
 // API Specification 1.2.0: a list of what was observed carries the interval it
@@ -140,5 +141,47 @@ describe('Domains: each domain leads to its detail', () => {
 
     expect(link.text()).toBe('a.example')
     expect(link.props('to')).toEqual({ name: 'domain', params: { domain: 'a.example' } })
+  })
+})
+
+describe('Domains: when a domain was seen, as a person reads it', () => {
+  const hourOf = (iso: string) => i18n.global.d(new Date(iso), 'short')
+
+  it('shows a domain seen in a single hour as that one hour, not as two sightings', async () => {
+    const view = await mountView(DomainsView, answer(observed()))
+
+    // The source reports by hour: 10:00 to 11:00 is one hour, seen once.
+    const line = view.find('.observation').text()
+
+    expect(line).toContain('Seen:')
+    expect(line).toContain(`${hourOf('2026-09-01T10:00:00Z')}–${hourOf('2026-09-01T11:00:00Z')}`)
+    expect(line).not.toContain('Last time')
+  })
+
+  it('shows the first and the last hour whole when a domain was seen in several', async () => {
+    const view = await mountView(
+      DomainsView,
+      answer(observed({ domains: [domain({ firstSeen: '2026-09-01T07:00:00Z', lastSeen: '2026-09-01T11:00:00Z' })] })),
+    )
+
+    const line = view.find('.observation').text()
+
+    // The last hour is the one that ends at 11:00, not a sighting at 11:00.
+    expect(line).toContain(`${hourOf('2026-09-01T07:00:00Z')}–${hourOf('2026-09-01T08:00:00Z')}`)
+    expect(line).toContain(`Last time:`)
+    expect(line).toContain(`${hourOf('2026-09-01T10:00:00Z')}–${hourOf('2026-09-01T11:00:00Z')}`)
+  })
+
+  it('says why hours are missing when fewer were observed than the interval spans', async () => {
+    const view = await mountView(DomainsView, answer(observed({ periodsObserved: 3 })))
+
+    // Five hours from 06:00 to 11:00, three observed.
+    expect(view.text()).toContain('PIE was off or could not collect data')
+  })
+
+  it('says nothing about missing hours when every hour of the interval was observed', async () => {
+    const view = await mountView(DomainsView, answer(observed()))
+
+    expect(view.text()).not.toContain('PIE was off')
   })
 })

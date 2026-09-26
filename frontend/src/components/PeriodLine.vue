@@ -14,6 +14,14 @@ const { d } = useI18n()
 /** The window includes the current hour, which has not elapsed. */
 const inProgress = computed(() => new Date(props.period.end) > new Date())
 
+/**
+ * Hours inside the interval that were not observed. Without a word about
+ * them, "3 hours observed" under "from 13:00 to 18:00" reads as a mistake.
+ */
+const missing = computed(
+  () => Math.round((new Date(props.period.end).getTime() - new Date(props.period.start).getTime()) / 3_600_000) > props.periodsObserved,
+)
+
 function moment(value: string): string {
   return d(new Date(value), 'stamp')
 }
@@ -29,6 +37,7 @@ function moment(value: string): string {
     -->
     {{ $t('domains.hoursObserved', { observed: periodsObserved, requested: periodsRequested }, periodsObserved) }}
     <em v-if="inProgress">{{ $t('domains.inProgress') }}</em>
+    <em v-if="missing" class="missing">{{ $t('domains.hoursMissing') }}</em>
   </p>
 </template>
 
@@ -41,5 +50,9 @@ function moment(value: string): string {
 .period em {
   font-style: normal;
   opacity: 0.75;
+}
+
+.period .missing {
+  display: block;
 }
 </style>

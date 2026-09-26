@@ -6,6 +6,7 @@ import { useDomainDetailStore } from '@/stores/domainDetail'
 import CategoryBadge from '@/components/CategoryBadge.vue'
 import DomainNotes from '@/components/DomainNotes.vue'
 import PeriodLine from '@/components/PeriodLine.vue'
+import SeenLine from '@/components/SeenLine.vue'
 import type { DeviceIdentification } from '@/api/types'
 
 const props = defineProps<{ domain: string }>()
@@ -13,15 +14,12 @@ const props = defineProps<{ domain: string }>()
 const store = useDomainDetailStore()
 const { detail, loading, failure } = storeToRefs(store)
 
-const { t, te, d } = useI18n()
+const { t, te } = useI18n()
 
 // Changing domain without leaving the page reads the new one; the store drops
 // the previous one first.
 watch(() => props.domain, store.load, { immediate: true })
 
-function moment(value: string): string {
-  return d(new Date(value), 'stamp')
-}
 
 /**
  * A transport named by the catalogue. One the catalogue does not know is shown
@@ -146,12 +144,7 @@ function deviceName(device: DeviceIdentification): string {
               {{ transport(activity.protocol) }}
             </td>
             <td :data-label="$t('domainDetail.seen')">
-              <template v-if="activity.firstSeen === activity.lastSeen">
-                {{ $t('domains.seenOnce', { from: moment(activity.firstSeen) }) }}
-              </template>
-              <template v-else>
-                {{ $t('domains.seen', { from: moment(activity.firstSeen), to: moment(activity.lastSeen) }) }}
-              </template>
+              <SeenLine :first-seen="activity.firstSeen" :last-seen="activity.lastSeen" :quality="activity.observationQuality" />
             </td>
           </tr>
         </tbody>
