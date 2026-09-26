@@ -54,7 +54,13 @@ internal sealed class AccessCommand
             return Refused;
         }
 
-        output.WriteLine("Open PIE from another device at one of these addresses:");
+        // The local address first, and apart: the warning below is about the
+        // other addresses, and placed after this one it read as if it were
+        // about this one (field test of 2026-09-27).
+        output.WriteLine($"On this computer, open {local}");
+        output.WriteLine("  It starts with http, not https, and that is right: this address never leaves the computer.");
+        output.WriteLine();
+        output.WriteLine("From another device, open one of these addresses:");
 
         foreach (string address in TransportSetup.Addresses(_transport.HttpsPort, _machine))
         {
@@ -62,10 +68,8 @@ internal sealed class AccessCommand
         }
 
         output.WriteLine();
-        output.WriteLine($"On this computer: {local}");
-        output.WriteLine();
-        output.WriteLine("The browser will warn that the connection is not private. Open the details of the");
-        output.WriteLine("certificate and check that its SHA-256 fingerprint is this one:");
+        output.WriteLine("On the other device, the browser will warn that the connection is not private.");
+        output.WriteLine("Open the details of the certificate and check that its SHA-256 fingerprint is this one:");
         output.WriteLine();
         output.WriteLine($"  {GeneratedCertificate.Fingerprint(shown)}");
         output.WriteLine();

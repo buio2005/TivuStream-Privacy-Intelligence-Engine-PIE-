@@ -29,13 +29,19 @@ La persona che lavora al progetto ha installato il pacchetto su Windows. Conness
 
 Due verifiche aggiunte a prove esistenti, 495 in tutto, frontend 121: l'eseguibile installato, lanciato con un comando, non crea la cartella del certificato; `configure` dice quanti caratteri ha ricevuto. Togliere la protezione fa fallire la prova del processo.
 
+**Seconda installazione, da pulito, riuscita**: disinstallazione con `-RemoveData`, poi installazione completa. Token ricevuto per intero (64 caratteri), connessione, account, firewall, servizio avviato in automatico; il servizio risponde su `http://localhost:5000` e su `https://…:5443`, anche dall'indirizzo della rete di casa.
+
+**`access` diceva male dove compare l'avviso.** La persona ha aperto `http://localhost:5000` e si aspettava l'avviso sul certificato, perché la frase veniva subito dopo quell'indirizzo; nell'indirizzo è rimasto `http`. È voluto: il collegamento non esce dal computer (Specification 19). Ora `access` scrive prima l'indirizzo di questo computer, con il perché del `http`, poi gli indirizzi per gli altri dispositivi, e dice che l'avviso compare su quelli. La guida lo spiega allo stesso modo.
+
+**La guida sul token di Technitium** dice di togliere l'utente dal gruppo Everyone, che gli darebbe permessi in più, e di creare il token da Administration → Sessions senza uscire da Technitium: la persona non sapeva se dovesse entrare come l'utente nuovo. Incollare con il tasto destro, e controllare i 64 caratteri.
+
 ### Known Impact
 
 **Nel Visualizzatore eventi i messaggi di PIE compaiono sotto «le informazioni seguenti erano incluse nell'evento»**: l'origine registrata con `New-EventLog` usa il file dei messaggi di .NET Framework, che non conosce gli identificativi degli eventi. Il testo c'è, la presentazione no.
 
 **Riprendere un'installazione interrotta dopo la creazione dell'account** reimposta la password di quell'account e chiede di cambiarla al primo accesso. Per la prova sul campo conviene disinstallare con `-RemoveData` e installare di nuovo.
 
-**Nella prova, `configure` ha dichiarato mancanti le impostazioni del server e disponibile l'attività dei dispositivi**: resta da sapere con quali permessi era stato creato il token.
+**I permessi per l'attività dei dispositivi non sono ancora verificati.** In entrambe le prove `configure` ha trovato l'attività disponibile, con token i cui permessi la persona non conosceva con certezza: probabilmente ereditati dal gruppo Everyone. La prova con un utente fuori da quel gruppo, con i soli Dashboard e Settings, e poi con Apps e Logs, dirà che cosa serve.
 
 ---
 

@@ -21,12 +21,14 @@ Ti servono tre cose.
 Il token appartiene a un utente di Technitium creato apposta per PIE, che può solo **guardare**, mai modificare.
 
 1. Apri l'interfaccia di Technitium (di solito `http://indirizzo-del-server:5380`) ed entra come amministratore.
-2. Vai in **Administration → Users** e crea un utente, per esempio `pie`.
-3. Vai in **Administration → Permissions** e dai a quell'utente il permesso **View** su:
+2. Vai in **Administration → Users** e crea un utente, per esempio `pie`. Nella scheda dell'utente, togli la spunta dal gruppo **Everyone**: altrimenti l'utente riceve anche i permessi di quel gruppo, più di quelli che servono.
+3. Vai in **Administration → Permissions**. Per ciascuna delle sezioni qui sotto, aggiungi l'utente `pie` con la sola casella **View** e salva:
    * **Dashboard**, obbligatorio: senza, PIE non vede nulla;
    * **Settings**, consigliato: permette a PIE di capire se le protezioni del DNS sono attive;
    * **Apps** e **Logs**, solo se vuoi sapere quale dispositivo ha contattato quale dominio (vedi sotto).
-4. Esci, rientra come `pie`, apri il menu dell'utente in alto a destra e scegli **Create API Token**. Copia il token: ti servirà tra poco, e Technitium non te lo mostrerà di nuovo.
+4. Vai in **Administration → Sessions**, scegli **Create Token**, seleziona l'utente `pie` e dai un nome al token, per esempio `pie`. Copia il token: ti servirà tra poco, e Technitium non te lo mostrerà di nuovo.
+
+Non serve uscire da Technitium né entrare come `pie`: il token funziona da solo.
 
 ### Quale dispositivo ha contattato quale dominio
 
@@ -56,7 +58,7 @@ Lo script fa tutto da solo e si ferma solo per chiederti tre cose:
 | Cosa chiede | Che cosa vuol dire | Che cosa rispondere |
 | --- | --- | --- |
 | `Address of Technitium` | Dove si trova Technitium | L'indirizzo che usi per aprirlo, per esempio `http://192.168.1.10:5380`. Se Technitium è su questo stesso computer, premi solo Invio |
-| `API token` | Il token creato prima | Incollalo con il tasto destro e premi Invio. Non lo vedrai comparire: è normale |
+| `API token` | Il token creato prima | Incollalo con il **tasto destro** del mouse (`Ctrl+V` in quella finestra può non funzionare) e premi Invio. Non lo vedrai comparire: è normale. Subito dopo PIE scrive quanti caratteri ha ricevuto: per un token di Technitium sono 64 |
 | `Name`, poi `New password` e `Repeat the password` | Il tuo account per entrare in PIE | Un nome in minuscolo, per esempio `maria`, e una password di almeno 12 caratteri, due volte |
 
 Dopo il token, PIE ti dice che cosa riesce a leggere e che cosa manca, e come ottenerlo. Se il token non funziona te lo dice con parole semplici e ti chiede se vuoi riprovare (`Try again? [Y/n]`: premi Invio per riprovare).
@@ -92,7 +94,7 @@ Su una distribuzione minima può mancare una libreria (ICU): lo script te lo dic
 
 ## Aprire PIE
 
-**Sul computer dove l'hai installato:** apri `http://localhost:5000`.
+**Sul computer dove l'hai installato:** apri `http://localhost:5000`. L'indirizzo comincia con `http` e il browser non mostra il lucchetto: è giusto così, perché quel collegamento non esce mai dal computer e non c'è nulla da proteggere lungo la strada.
 
 **Dal telefono o da un altro computer di casa:**
 

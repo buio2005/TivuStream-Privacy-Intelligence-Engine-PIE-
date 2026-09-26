@@ -235,6 +235,12 @@ public sealed class InstallationCommandTests : IDisposable
             Assert.Contains("https://192.168.1.5:5443", said, StringComparison.Ordinal);
             Assert.Contains(GeneratedCertificate.Fingerprint(certificate), said, StringComparison.Ordinal);
             Assert.Contains("do not enter your password", said, StringComparison.Ordinal);
+
+            // The plain address of this computer comes first, with why it is
+            // plain, so that the warning is not read as being about it.
+            Assert.True(
+                said.IndexOf("http://localhost:5000", StringComparison.Ordinal) < said.IndexOf("not private", StringComparison.Ordinal));
+            Assert.Contains("never leaves the computer", said, StringComparison.Ordinal);
         }
     }
 
