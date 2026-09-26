@@ -172,6 +172,17 @@ internal sealed class RecoveryCommand
 
         string hash = _hasher.Hash(password);
 
+        // The first account of an empty installation is created by whoever
+        // installs it, with a password they have just chosen: asking them to
+        // change it at once would protect nothing. Authentication
+        // Specification, Recovery.
+        if (account is null && _accounts.CreateFirst(name, hash, _time.GetUtcNow()) is not null)
+        {
+            output.WriteLine($"Administrator '{name}' created.");
+
+            return Done;
+        }
+
         if (account is null)
         {
             _accounts.Create(name, AccountRole.Administrator, hash, passwordChangeRequired: true, _time.GetUtcNow());

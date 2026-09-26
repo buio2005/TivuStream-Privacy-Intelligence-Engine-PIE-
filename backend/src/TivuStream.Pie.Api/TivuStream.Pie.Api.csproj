@@ -6,13 +6,19 @@
     Hosts the REST API layer and acts as the composition root of the system.
     Being the composition root, this is the only project allowed to reference
     a concrete Adapter.
-
-    No endpoint is defined at this milestone.
   -->
 
   <PropertyGroup>
     <Description>Host of the Privacy Intelligence Engine.</Description>
+
+    <!-- The name the person types at the terminal (Installation Specification, Package). -->
+    <AssemblyName>tivustream-pie</AssemblyName>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TivuStream.Pie.Core\TivuStream.Pie.Core.csproj" />

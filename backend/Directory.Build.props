@@ -13,6 +13,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!--
+      Version of the product, one for every component. Independent of the
+      Documentation Release (Installation Specification, Package).
+    -->
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <PropertyGroup>

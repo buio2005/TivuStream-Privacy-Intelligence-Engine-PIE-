@@ -85,8 +85,37 @@ public sealed class TransportTests
     {
         FakeTechnitiumHandler server = new() { Unreachable = true };
 
-        await Assert.ThrowsAsync<AdapterException>(
+        AdapterException failure = await Assert.ThrowsAsync<AdapterException>(
             () => TestServer.AdapterFor(server).GetStatisticsAsync(TestServer.Window, CancellationToken.None));
+
+        Assert.Equal(AdapterFailure.Unreachable, failure.Failure);
+    }
+
+    [Fact]
+    public async Task A_token_the_server_does_not_know_is_reported_as_refused_credentials()
+    {
+        // Technitium answers an unknown token with a status of its own, and
+        // an HTTP status of 200.
+        FakeTechnitiumHandler server = new FakeTechnitiumHandler()
+            .On("/api/user/session/get", """{ "status": "invalid-token", "errorMessage": "Invalid token or session expired." }""");
+
+        AdapterException failure = await Assert.ThrowsAsync<AdapterException>(
+            () => TestServer.AdapterFor(server).DescribeAsync(CancellationToken.None));
+
+        Assert.Equal(AdapterFailure.CredentialsRefused, failure.Failure);
+        Assert.DoesNotContain(TestServer.Token, failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_answer_of_401_is_reported_as_refused_credentials()
+    {
+        FakeTechnitiumHandler server = new FakeTechnitiumHandler()
+            .On("/api/user/session/get", "{}", System.Net.HttpStatusCode.Unauthorized);
+
+        AdapterException failure = await Assert.ThrowsAsync<AdapterException>(
+            () => TestServer.AdapterFor(server).DescribeAsync(CancellationToken.None));
+
+        Assert.Equal(AdapterFailure.CredentialsRefused, failure.Failure);
     }
 
     [Fact]

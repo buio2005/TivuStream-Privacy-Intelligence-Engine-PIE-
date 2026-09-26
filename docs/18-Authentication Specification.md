@@ -4,7 +4,7 @@
 
 **Document:** Authentication Specification
 
-**Version:** 1.5.1
+**Version:** 1.6.0
 
 **Status:** Approved
 
@@ -176,6 +176,8 @@ Una nuova installazione non ha account. Chi raggiunge per primo l'indirizzo non 
 
 La prova di possesso è dunque l'**accesso alla macchina**: chi legge l'output standard del processo è, per definizione, chi amministra l'host. In un container è l'output di `docker logs`, e questo è un limite dichiarato.
 
+**Sotto un servizio di sistema il codice non esiste.** L'output standard di un servizio finisce nel registro di sistema, oppure da nessuna parte: mostrarvi il codice violerebbe il punto 2, e non mostrarlo lascerebbe l'installazione senza via d'ingresso. Quando PIE funziona come servizio, non entra nello stato `SetupRequired` con un codice: il primo `Administrator` si crea con il comando di recupero, che su un'installazione senza account ne crea uno (Installation Specification, First Administrator Under A Service). Finché non esiste, ogni richiesta riceve `401` con codice `SetupRequired`, e `POST /api/v1/setup` rifiuta qualunque codice.
+
 ---
 
 # Recovery
@@ -185,7 +187,7 @@ Non esiste un «ho dimenticato la password» via rete e non esiste un messaggio 
 Il recupero è **un comando eseguito sulla macchina che ospita PIE**, dallo stesso eseguibile, che:
 
 * chiede la nuova password sul terminale;
-* la imposta sull'account indicato e vi rimette `passwordChangeRequired`;
+* la imposta sull'account indicato e vi rimette `passwordChangeRequired`, tranne quando crea il primo account di un'installazione che non ne ha: quella password l'ha appena scelta chi la userà, e cambiarla subito non protegge nulla;
 * fa cadere tutte le sessioni di quell'account;
 * può, se non esiste alcun `Administrator` attivo, riattivarne o crearne uno.
 

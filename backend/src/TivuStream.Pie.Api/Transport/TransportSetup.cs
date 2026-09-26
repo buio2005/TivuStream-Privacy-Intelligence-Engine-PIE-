@@ -69,18 +69,25 @@ internal static partial class TransportSetup
             return;
         }
 
-        IEnumerable<string> urls = names.DnsNames
-            .Skip(MachineNames.LoopbackNames.Length)
-            .Concat(names.Addresses
-                .Where(address => address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(address))
-                .Select(address => address.ToString()))
-            .Select(host => $"  https://{host}:{port}");
-
-        string list = Environment.NewLine + string.Join(Environment.NewLine, urls);
+        string list = Environment.NewLine + string.Join(Environment.NewLine, Addresses(port, names).Select(url => $"  {url}"));
         string until = certificate.NotAfter.ToUniversalTime().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         string fingerprint = GeneratedCertificate.Fingerprint(certificate);
 
         Reachable(logger, list, origin, until, fingerprint);
+    }
+
+    /// <summary>
+    /// The addresses other devices reach PIE at: this computer's names and
+    /// its addresses on the network, never the loopback.
+    /// </summary>
+    internal static IEnumerable<string> Addresses(int port, MachineNames names)
+    {
+        return names.DnsNames
+            .Skip(MachineNames.LoopbackNames.Length)
+            .Concat(names.Addresses
+                .Where(address => address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(address))
+                .Select(address => address.ToString()))
+            .Select(host => $"https://{host}:{port}");
     }
 
     [LoggerMessage(

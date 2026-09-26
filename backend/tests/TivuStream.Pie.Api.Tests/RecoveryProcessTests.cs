@@ -52,7 +52,9 @@ public sealed class RecoveryProcessTests : IDisposable
         StoredAccount maria = accounts.FindByUsername("maria")!;
 
         Assert.Equal(AccountRole.Administrator, maria.Role);
-        Assert.True(maria.PasswordChangeRequired);
+        // The first account of an empty installation: the password was just
+        // chosen by whoever installed it.
+        Assert.False(maria.PasswordChangeRequired);
         Assert.Equal(PasswordVerification.Valid, PasswordHasher.Standard.Verify(Password, maria.PasswordHash));
     }
 
@@ -65,6 +67,30 @@ public sealed class RecoveryProcessTests : IDisposable
 
         Assert.Equal(RecoveryCommand.NotAcceptable, exit);
         Assert.Contains("Usage: reset-password", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Installed_the_executable_keeps_its_database_in_the_data_folder()
+    {
+        string data = Path.Combine(_directory, "installed-data");
+        Directory.CreateDirectory(data);
+
+        // A relative path, as the default configuration has: taken from the
+        // data folder, not from the folder the program was started in.
+        (int exit, _, _) = await Run(
+            ["reset-password", "maria", $"--DataDirectory={data}", "--Storage:DatabasePath=pie.db"],
+            $"{Password}\n{Password}\n");
+
+        string database = Path.Combine(data, "pie.db");
+
+        Assert.Equal(0, exit);
+        Assert.True(File.Exists(database));
+
+        AccountRepository accounts = new(new SqliteConnectionFactory(new StorageOptions { DatabasePath = database }));
+
+        Assert.NotNull(accounts.FindByUsername("maria"));
+
+        SqliteConnectionFactory.ReleaseConnections(database);
     }
 
     private string DatabasePath => Path.Combine(_directory, "pie.db");
@@ -133,7 +159,7 @@ public sealed class RecoveryProcessTests : IDisposable
             "bin",
             framework.Parent.Name,
             framework.Name,
-            "TivuStream.Pie.Api.dll");
+            "tivustream-pie.dll");
 
         Assert.True(File.Exists(path), $"the built product was not found at {path}");
 

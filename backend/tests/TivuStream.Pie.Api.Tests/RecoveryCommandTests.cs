@@ -164,8 +164,22 @@ public sealed class RecoveryCommandTests : IDisposable
     // ------------------------------------------------------------------
 
     [Fact]
+    public void The_first_administrator_of_an_empty_installation_keeps_the_password_just_chosen()
+    {
+        int exit = _database.Recovery.Run("root", new ScriptedPrompt(NewPassword, NewPassword), _output);
+
+        StoredAccount root = _database.Accounts.FindByUsername("root")!;
+
+        Assert.Equal(RecoveryCommand.Done, exit);
+        Assert.Equal(AccountRole.Administrator, root.Role);
+        Assert.False(root.PasswordChangeRequired);
+    }
+
+    [Fact]
     public void A_new_name_becomes_an_administrator_when_nobody_can_sign_in_as_one()
     {
+        _database.Add("reader", AccountRole.Viewer);
+
         int exit = _database.Recovery.Run("Root", new ScriptedPrompt(NewPassword, NewPassword), _output);
 
         StoredAccount root = _database.Accounts.FindByUsername("root")!;

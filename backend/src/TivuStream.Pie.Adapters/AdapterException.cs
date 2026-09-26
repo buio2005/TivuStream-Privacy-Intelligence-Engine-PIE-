@@ -40,4 +40,21 @@ public sealed class AdapterException : Exception
         : base(message, innerException)
     {
     }
+
+    /// <summary>
+    /// Creates an exception that says what kind of failure occurred.
+    /// </summary>
+    /// <param name="failure">Kind of failure.</param>
+    /// <param name="message">Description of the failure.</param>
+    /// <param name="innerException">Failure that caused this one, when there is one.</param>
+    public AdapterException(AdapterFailure failure, string message, Exception? innerException = null)
+        : base(message, innerException)
+    {
+        Failure = failure;
+    }
+
+    /// <summary>
+    /// What kind of failure occurred.
+    /// </summary>
+    public AdapterFailure Failure { get; }
 }

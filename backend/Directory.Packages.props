@@ -12,7 +12,6 @@
     that record easy to review and prevents the same package from being
     referenced at different versions across projects.
 
-    No package is referenced yet.
   -->
 
   <PropertyGroup>
@@ -85,6 +84,22 @@
       than the ones the product runs on.
     -->
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.8" />
+
+    <!--
+      Microsoft.Extensions.Hosting.WindowsServices
+      Microsoft.Extensions.Hosting.Systemd
+      Purpose : let the product run as a Windows service and as a systemd
+                unit, reporting its state to the service manager. Outside a
+                service, neither changes anything
+      Licence : MIT
+      Approved: 2026-09-26, Installation Specification 1.3.0, Running As A
+                Service
+
+      Version 10.0.8, as the ASP.NET Core runtime installed, for the reason
+      given above.
+    -->
+    <PackageVersion Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Systemd" Version="10.0.8" />
   </ItemGroup>
 
 </Project>

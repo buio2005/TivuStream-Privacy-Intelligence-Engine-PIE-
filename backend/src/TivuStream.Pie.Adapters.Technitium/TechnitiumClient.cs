@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using TivuStream.Pie.Adapters.Technitium.Responses;
@@ -101,6 +102,13 @@ internal sealed class TechnitiumClient
             return;
         }
 
+        // Technitium answers a token it does not know with a status of its
+        // own rather than with an HTTP status.
+        if (string.Equals(status, "invalid-token", StringComparison.Ordinal))
+        {
+            throw new AdapterException(AdapterFailure.CredentialsRefused, "The Technitium instance refused the API token.");
+        }
+
         string detail = string.IsNullOrWhiteSpace(errorMessage)
             ? "no description was provided"
             : errorMessage;
@@ -124,15 +132,20 @@ internal sealed class TechnitiumClient
         }
         catch (HttpRequestException exception)
         {
-            throw new AdapterException("The Technitium instance could not be reached.", exception);
+            throw new AdapterException(AdapterFailure.Unreachable, "The Technitium instance could not be reached.", exception);
         }
         catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new AdapterException("The Technitium instance did not answer in time.", exception);
+            throw new AdapterException(AdapterFailure.NoAnswer, "The Technitium instance did not answer in time.", exception);
         }
 
         using (response)
         {
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                throw new AdapterException(AdapterFailure.CredentialsRefused, "The Technitium instance refused the API token.");
+            }
+
             if (!response.IsSuccessStatusCode)
             {
                 throw new AdapterException(

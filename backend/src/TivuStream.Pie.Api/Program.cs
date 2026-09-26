@@ -1,13 +1,9 @@
 // TivuStream Privacy Intelligence Engine (PIE)
 // Application host and composition root.
 //
-// Milestone M3.4 builds the first vertical slice: the Acquisition Flow
-// reaches Technitium, the result is held in memory, and the Query Flow reads
-// it. The Core does not exist yet, so no analysis takes place.
-//
-// One deviation from the API Specification is accepted for local use only and
-// is recorded in the changelog: the host serves plain HTTP. Every endpoint
-// requires a signed in account, as the Authentication Specification says.
+// Started by hand during development, or as a system service once installed
+// (Installation Specification). A command given on the terminal, such as
+// reset-password, runs and stops without starting the service.
 
 using System.Security.Claims;
 using System.Text.Json.Serialization;
@@ -23,6 +19,7 @@ using TivuStream.Pie.Api;
 using TivuStream.Pie.Api.Acquisition;
 using TivuStream.Pie.Api.Authentication;
 using TivuStream.Pie.Api.Classification;
+using TivuStream.Pie.Api.Installation;
 using TivuStream.Pie.Api.Contracts;
 using TivuStream.Pie.Api.Storage;
 using TivuStream.Pie.Api.Transport;
@@ -32,12 +29,35 @@ using TivuStream.Pie.Model.Entities;
 using TivuStream.Pie.Storage;
 using TivuStream.Pie.Storage.Schema;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+HostingMode hosting = HostingMode.Detect();
+
+// A service is started from a folder of the system's choosing. The program's
+// own files, the interface among them, are found beside the program.
+WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = hosting.AsService ? AppContext.BaseDirectory : null,
+});
+
+builder.Services.AddWindowsService(options => options.ServiceName = HostingMode.ServiceName);
+builder.Services.AddSystemd();
+builder.Services.AddSingleton(hosting);
+
+// Installed, the data and the configuration holding the credentials live in
+// a folder of their own, apart from the program.
+string? dataDirectory = DataDirectory.From(builder.Configuration);
 
 // Credentials never belong to a versioned file.
-builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
+builder.Configuration.AddJsonFile(
+    DataDirectory.Resolve(dataDirectory, DataDirectory.LocalSettingsFile),
+    optional: true,
+    reloadOnChange: false);
 
 TransportOptions transport = builder.Configuration.GetSection("Transport").Get<TransportOptions>() ?? new();
+
+transport.CertificateDirectory = DataDirectory.Resolve(dataDirectory, transport.CertificateDirectory);
+transport.Certificate.Path = DataDirectory.Resolve(dataDirectory, transport.Certificate.Path);
+transport.Certificate.KeyPath = DataDirectory.Resolve(dataDirectory, transport.Certificate.KeyPath);
 
 // With the encrypted channel open, PIE is reached by this computer's own name
 // and addresses. They are what the certificate names, and what is accepted.
@@ -92,6 +112,11 @@ builder.Services.PostConfigure<HostFilteringOptions>(options => options.AllowedH
 builder.Services.Configure<TechnitiumOptions>(builder.Configuration.GetSection("Technitium"));
 builder.Services.Configure<AcquisitionOptions>(builder.Configuration.GetSection("Acquisition"));
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Storage"));
+builder.Services.PostConfigure<StorageOptions>(options =>
+{
+    options.DatabasePath = DataDirectory.Resolve(dataDirectory, options.DatabasePath);
+    options.ListDirectoryPath = DataDirectory.Resolve(dataDirectory, options.ListDirectoryPath);
+});
 builder.Services.Configure<ClassificationOptions>(builder.Configuration.GetSection("Classification"));
 
 builder.Services.AddSingleton(
@@ -196,21 +221,56 @@ else
     SchemaLog.Unchanged(app.Logger, migration.FinalVersion);
 }
 
+string productVersion = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "unknown";
+string startedAs = hosting.AsService ? "running as a service" : "started by hand";
+string dataLocation = dataDirectory ?? Directory.GetCurrentDirectory();
+
+InstallationLog.Started(app.Logger, productVersion, startedAs, dataLocation);
+
 RetentionLog.Configured(app.Logger, retention.HourlyDays, retention.DailyMonths, retention.MonthlyYears);
 
 // Restoring access to an account is done at the terminal, by someone who has
 // the machine, and never starts the service. It runs once the schema is ready
 // and before anything slow is read.
-if (args.Length > 0 && args[0] == "reset-password")
+string[] command = CommandLine.Positional(args);
+
+if (command.Length > 0 && command[0] == "reset-password")
 {
-    if (args.Length != 2)
+    if (command.Length != 2)
     {
         Console.Error.WriteLine("Usage: reset-password <name>");
 
         return RecoveryCommand.NotAcceptable;
     }
 
-    return app.Services.GetRequiredService<RecoveryCommand>().Run(args[1], new ConsolePasswordPrompt(), Console.Out);
+    return app.Services.GetRequiredService<RecoveryCommand>().Run(command[1], new ConsolePasswordPrompt(), Console.Out);
+}
+
+// Connecting to the Data Source and finding the way in are done at the
+// terminal as well, during the installation (Installation Specification,
+// Commands).
+if (command.Length > 0 && command[0] == "configure")
+{
+    ConfigureCommand configure = new(
+        options => new TechnitiumAdapter(
+            new HttpClient(new SocketsHttpHandler { UseProxy = false }) { Timeout = TimeSpan.FromSeconds(15) },
+            options),
+        DataDirectory.Resolve(dataDirectory, DataDirectory.LocalSettingsFile));
+
+    return await configure.RunAsync(Console.In, new ConsolePasswordPrompt(), Console.Out, CancellationToken.None);
+}
+
+if (command.Length > 0 && command[0] == "access")
+{
+    return new AccessCommand(transport, machine, provided).Run(Console.Out);
+}
+
+// A mistyped command must not start the service in its place.
+if (command.Length > 0)
+{
+    Console.Error.WriteLine("Usage: tivustream-pie [configure | access | reset-password <name>]");
+
+    return RecoveryCommand.NotAcceptable;
 }
 
 // The lists are put in place and read once the schema is ready. Reading them
@@ -390,7 +450,20 @@ app.MapGet("/api/v1/domains/{domain}", (
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
 
 // Shown last, so that it is what is on the screen when the service is ready.
-app.Services.GetRequiredService<SetupService>().AnnounceIfRequired();
+// Under a service there is no screen, and the setup code does not exist: the
+// first administrator is created at the terminal (Authentication
+// Specification, First Run).
+if (app.Services.GetRequiredService<HostingMode>().AsService)
+{
+    if (app.Services.GetRequiredService<SetupService>().IsRequired)
+    {
+        InstallationLog.AdministratorMissing(app.Logger);
+    }
+}
+else
+{
+    app.Services.GetRequiredService<SetupService>().AnnounceIfRequired();
+}
 
 app.Run();
 
