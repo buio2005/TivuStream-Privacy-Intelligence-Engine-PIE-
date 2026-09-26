@@ -85,7 +85,7 @@ Anche togliere la verifica della configurazione all'avvio fa fallire la prova co
 
 **Il primo avvio sul database vero consoliderà il 3 e il 4 agosto**, dopo aver scritto la copia. È irreversibile nel database, non nella copia.
 
-**Le due prove di `RecoveryProcessTests`** non sono state eseguite con la compilazione normale, perché il backend della persona era acceso: passano solo così. Vanno rieseguite a backend fermo.
+**Le due prove di `RecoveryProcessTests`**, che passano solo con la compilazione normale, sono state eseguite a backend fermo: compilazione normale senza avvisi, 464 prove su 464 sul backend, 121 su 121 sul frontend.
 
 ---
 
