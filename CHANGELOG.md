@@ -37,7 +37,11 @@ Due verifiche aggiunte a prove esistenti, 495 in tutto, frontend 121: l'eseguibi
 
 **Dal telefono il tempo scadeva.** Windows segnava come pubblica la rete di casa (`WINDTRE-BF8E10`, Ethernet), e la regola del firewall vale solo per le reti private. Con la rete segnata come privata, il telefono ha aperto PIE in HTTPS. Decisione della persona del 2026-09-27: PIE non si apre mai sulle reti pubbliche; lo script d'installazione, quando una rete con un indirizzo di casa (10.x, 172.16–31.x, 192.168.x) è segnata come pubblica, lo dice e **chiede** se segnarla come privata, con «no» come risposta predefinita, e altrimenti spiega dove farlo dopo. La guida lo spiega, e spiega che una VPN sul telefono va configurata per lasciare fuori la rete locale.
 
+**Aggiornamento riuscito**: lo stesso script, lanciato dal pacchetto nuovo, ha riconosciuto l'installazione completata, sostituito il programma senza domande e riavviato il servizio. Impronta invariata (`A7:0A:D0:A9…`), stesso account, testo nuovo di `access`.
+
 ### Known Impact
+
+**`access` elenca anche indirizzi che dal telefono non servono**: quello della VPN (`100.64.…`) e quello della rete virtuale di WSL (`172.23.…`), accanto a quello di casa. La guida dice quale scegliere; filtrarli richiede di riconoscere le schede virtuali, ed è da decidere.
 
 **Una VPN che usa indirizzi 10.x** verrebbe proposta dallo script come rete da segnare privata, se Windows la considera pubblica. La domanda nomina la rete e la scheda, e la risposta predefinita è no.
 
