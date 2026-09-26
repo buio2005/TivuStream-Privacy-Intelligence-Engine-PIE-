@@ -4,7 +4,7 @@
 
 **Document:** Authentication Specification
 
-**Version:** 1.3.1
+**Version:** 1.4.0
 
 **Status:** Approved
 
@@ -449,11 +449,13 @@ I registri portano conteggi e a esiti, mai dati di rete e mai segreti.
 | --- | --- |
 | Configurazione iniziale completata | L'evento e il nome dell'amministratore creato |
 | Accesso riuscito | Il nome dell'account |
-| Accesso fallito | L'evento e un **conteggio**. Non il nome tentato: potrebbe essere una password digitata nel campo sbagliato |
-| Operazione sugli account | Chi l'ha eseguita, su quale account, quale operazione |
-| Limite raggiunto | L'evento, non l'origine |
+| Accesso fallito | L'evento e un **conteggio**: i rifiuti dall'avvio del servizio. Non il nome tentato: potrebbe essere una password digitata nel campo sbagliato |
+| Operazione sugli account | Chi l'ha eseguita, su quale account, quale operazione. Comprende il cambio della propria password; una modifica che ne porta più d'una le registra una per una |
+| Limite raggiunto | L'evento, il tipo di contatore (indirizzo o nome) e il ritardo. Non l'origine né il nome |
 
 Non compaiono mai: password, identificativi di sessione, codice di configurazione, indirizzi di origine.
+
+La regola vale per **ogni** registro del processo, compresi quelli del framework a qualunque livello di dettaglio, e per ogni risposta, comprese quelle a un guasto imprevisto: la pagina diagnostica del framework, che riporta le intestazioni della richiesta e quindi il cookie di sessione, non viene mai mostrata. Vedi API Specification, Error Handling.
 
 ---
 
@@ -507,7 +509,7 @@ Una funzionalità di questa portata non si realizza in un solo passo. Ogni miles
 | A4 | Ruoli, gestione degli account, ciò che viene trattenuto | V6, V7 |
 | A5 | Tentativi, trasporto, `Origin`, `Host` | V8, V9, V13, V14 |
 | A6 | Frontend: stati, schermate, catalogo | F1–F3, F5. F4 si verifica con la pagina di dettaglio del dominio, che il Frontend non ha ancora |
-| A7 | Registrazione senza segreti | V11 |
+| A7 | Registrazione senza segreti; risposte ai guasti nella struttura comune | V11 |
 
 Le prove dell'API esistenti dovranno ottenere una sessione: la loro fabbrica di test dovrà crearne una.
 

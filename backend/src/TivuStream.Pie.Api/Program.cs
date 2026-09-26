@@ -100,6 +100,10 @@ builder.Services.AddHostedService<ClassificationUpdateService>();
 
 // Enumerations travel as names rather than as numbers: a number would be
 // meaningless to anyone reading the answer.
+// A body that cannot be read is reported the same way in every environment,
+// through the handler of failures, instead of as a bare status in some.
+builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = true);
+
 builder.Services.ConfigureHttpJsonOptions(
     options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -145,6 +149,9 @@ ClassificationProvider classification = app.Services.GetRequiredService<Classifi
 
 classification.EnsureDefaults();
 classification.Reload();
+
+// Outermost: whatever fails below answers in the common structure.
+app.UseFailureAnswers();
 
 // Before anything recognises the person: a request from another site is
 // refused whoever it claims to be.

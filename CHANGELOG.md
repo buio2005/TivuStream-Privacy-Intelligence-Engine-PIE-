@@ -8,6 +8,61 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone A7 — Registrazione senza segreti — 2026-09-26
+
+Ultima delle sette milestone della Specification 18. L'autenticazione è completa: il debito più grave del progetto esce dall'elenco. Resta, separato, il trasporto cifrato.
+
+### Added
+
+**Eventi registrati**, come li elenca la specifica:
+
+| Evento | Riga |
+| --- | --- |
+| Configurazione iniziale | `First run setup completed. Administrator 'root' created.` |
+| Accesso riuscito | `'maria' signed in.` |
+| Accesso rifiutato | `A sign in was refused. Refused since the service started: 5.`, un conteggio e non il nome tentato |
+| Limite raggiunto | `Too many failed attempts from one source address. Further attempts wait 30 seconds.`, il tipo di contatore e non l'origine |
+| Operazioni sugli account | `'root' performed 'reset password' on account 'maria'.`, una riga per ogni cambiamento di una stessa richiesta |
+| Cambio della propria password | `'maria' changed their own password.` |
+
+**Guasti nella struttura comune, in ogni ambiente.** Un guasto imprevisto risponde `500 InternalError`; un corpo illeggibile risponde `400 RequestUnreadable`. Prima il primo produceva la pagina diagnostica del framework e il secondo un `400` senza corpo. Questo chiude il debito dichiarato in A4.
+
+### Fixed
+
+**Una risposta a un guasto conteneva il cookie di sessione.** In ambiente di sviluppo la pagina diagnostica del framework elenca le intestazioni della richiesta. Una prova che provoca un guasto vero (la tabella delle sessioni rimossa) l'ha mostrato: il corpo della risposta conteneva `pie_session=` con l'identificativo. `dotnet run` parte in produzione e non la mostra, ma basta impostare `ASPNETCORE_ENVIRONMENT=Development` per attivarla. Ora la pagina non viene mai raggiunta.
+
+**Le prove chiudevano le connessioni al database delle altre prove.** Alla fine di ogni classe, `SqliteConnection.ClearAllPools()` svuotava i pool di tutto il processo, comprese le connessioni che altre classi, in parallelo, stavano usando sui propri database: `ObjectDisposedException`, quindi `500`, a intermittenza. Il difetto esisteva da prima. Si è fatto frequente con le prove di A6 e A7, ed è emerso quando il nuovo gestore dei guasti ha reso leggibile l'errore. `SqliteConnectionFactory.ReleaseConnections` libera ora le connessioni del solo database indicato. Dieci esecuzioni complete consecutive, senza fallimenti.
+
+### Verified
+
+**V11**: una prova percorre il ciclo intero con i registri al livello più dettagliato (`Trace`), compresi quelli del framework. Configurazione iniziale con due codici sbagliati; un accesso con una password digitata nel campo del nome; errori fino al limite da un indirizzo riconoscibile; creazione, reimpostazione, cambi di ruolo e di stato, rimozione; cambio della propria password per due account; un guasto con il cookie presente. Nessuna risposta e nessuna riga contiene le cinque password usate, il testo digitato come nome, il codice di configurazione in entrambe le forme, l'indirizzo, gli identificativi di sessione né il token della sorgente dati. Ogni evento della tabella è presente, e sono presenti anche le righe del framework: senza, il controllo non direbbe nulla su di esse.
+
+Nove difetti introdotti di proposito, tutti intercettati, e una modifica innocua come controllo: gestore dei guasti tolto; ramo del corpo illeggibile tolto; eccezione del corpo illeggibile non più lanciata in produzione; nome tentato nel registro; indirizzo nel registro del limite; configurazione iniziale non registrata; reimpostazione non registrata; password nel registro del cambio; conteggio dei rifiuti fermo.
+
+**Il metodo aveva un punto cieco.** Lo script dei difetti riconosceva come errori di compilazione solo quelli del compilatore e dello stile (`CS`, `IDE`), non quelli dell'analizzatore (`CA`). Un difetto rifiutato dall'analizzatore lasciava le prove girare sul codice precedente, e risultava «non intercettato». È successo una volta, con il nome tentato nel registro; riscritto in una forma che compila, è intercettato. Nelle tornate di A4, A5 e A6 l'unico risultato «0 fallite» era sempre il controllo innocuo, che compila: quelle tornate reggono.
+
+Compilazione senza avvisi. 366 prove sul backend, tre esecuzioni complete consecutive senza fallimenti.
+
+### Known Impact
+
+**I registri non sono consultabili dall'interfaccia**, come dichiarato nei Known Limits della specifica: esistono gli eventi nel registro dell'applicazione, non uno storico.
+
+**Un guasto imprevisto si presenta nel Frontend come «Il motore ha risposto in modo inatteso (InternalError)».** È vero, ma non dice altro: la causa è nel registro dell'applicazione.
+
+---
+
+## Documentation Release 1.8.0 — Registri e guasti — 2026-09-26
+
+### Changed
+
+**Specification 18 alla 1.4.0.** Il contenuto di ciascun evento registrato; la regola vale per ogni registro del processo, compresi quelli del framework a qualunque livello, e per ogni risposta, comprese quelle ai guasti. La milestone A7 comprende le risposte ai guasti.
+
+**Specification 06 alla 1.3.2.** I due codici validi per ogni endpoint, `RequestUnreadable` (400, Validation) e `InternalError` (500, Internal), in ogni ambiente di esecuzione.
+
+**Roadmap 1.3.5**: soddisfatto il criterio di Beta sull'autenticazione; gli altri no, o non verificati. README e PROJECT_CONTEXT allineati alla Documentation Release 1.8.0.
+
+---
+
 ## A6.1 — La pagina che una sessione lascia dietro di sé — 2026-09-26
 
 Difetto trovato dalla prima prova nel browser, fatta dalla persona che lavora al progetto.

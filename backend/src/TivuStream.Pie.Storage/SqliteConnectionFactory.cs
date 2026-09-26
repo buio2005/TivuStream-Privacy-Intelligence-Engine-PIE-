@@ -31,6 +31,32 @@ public sealed class SqliteConnectionFactory
             Directory.CreateDirectory(directory);
         }
 
+        _connectionString = ConnectionString(fullPath);
+
+        DatabasePath = fullPath;
+    }
+
+    /// <summary>
+    /// Closes the idle connections kept open towards one database file, and
+    /// only that one.
+    /// </summary>
+    /// <remarks>
+    /// Pooled connections hold the file open, which stops it being deleted.
+    /// Clearing every pool of the process instead would close, under their
+    /// feet, the connections other users of other databases are working with.
+    /// </remarks>
+    /// <param name="databasePath">Path of the database, as configured.</param>
+    public static void ReleaseConnections(string databasePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(databasePath);
+
+        using SqliteConnection connection = new(ConnectionString(Path.GetFullPath(databasePath)));
+
+        SqliteConnection.ClearPool(connection);
+    }
+
+    private static string ConnectionString(string fullPath)
+    {
         SqliteConnectionStringBuilder builder = new()
         {
             DataSource = fullPath,
@@ -42,9 +68,7 @@ public sealed class SqliteConnectionFactory
             Cache = SqliteCacheMode.Private,
         };
 
-        _connectionString = builder.ToString();
-
-        DatabasePath = fullPath;
+        return builder.ToString();
     }
 
     /// <summary>

@@ -82,7 +82,8 @@ internal static class AccountEndpoints
         HttpContext context,
         AccountRepository accounts,
         PasswordHasher hasher,
-        TimeProvider time)
+        TimeProvider time,
+        ILoggerFactory loggers)
     {
         // The initial password is a password like any other (D9).
         if (!CredentialTransport.IsSuitable(context))
@@ -120,6 +121,8 @@ internal static class AccountEndpoints
                 statusCode: StatusCodes.Status409Conflict);
         }
 
+        Record(loggers, context, $"create as {role}", created.Username);
+
         return Results.Json(ApiResponse.Ok(AccountSummary.Of(created)), statusCode: StatusCodes.Status201Created);
     }
 
@@ -129,7 +132,8 @@ internal static class AccountEndpoints
         HttpContext context,
         AccountRepository accounts,
         PasswordHasher hasher,
-        SessionService sessions)
+        SessionService sessions,
+        ILoggerFactory loggers)
     {
         if (request?.Password is not null && !CredentialTransport.IsSuitable(context))
         {
@@ -189,16 +193,46 @@ internal static class AccountEndpoints
             sessions.EndAllFor(changed!.Id, exceptSessionId: null);
         }
 
+        if (role is not null)
+        {
+            Record(loggers, context, $"set role {role}", changed!.Username);
+        }
+
+        if (request?.Enabled is bool enabled)
+        {
+            Record(loggers, context, enabled ? "enable" : "disable", changed!.Username);
+        }
+
+        if (passwordHash is not null)
+        {
+            Record(loggers, context, "reset password", changed!.Username);
+        }
+
         return Results.Ok(ApiResponse.Ok(AccountSummary.Of(changed!)));
     }
 
-    private static IResult Delete(string username, AccountRepository accounts)
+    private static IResult Delete(string username, HttpContext context, AccountRepository accounts, ILoggerFactory loggers)
     {
-        AccountChangeOutcome outcome = accounts.Delete(AccountPolicy.CanonicalUsername(username));
+        string name = AccountPolicy.CanonicalUsername(username);
+        AccountChangeOutcome outcome = accounts.Delete(name);
+
+        if (outcome == AccountChangeOutcome.Changed)
+        {
+            Record(loggers, context, "remove", name);
+        }
 
         return outcome == AccountChangeOutcome.Changed
             ? Results.Ok(ApiResponse.Ok<object?>(null))
             : Refusal<object>(outcome);
+    }
+
+    // Who did what to whom. The name of the account signed in is the actor.
+    private static void Record(ILoggerFactory loggers, HttpContext context, string operation, string account)
+    {
+        ILogger log = AuthenticationLog.For(loggers);
+        string actor = context.User.Identity?.Name ?? "unknown";
+
+        AuthenticationLog.AccountChanged(log, actor, operation, account);
     }
 
     private static IResult Refusal<TData>(AccountChangeOutcome outcome)

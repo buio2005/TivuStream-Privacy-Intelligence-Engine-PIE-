@@ -4,11 +4,11 @@
 
 **Document:** API Specification
 
-**Version:** 1.3.1
+**Version:** 1.3.2
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-19
+**Last Updated:** 2026-09-26
 
 ---
 
@@ -461,6 +461,15 @@ Gli errori sono classificati nelle seguenti categorie.
 * Internal
 
 Ogni errore utilizza un codice identificativo univoco.
+
+Due codici valgono per ogni endpoint:
+
+| Stato | Codice | Categoria | Quando |
+| --- | --- | --- | --- |
+| 400 | `RequestUnreadable` | Validation | Il corpo della richiesta non si può leggere: non è JSON, non ha la forma attesa, contiene testo non valido |
+| 500 | `InternalError` | Internal | Un guasto che il codice non ha previsto |
+
+Entrambi usano la struttura comune **in ogni ambiente di esecuzione**. `InternalError` non dice nulla della causa né della richiesta: la pagina diagnostica del framework, che elenca le intestazioni e con esse il cookie di sessione, non viene mai mostrata (Authentication Specification, V11). La causa va nel registro dell'applicazione, senza segreti.
 
 ---
 

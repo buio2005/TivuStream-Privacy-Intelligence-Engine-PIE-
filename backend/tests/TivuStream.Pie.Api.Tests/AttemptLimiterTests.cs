@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.Extensions.Logging.Abstractions;
 using TivuStream.Pie.Api.Authentication;
 using Xunit;
 
@@ -22,7 +23,7 @@ public sealed class AttemptLimiterTests
 
     public AttemptLimiterTests()
     {
-        _limiter = new AttemptLimiter(_clock);
+        _limiter = new AttemptLimiter(_clock, NullLogger<AttemptLimiter>.Instance);
     }
 
     [Fact]

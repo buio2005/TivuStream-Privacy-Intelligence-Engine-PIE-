@@ -47,7 +47,7 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 362 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 366 tests, all must pass
 cd frontend && npm run test:unit -- --run        # 79 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000; a fresh database
@@ -90,28 +90,31 @@ Every boundary crossed carries at least one test.
 
 ---
 
+## Authentication
+
+Specified in `docs/18-Authentication Specification.md`, milestones A1 to A7,
+all done. Every endpoint requires a signed in account except `setup` and
+`login`. A fresh instance prints a one-time setup code; `dotnet run --
+reset-password <name>` restores access from this machine. A `Viewer` reads
+aggregated data only. Passwords are refused over plain HTTP from another
+machine, repeated failures are slowed down, requests that change data from
+another `Origin` are refused, only the names in `AllowedHosts` are served
+(loopback by default, `*` stops the start). No answer and no log line carries
+a password, a session identifier, the setup code or a source address.
+
+In the frontend `stores/session.ts` holds the five states. Backend tests
+create accounts directly; requests in tests come from the loopback unless
+they set `X-Test-Remote-Address`.
+
+---
+
 ## Known debts
 
-* **Authentication not finished.** Logs are not yet checked for secrets
-  (A7), and without HTTPS a password can only be sent from this machine.
-  Specified in `docs/18-Authentication
-  Specification.md` (approved); milestones A1 to A7. A1 to A6 are done: every
-  endpoint requires a signed in account, and the first one is created with the
-  setup code printed by a fresh instance (`POST /api/v1/setup`), or with
-  `dotnet run -- reset-password <name>`. Administrators manage accounts
-  through `/api/v1/accounts`; a `Viewer` reads aggregated data only; a
-  password set by someone else must be changed before anything else. Repeated
-  failures are slowed down; passwords are refused over plain HTTP from another
-  machine; requests that change data from another `Origin` are refused; only
-  the names in `AllowedHosts` are served (loopback by default, `*` stops the
-  start). The frontend has setup, sign in, password change and account
-  screens (`stores/session.ts` holds the five states). Left: A7, logs without
-  secrets. Backend tests create accounts directly, and requests in tests come
-  from the loopback unless they set `X-Test-Remote-Address`.
 * No domain detail page in the frontend: per-device activity and
   `activityAccess` are not shown anywhere yet (F4 of Specification 18 waits
   for it).
-* HTTP, not HTTPS.
+* HTTP, not HTTPS. Until the Transport Security Specification exists and is
+  implemented, a password can only be sent from this machine.
 * No installation procedure: the `installer/` directory is empty.
 * Tiered retention is designed in Specification 16 and not implemented; the
   database grows without limit.

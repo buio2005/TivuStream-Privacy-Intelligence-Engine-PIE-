@@ -157,8 +157,13 @@ public sealed class AuthenticationTests : IDisposable
         using HttpResponseMessage response = await client.PostAsync(new Uri("/api/v1/auth/login", UriKind.Relative), content);
 
         // A password with characters that are not valid text can never match
-        // one that was accepted. It must be refused, not crash the request.
-        Assert.InRange((int)response.StatusCode, 400, 499);
+        // one that was accepted. It must be refused, not crash the request,
+        // and in the same structure as every other answer.
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using JsonDocument answer = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+        Assert.Equal("RequestUnreadable", answer.RootElement.GetProperty("error").GetProperty("code").GetString());
     }
 
     // ------------------------------------------------------------------

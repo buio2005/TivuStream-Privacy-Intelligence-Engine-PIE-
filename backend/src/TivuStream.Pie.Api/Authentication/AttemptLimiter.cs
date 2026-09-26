@@ -42,10 +42,12 @@ internal sealed class AttemptLimiter
     private readonly Dictionary<string, Counter> _accounts = [];
     private readonly Lock _gate = new();
     private readonly TimeProvider _time;
+    private readonly ILogger<AttemptLimiter> _logger;
 
-    public AttemptLimiter(TimeProvider time)
+    public AttemptLimiter(TimeProvider time, ILogger<AttemptLimiter> logger)
     {
         _time = time;
+        _logger = logger;
     }
 
     /// <summary>
@@ -82,11 +84,14 @@ internal sealed class AttemptLimiter
             Forget(_sources, now);
             Forget(_accounts, now);
 
-            Fail(_sources, SourceKey(source), SourceThreshold, now);
-
-            if (account is not null)
+            if (Fail(_sources, SourceKey(source), SourceThreshold, now) is TimeSpan sourceDelay)
             {
-                Fail(_accounts, account, AccountThreshold, now);
+                AuthenticationLog.LimitReached(_logger, "source address", (int)sourceDelay.TotalSeconds);
+            }
+
+            if (account is not null && Fail(_accounts, account, AccountThreshold, now) is TimeSpan accountDelay)
+            {
+                AuthenticationLog.LimitReached(_logger, "account name", (int)accountDelay.TotalSeconds);
             }
         }
     }
@@ -135,7 +140,8 @@ internal sealed class AttemptLimiter
         return new IPAddress(bytes) + "/64";
     }
 
-    private static void Fail(Dictionary<string, Counter> counters, string key, int threshold, DateTimeOffset now)
+    // Returns the delay the failure started, when it started one.
+    private static TimeSpan? Fail(Dictionary<string, Counter> counters, string key, int threshold, DateTimeOffset now)
     {
         Counter counter = counters.TryGetValue(key, out Counter? existing) ? existing : counters[key] = new Counter();
 
@@ -151,7 +157,11 @@ internal sealed class AttemptLimiter
             TimeSpan delay = FirstDelay * (1L << doublings);
 
             counter.BlockedUntil = now + (delay < MaximumDelay ? delay : MaximumDelay);
+
+            return counter.BlockedUntil - now;
         }
+
+        return null;
     }
 
     private static DateTimeOffset BlockedUntil(Dictionary<string, Counter> counters, string key, DateTimeOffset now)

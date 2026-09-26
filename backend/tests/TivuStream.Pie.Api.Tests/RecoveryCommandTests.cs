@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using TivuStream.Pie.Api.Authentication;
 using TivuStream.Pie.Storage;
 using TivuStream.Pie.Storage.Schema;
@@ -42,7 +41,9 @@ internal sealed class TempDatabase : IDisposable
 
     public void Dispose()
     {
-        SqliteConnection.ClearAllPools();
+        // Pooled connections hold the file open. Only this database's: other tests
+        // run at the same time on databases of their own.
+        SqliteConnectionFactory.ReleaseConnections(Path.Combine(_directory, "pie.db"));
 
         if (Directory.Exists(_directory))
         {

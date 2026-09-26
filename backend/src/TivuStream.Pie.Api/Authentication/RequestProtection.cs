@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.AspNetCore.Diagnostics;
 using TivuStream.Pie.Api.Contracts;
 
 namespace TivuStream.Pie.Api.Authentication;
@@ -102,21 +103,10 @@ internal static class RequestProtection
     {
         app.Use(async (context, next) =>
         {
-            // Nothing served here may be framed by another site.
-            context.Response.Headers.ContentSecurityPolicy = "frame-ancestors 'none'";
-
-            if (context.Request.IsHttps)
-            {
-                context.Response.Headers.StrictTransportSecurity = "max-age=31536000";
-            }
+            WriteHeaders(context);
 
             if (context.Request.Path.StartsWithSegments("/api"))
             {
-                // Every answer of the API carries data about the network, and
-                // none of it may stay in the cache of a browser or of anything
-                // between.
-                context.Response.Headers.CacheControl = "no-store";
-
                 if (!OriginAllowed(context.Request))
                 {
                     await Results.Json(
@@ -131,6 +121,62 @@ internal static class RequestProtection
 
             await next(context);
         });
+    }
+
+    /// <summary>
+    /// Answers every failure in the common structure, in every environment.
+    /// </summary>
+    /// <remarks>
+    /// Authentication Specification, V11. The diagnostic page of the
+    /// framework lists the headers of the request, the session cookie among
+    /// them: shown to whoever made the request, it puts a session identifier
+    /// in an answer. It is never reached.
+    /// <para>
+    /// A body that cannot be read is the client's error and is said to be
+    /// one. Anything else is the engine's, and says nothing of its cause.
+    /// </para>
+    /// </remarks>
+    internal static void UseFailureAnswers(this IApplicationBuilder app)
+    {
+        app.UseExceptionHandler(failure => failure.Run(context =>
+        {
+            WriteHeaders(context);
+
+            IResult answer = context.Features.Get<IExceptionHandlerFeature>()?.Error is BadHttpRequestException unreadable
+                ? Results.Json(
+                    ApiResponse.Failed<object>("RequestUnreadable", "The body of the request could not be read."),
+                    statusCode: unreadable.StatusCode)
+                : Results.Json(
+                    ApiResponse.Failed<object>("InternalError", "The engine could not complete the request."),
+                    statusCode: StatusCodes.Status500InternalServerError);
+
+            return answer.ExecuteAsync(context);
+        }));
+    }
+
+    /// <summary>
+    /// Writes the headers every answer carries.
+    /// </summary>
+    /// <remarks>
+    /// Called again for an answer to a failure, because the framework clears
+    /// the response before writing one.
+    /// </remarks>
+    internal static void WriteHeaders(HttpContext context)
+    {
+        // Nothing served here may be framed by another site.
+        context.Response.Headers.ContentSecurityPolicy = "frame-ancestors 'none'";
+
+        if (context.Request.IsHttps)
+        {
+            context.Response.Headers.StrictTransportSecurity = "max-age=31536000";
+        }
+
+        // Every answer of the API carries data about the network, and none of
+        // it may stay in the cache of a browser or of anything between.
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.Headers.CacheControl = "no-store";
+        }
     }
 
     /// <summary>

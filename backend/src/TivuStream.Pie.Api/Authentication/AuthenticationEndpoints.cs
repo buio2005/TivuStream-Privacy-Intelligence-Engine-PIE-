@@ -80,7 +80,8 @@ internal static class AuthenticationEndpoints
         HttpContext context,
         SetupService setup,
         SessionService sessions,
-        AttemptLimiter attempts)
+        AttemptLimiter attempts,
+        ILoggerFactory loggers)
     {
         if (!CredentialTransport.IsSuitable(context))
         {
@@ -124,6 +125,9 @@ internal static class AuthenticationEndpoints
                     statusCode: StatusCodes.Status409Conflict);
         }
 
+        ILogger log = AuthenticationLog.For(loggers);
+        AuthenticationLog.SetupCompleted(log, result.Account!.Username);
+
         // The person who has just created the administrator is signed in.
         (string token, DateTimeOffset expiresAt) = sessions.Start(result.Account!);
 
@@ -140,7 +144,8 @@ internal static class AuthenticationEndpoints
         SetupService setup,
         CredentialVerifier credentials,
         SessionService sessions,
-        AttemptLimiter attempts)
+        AttemptLimiter attempts,
+        ILoggerFactory loggers)
     {
         if (!CredentialTransport.IsSuitable(context))
         {
@@ -175,12 +180,20 @@ internal static class AuthenticationEndpoints
         {
             attempts.RecordFailure(source, name);
 
+            // A count, not the name: a password typed into the name field must
+            // not end up in the logs.
+            ILogger refusalLog = AuthenticationLog.For(loggers);
+            AuthenticationLog.SignInRefused(refusalLog, credentials.Refusals);
+
             return Results.Json(
                 ApiResponse.Failed<AccountInfo>("AuthenticationFailed", RefusedMessage),
                 statusCode: StatusCodes.Status401Unauthorized);
         }
 
         attempts.RecordSuccess(name);
+
+        ILogger log = AuthenticationLog.For(loggers);
+        AuthenticationLog.SignedIn(log, account.Username);
 
         // Signing in again where a session is already open replaces it. The
         // identifier changes at every sign in, and the old one stops working.
@@ -213,7 +226,8 @@ internal static class AuthenticationEndpoints
         PasswordHasher hasher,
         AccountRepository accounts,
         SessionService sessions,
-        AttemptLimiter attempts)
+        AttemptLimiter attempts,
+        ILoggerFactory loggers)
     {
         if (!CredentialTransport.IsSuitable(context))
         {
@@ -267,6 +281,9 @@ internal static class AuthenticationEndpoints
         // Every other place the account was signed in stops working. This one,
         // where the change was made, goes on.
         sessions.EndAllFor(account.Id, session.SessionId);
+
+        ILogger log = AuthenticationLog.For(loggers);
+        AuthenticationLog.PasswordChanged(log, account.Username);
 
         return Results.Ok(ApiResponse.Ok(ToInfo(account with { PasswordChangeRequired = false }, session.ExpiresAt)));
     }

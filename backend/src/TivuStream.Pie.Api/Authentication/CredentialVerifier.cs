@@ -27,6 +27,8 @@ internal sealed class CredentialVerifier
     // only use is to cost the same as a real check.
     private readonly string _absentAccountHash;
 
+    private long _refusals;
+
     public CredentialVerifier(AccountRepository accounts, PasswordHasher hasher)
     {
         _accounts = accounts;
@@ -34,6 +36,12 @@ internal sealed class CredentialVerifier
 
         _absentAccountHash = hasher.Hash(Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)));
     }
+
+    /// <summary>
+    /// Sign ins refused since the service started. What the logs record of a
+    /// refusal, instead of the name that was tried.
+    /// </summary>
+    internal long Refusals => Interlocked.Read(ref _refusals);
 
     /// <summary>
     /// Checks a name and a password.
@@ -53,6 +61,8 @@ internal sealed class CredentialVerifier
 
         if (account is null || !account.Enabled || result == PasswordVerification.Failed)
         {
+            Interlocked.Increment(ref _refusals);
+
             return null;
         }
 

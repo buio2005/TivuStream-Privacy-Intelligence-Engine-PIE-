@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -213,8 +212,9 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
 
         _administrator?.Dispose();
 
-        // Pooled connections hold the file open.
-        SqliteConnection.ClearAllPools();
+        // Pooled connections hold the file open. Only this database's: other tests
+        // run at the same time on databases of their own.
+        SqliteConnectionFactory.ReleaseConnections(Path.Combine(_directory, "pie.db"));
 
         if (Directory.Exists(_directory))
         {

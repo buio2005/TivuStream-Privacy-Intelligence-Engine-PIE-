@@ -4,7 +4,7 @@
 
 **Document:** Project Roadmap Specification
 
-**Version:** 1.3.4
+**Version:** 1.3.5
 
 **Status:** Approved
 
@@ -33,11 +33,11 @@ La roadmap ha i seguenti obiettivi.
 
 # Current Status
 
-**Documentation Release:** 1.7.1
+**Documentation Release:** 1.8.0
 
 **Project Status:** In Development
 
-**Development Status:** In Progress. Il repository non è pubblico e nessun criterio di Beta è soddisfatto: vedi Release Criteria.
+**Development Status:** In Progress. Il repository non è pubblico. Dei criteri di Beta è soddisfatto quello sull'autenticazione (Specification 18, milestone A1–A7); gli altri no, o non sono stati verificati: vedi Release Criteria.
 
 ---
 

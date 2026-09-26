@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using TivuStream.Pie.Model;
 using TivuStream.Pie.Model.Entities;
 using TivuStream.Pie.Model.Enums;
@@ -49,8 +48,9 @@ internal sealed class TestDatabase : IDisposable
 
     public void Dispose()
     {
-        // Pooled connections hold the file open.
-        SqliteConnection.ClearAllPools();
+        // Pooled connections hold the file open. Only this database's: other tests
+        // run at the same time on databases of their own.
+        SqliteConnectionFactory.ReleaseConnections(Path.Combine(_directory, "pie.db"));
 
         if (Directory.Exists(_directory))
         {
