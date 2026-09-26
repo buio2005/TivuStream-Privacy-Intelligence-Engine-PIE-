@@ -204,31 +204,57 @@ public sealed class AcquisitionRepository
     }
 
     /// <summary>
-    /// Returns the devices of the most recent observation period.
+    /// Returns the devices observed since the given instant, one per
+    /// identifier.
     /// </summary>
-    public IReadOnlyList<Device> GetLatestDevices()
+    /// <remarks>
+    /// Lawful because the identifier is derived deterministically from the
+    /// address or the hardware address. A device recognised by its network
+    /// address that changed address within the window appears twice, and its
+    /// identity basis says so.
+    /// </remarks>
+    /// <param name="since">Beginning of the window, inclusive.</param>
+    public List<ObservedDevice> GetDevicesSince(DateTimeOffset since)
     {
         using SqliteConnection connection = _connectionFactory.Open();
 
         using SqliteCommand command = connection.CreateCommand();
 
         command.CommandText =
-            """
-            SELECT  d.device_id, d.hostname, d.ip_address, d.mac_address,
-                    d.vendor, d.operating_system, d.first_seen, d.last_seen, d.status,
-                    d.observation_quality, d.identity_basis
-            FROM    device d
-            WHERE   d.observation_period_id = (SELECT id FROM observation_period ORDER BY period_start DESC LIMIT 1)
-            ORDER BY d.ip_address;
+            $"""
+            WITH windowed AS (
+                SELECT      d.*, p.period_start
+                FROM        device d
+                INNER JOIN  observation_period p ON p.id = d.observation_period_id
+                WHERE       p.period_start >= $since
+            ),
+            aggregated AS (
+                SELECT   device_id,
+                         MIN(first_seen)   AS first_seen,
+                         MAX(last_seen)    AS last_seen,
+                         MAX(period_start) AS latest_period,
+                         {LeastPreciseQuality} AS quality_rank
+                FROM     windowed
+                GROUP BY device_id
+            )
+            SELECT      a.device_id, w.hostname, w.ip_address, w.mac_address,
+                        w.vendor, w.operating_system, w.identity_basis,
+                        a.first_seen, a.last_seen, a.quality_rank
+            FROM        aggregated a
+            INNER JOIN  windowed w
+                    ON  w.device_id = a.device_id AND w.period_start = a.latest_period
+            ORDER BY    w.ip_address, a.device_id;
             """;
 
-        List<Device> devices = [];
+        command.Parameters.AddWithValue("$since", Format(since));
+
+        List<ObservedDevice> devices = [];
 
         using SqliteDataReader reader = command.ExecuteReader();
 
         while (reader.Read())
         {
-            devices.Add(new Device
+            devices.Add(new ObservedDevice
             {
                 DeviceId = Guid.Parse(reader.GetString(0), CultureInfo.InvariantCulture),
                 Hostname = reader.IsDBNull(1) ? null : reader.GetString(1),
@@ -236,15 +262,98 @@ public sealed class AcquisitionRepository
                 MacAddress = reader.IsDBNull(3) ? null : reader.GetString(3),
                 Vendor = reader.IsDBNull(4) ? null : reader.GetString(4),
                 OperatingSystem = reader.IsDBNull(5) ? null : reader.GetString(5),
-                FirstSeen = ReadInstant(reader, 6),
-                LastSeen = ReadInstant(reader, 7),
-                Status = Enum.Parse<DeviceStatus>(reader.GetString(8)),
-                ObservationQuality = Enum.Parse<MeasurementQuality>(reader.GetString(9)),
-                IdentityBasis = Enum.Parse<DeviceIdentityBasis>(reader.GetString(10)),
+                IdentityBasis = Enum.Parse<DeviceIdentityBasis>(reader.GetString(6)),
+                FirstSeen = ReadInstant(reader, 7),
+                LastSeen = ReadInstant(reader, 8),
+                ObservationQuality = (MeasurementQuality)reader.GetInt32(9),
             });
         }
 
         return devices;
+    }
+
+    /// <summary>
+    /// Returns the statistics of the network since the given instant,
+    /// aggregated, or nothing when no period falls in the window.
+    /// </summary>
+    /// <remarks>
+    /// Counts of queries add up, since periods do not overlap. Distinct
+    /// domains and devices do not: the same domain in two hours would count
+    /// twice. The highest hourly value and the distinct names or identifiers
+    /// kept are both lower bounds, the sources returning truncated lists, and
+    /// the greater of the two is still one.
+    /// <para>
+    /// Nothing, rather than a set of zeros, when the window is empty: zeros
+    /// would say the network queried nothing, when nothing was observed.
+    /// </para>
+    /// </remarks>
+    /// <param name="since">Beginning of the window, inclusive.</param>
+    public Statistics? GetStatisticsSince(DateTimeOffset since)
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText =
+            """
+            WITH windowed AS (
+                SELECT      s.*, p.period_start
+                FROM        statistics s
+                INNER JOIN  observation_period p ON p.id = s.observation_period_id
+                WHERE       p.period_start >= $since
+            ),
+            latest AS (
+                SELECT dnssec_enabled, unique_domains_quality
+                FROM   windowed
+                ORDER BY period_start DESC
+                LIMIT  1
+            )
+            SELECT  COUNT(*),
+                    SUM(total_queries), SUM(blocked_queries), SUM(cached_queries),
+                    SUM(failed_queries), SUM(encrypted_queries),
+                    MAX(unique_domains), MAX(active_devices),
+                    (SELECT     COUNT(DISTINCT d.name)
+                     FROM       domain d
+                     INNER JOIN observation_period p ON p.id = d.observation_period_id
+                     WHERE      p.period_start >= $since),
+                    (SELECT     COUNT(DISTINCT v.device_id)
+                     FROM       device v
+                     INNER JOIN observation_period p ON p.id = v.observation_period_id
+                     WHERE      p.period_start >= $since),
+                    (SELECT dnssec_enabled FROM latest),
+                    (SELECT unique_domains_quality FROM latest)
+            FROM    windowed;
+            """;
+
+        command.Parameters.AddWithValue("$since", Format(since));
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        if (!reader.Read() || reader.GetInt64(0) == 0)
+        {
+            return null;
+        }
+
+        long periods = reader.GetInt64(0);
+
+        return new Statistics
+        {
+            TotalQueries = reader.GetInt64(1),
+            BlockedQueries = reader.GetInt64(2),
+            CachedQueries = reader.GetInt64(3),
+            FailedQueries = reader.GetInt64(4),
+            EncryptedQueries = reader.GetInt64(5),
+            UniqueDomains = (int)Math.Max(reader.GetInt64(6), reader.GetInt64(8)),
+
+            // More than one hour: the distinct domains of the window are known
+            // only as a floor, whatever each hour said of its own.
+            UniqueDomainsQuality = periods > 1
+                ? MeasurementQuality.LowerBound
+                : Enum.Parse<MeasurementQuality>(reader.GetString(11)),
+
+            ActiveDevices = (int)Math.Max(reader.GetInt64(7), reader.GetInt64(9)),
+            DnssecEnabled = reader.GetInt64(10) != 0,
+        };
     }
 
     /// <summary>

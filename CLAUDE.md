@@ -47,7 +47,7 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 377 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 389 tests, all must pass
 cd frontend && npm run test:unit -- --run        # 113 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000; a fresh database
@@ -117,8 +117,6 @@ they set `X-Test-Remote-Address`.
   database grows without limit.
 * Device, Alert and Recommendation Engines do not exist. Device Health is
   therefore not measurable, and fifteen points of the score stay out.
-* `/devices` and `/statistics` do not declare the period they refer to, a rule
-  already applied to `/domains`.
 * Documentation is in Italian and is to be translated before publication.
 * No licence header in source files, no licence notice in the interface.
 

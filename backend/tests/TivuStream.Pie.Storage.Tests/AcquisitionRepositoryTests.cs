@@ -393,6 +393,186 @@ public sealed class AcquisitionRepositoryTests : IDisposable
     }
 
     // ------------------------------------------------------------------
+    // Devices and statistics over a window
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void A_device_over_a_window_is_one_entry_described_as_in_its_most_recent_period()
+    {
+        ObservationPeriod older = TestDatabase.PeriodAt(0);
+        ObservationPeriod newer = TestDatabase.PeriodAt(1);
+        Guid device = Guid.NewGuid();
+
+        // The newer period is written first on purpose: recency is a property
+        // of the period, not of when the row happened to be saved.
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            newer,
+            devices: [DeviceSeen(device, newer, "192.168.1.30", "laptop-now", DeviceIdentityBasis.HardwareAddress)]));
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            older,
+            devices: [DeviceSeen(device, older, "192.168.1.20", "laptop-then", DeviceIdentityBasis.NetworkAddress)]));
+
+        ObservedDevice only = Assert.Single(_database.Acquisitions.GetDevicesSince(older.Start));
+
+        Assert.Equal("laptop-now", only.Hostname);
+        Assert.Equal("192.168.1.30", only.IpAddress);
+        Assert.Equal(DeviceIdentityBasis.HardwareAddress, only.IdentityBasis);
+        Assert.Equal(older.Start, only.FirstSeen);
+        Assert.Equal(newer.End, only.LastSeen);
+        Assert.Equal(MeasurementQuality.PeriodBounded, only.ObservationQuality);
+        Assert.Equal(DeviceStatus.Active, only.Status);
+    }
+
+    [Fact]
+    public void A_device_seen_only_before_the_window_is_left_out()
+    {
+        ObservationPeriod before = TestDatabase.PeriodAt(0);
+        ObservationPeriod inside = TestDatabase.PeriodAt(1);
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            before,
+            devices: [DeviceSeen(Guid.NewGuid(), before, "192.168.1.20", null, DeviceIdentityBasis.NetworkAddress)]));
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            inside,
+            devices: [DeviceSeen(Guid.NewGuid(), inside, "192.168.1.30", null, DeviceIdentityBasis.NetworkAddress)]));
+
+        ObservedDevice only = Assert.Single(_database.Acquisitions.GetDevicesSince(inside.Start));
+
+        Assert.Equal("192.168.1.30", only.IpAddress);
+    }
+
+    [Fact]
+    public void Query_counts_over_a_window_add_up_and_the_configuration_is_the_latest()
+    {
+        ObservationPeriod before = TestDatabase.PeriodAt(0);
+        ObservationPeriod first = TestDatabase.PeriodAt(1);
+        ObservationPeriod second = TestDatabase.PeriodAt(2);
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(before, statistics: StatisticsOf(queries: 5000, dnssec: true)));
+        _database.Acquisitions.Save(TestDatabase.Acquisition(first, statistics: StatisticsOf(queries: 100, dnssec: true)));
+        _database.Acquisitions.Save(TestDatabase.Acquisition(second, statistics: StatisticsOf(queries: 40, dnssec: false)));
+
+        Statistics? statistics = _database.Acquisitions.GetStatisticsSince(first.Start);
+
+        Assert.NotNull(statistics);
+        Assert.Equal(140, statistics.TotalQueries);
+        Assert.Equal(14, statistics.BlockedQueries);
+        Assert.Equal(56, statistics.CachedQueries);
+        Assert.Equal(7, statistics.FailedQueries);
+        Assert.Equal(28, statistics.EncryptedQueries);
+
+        // Configuration, not traffic: what holds now.
+        Assert.False(statistics.DnssecEnabled);
+    }
+
+    [Fact]
+    public void Distinct_domains_and_devices_over_a_window_are_not_summed()
+    {
+        ObservationPeriod first = TestDatabase.PeriodAt(0);
+        ObservationPeriod second = TestDatabase.PeriodAt(1);
+        Guid device = Guid.NewGuid();
+
+        // The same domain and the same device in both hours, each hour
+        // reporting one of each.
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            first,
+            domains: [TestDatabase.DomainSeen("a.example", first, 1)],
+            devices: [DeviceSeen(device, first, "192.168.1.20", null, DeviceIdentityBasis.NetworkAddress)],
+            statistics: StatisticsOf(queries: 10, uniqueDomains: 1, activeDevices: 1)));
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            second,
+            domains: [TestDatabase.DomainSeen("a.example", second, 1)],
+            devices: [DeviceSeen(device, second, "192.168.1.20", null, DeviceIdentityBasis.NetworkAddress)],
+            statistics: StatisticsOf(queries: 10, uniqueDomains: 1, activeDevices: 1)));
+
+        Statistics statistics = _database.Acquisitions.GetStatisticsSince(first.Start)!;
+
+        // Summing would say two of each.
+        Assert.Equal(1, statistics.UniqueDomains);
+        Assert.Equal(1, statistics.ActiveDevices);
+    }
+
+    [Fact]
+    public void Distinct_counts_take_the_greater_of_two_lower_bounds()
+    {
+        ObservationPeriod first = TestDatabase.PeriodAt(0);
+        ObservationPeriod second = TestDatabase.PeriodAt(1);
+
+        // The first hour reports many domains and devices, of which few rows
+        // were kept (the source truncates its lists). The second keeps rows
+        // of domains and devices the first did not have.
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            first,
+            domains: [TestDatabase.DomainSeen("a.example", first, 1)],
+            statistics: StatisticsOf(queries: 10, uniqueDomains: 50, activeDevices: 7, uniqueDomainsQuality: MeasurementQuality.Exact)));
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            second,
+            domains:
+            [
+                TestDatabase.DomainSeen("b.example", second, 1),
+                TestDatabase.DomainSeen("c.example", second, 1),
+            ],
+            devices:
+            [
+                DeviceSeen(Guid.NewGuid(), second, "192.168.1.20", null, DeviceIdentityBasis.NetworkAddress),
+            ],
+            statistics: StatisticsOf(queries: 10, uniqueDomains: 2, activeDevices: 1, uniqueDomainsQuality: MeasurementQuality.Exact)));
+
+        Statistics statistics = _database.Acquisitions.GetStatisticsSince(first.Start)!;
+
+        Assert.Equal(50, statistics.UniqueDomains);
+        Assert.Equal(7, statistics.ActiveDevices);
+
+        // Each hour knew its own count exactly; the window knows only a floor.
+        Assert.Equal(MeasurementQuality.LowerBound, statistics.UniqueDomainsQuality);
+    }
+
+    [Fact]
+    public void Distinct_names_kept_count_when_they_exceed_every_hourly_value()
+    {
+        ObservationPeriod first = TestDatabase.PeriodAt(0);
+        ObservationPeriod second = TestDatabase.PeriodAt(1);
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            first,
+            domains: [TestDatabase.DomainSeen("a.example", first, 1)],
+            statistics: StatisticsOf(queries: 10, uniqueDomains: 1, activeDevices: 0)));
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            second,
+            domains: [TestDatabase.DomainSeen("b.example", second, 1)],
+            statistics: StatisticsOf(queries: 10, uniqueDomains: 1, activeDevices: 0)));
+
+        Assert.Equal(2, _database.Acquisitions.GetStatisticsSince(first.Start)!.UniqueDomains);
+    }
+
+    [Fact]
+    public void A_single_period_keeps_the_quality_it_declared()
+    {
+        ObservationPeriod period = TestDatabase.PeriodAt(0);
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            period,
+            statistics: StatisticsOf(queries: 10, uniqueDomainsQuality: MeasurementQuality.Exact)));
+
+        Assert.Equal(
+            MeasurementQuality.Exact,
+            _database.Acquisitions.GetStatisticsSince(period.Start)!.UniqueDomainsQuality);
+    }
+
+    [Fact]
+    public void A_window_without_periods_has_no_statistics_rather_than_zeros()
+    {
+        _database.Acquisitions.Save(TestDatabase.Acquisition(TestDatabase.PeriodAt(0)));
+
+        Assert.Null(_database.Acquisitions.GetStatisticsSince(TestDatabase.PeriodAt(1).Start));
+    }
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
 
@@ -446,6 +626,27 @@ public sealed class AcquisitionRepositoryTests : IDisposable
             LastSeen = period.End,
             ObservationQuality = MeasurementQuality.PeriodBounded,
             Status = DeviceStatus.Active,
+        };
+    }
+
+    private static Statistics StatisticsOf(
+        long queries,
+        int uniqueDomains = 2,
+        int activeDevices = 3,
+        bool dnssec = true,
+        MeasurementQuality uniqueDomainsQuality = MeasurementQuality.LowerBound)
+    {
+        return new Statistics
+        {
+            TotalQueries = queries,
+            BlockedQueries = queries / 10,
+            CachedQueries = queries * 4 / 10,
+            FailedQueries = queries / 20,
+            UniqueDomains = uniqueDomains,
+            UniqueDomainsQuality = uniqueDomainsQuality,
+            ActiveDevices = activeDevices,
+            EncryptedQueries = queries / 5,
+            DnssecEnabled = dnssec,
         };
     }
 }

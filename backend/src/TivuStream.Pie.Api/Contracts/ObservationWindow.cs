@@ -3,19 +3,20 @@ using TivuStream.Pie.Model;
 namespace TivuStream.Pie.Api.Contracts;
 
 /// <summary>
-/// The window over which domains are read.
+/// The window over which everything describing the network is read.
 /// </summary>
 /// <remarks>
-/// The list of domains and the detail of a domain cover the same window. Were
-/// they to differ, a domain the list shows as observed ten hours earlier would
-/// be denied by its own detail.
+/// Domains, the detail of a domain, devices and statistics cover the same
+/// window. Were they to differ, a domain the list shows as observed ten hours
+/// earlier would be denied by its own detail, and two pages would contradict
+/// each other without saying so.
 /// <para>
 /// A whole day rather than the current hour: a fixed hourly bucket empties at
 /// every turn of the clock, which is the opposite of what someone asking what
 /// their network is doing wants to see.
 /// </para>
 /// </remarks>
-internal static class DomainWindow
+internal static class ObservationWindow
 {
     /// <summary>
     /// Hourly periods the window asks for, the current one included.

@@ -8,6 +8,74 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Dispositivi e statistiche sulla stessa finestra — 2026-09-26
+
+Chiude il debito «`/devices` e `/statistics` non dichiarano il periodo a cui si riferiscono».
+
+### Fixed
+
+**`/devices` e `/statistics` descrivevano l'ora in corso senza dirlo.** Pochi minuti dopo lo scoccare dell'ora descrivevano pochi minuti di traffico, indistinguibili da una rete quasi ferma: è lo stesso difetto per cui `/domains` era passato alle ventiquattro ore.
+
+**`/statistics` con la finestra vuota rispondeva `503 AcquisitionPending`**, «nessuna acquisizione registrata», anche quando esistevano acquisizioni più vecchie della finestra, come nel database della persona che lavora al progetto, fermo al 31 agosto.
+
+**`/devices` portava `domainActivities` e `threats` come elenchi vuoti**, che si leggono «nessuna attività, nessuna minaccia» quando significano «non compreso in questa risposta».
+
+### Changed
+
+**Una sola finestra per tutto ciò che descrive la rete.** `/devices` e `/statistics` coprono le ultime ventiquattro ore, come `/domains` e `/domains/{domain}`, e lo dichiarano con `period`, `periodsObserved`, `periodsRequested`. `DomainWindow` diventa `ObservationWindow`, usata dai quattro endpoint.
+
+**`/devices`** (`GetDevicesSince`): un elemento per identificativo. Descrizione dal periodo più recente in cui il dispositivo compare, prima e ultima osservazione sull'intera finestra, qualità meno precisa, stato `Active`. Il contratto `ObservedDevice` non ha `domainActivities` né `threats`.
+
+**`/statistics`** (`GetStatisticsSince`):
+* **Conteggi delle interrogazioni:** si sommano.
+* **Domini distinti e dispositivi attivi:** il maggiore fra il valore orario più alto e i nomi o gli identificativi distinti conservati. Sommarli avrebbe contato due volte ciò che compare in due ore.
+* **Qualità dei domini distinti:** `LowerBound` con più di un'ora.
+* **DNSSEC:** dal periodo più recente.
+* **Finestra vuota:** `statistics` è `null`, mai una serie di zeri.
+
+**Rimosso** `GetLatestDevices`, che serviva solo al vecchio `/devices`.
+
+### Verified
+
+Dodici prove nuove, da 377 a 389.
+
+| Livello | Cosa si verifica |
+| --- | --- |
+| Storage | Un dispositivo su due ore è un solo elemento, descritto come nell'ora più recente, qualunque sia l'ordine di scrittura |
+| Storage | Un dispositivo visto solo prima della finestra resta fuori |
+| Storage | I conteggi si sommano, fuori finestra non contano, DNSSEC è quello più recente |
+| Storage | Lo stesso dominio e lo stesso dispositivo in due ore non si contano due volte |
+| Storage | Fra due limiti inferiori vale il maggiore, in entrambe le direzioni, con la qualità `LowerBound` |
+| Storage | Un solo periodo conserva la qualità dichiarata |
+| Storage | Una finestra senza periodi non ha statistiche |
+| API | Statistiche senza osservazioni: `null` con il periodo assente |
+| API | Con sole acquisizioni più vecchie della finestra: `null`, non «nessuna acquisizione» |
+| API | Dispositivi sulla finestra, dichiarata; quello più vecchio della finestra resta fuori |
+| API | Un dispositivo dell'elenco non porta attività né minacce vuote |
+| API | Statistiche sommate sulla finestra, dichiarata |
+
+Dieci difetti introdotti di proposito, tutti intercettati: finestra ignorata per i dispositivi e per le statistiche; dispositivo descritto dal periodo più vecchio; interrogazioni non sommate; domini distinti e dispositivi attivi sommati; nomi distinti ignorati; DNSSEC dal periodo più vecchio; qualità non abbassata su più ore; ore osservate non dichiarate. La qualità all'inizio sopravviveva: la prova seminava ore già `LowerBound`. Ora ogni ora dichiara `Exact` e la finestra deve dire `LowerBound`. Una modifica innocua non ha fatto fallire nulla.
+
+Compilazione senza avvisi. 389 prove sul backend con la compilazione normale, comprese le due di `reset-password` rimaste in sospeso da D2.1.
+
+### Known Impact
+
+**Il NPSS non cambia**: resta calcolato come descrive la NPSS Specification, sull'acquisizione dell'ora corrente. Le statistiche esposte e quelle da cui nasce il punteggio coprono ora intervalli diversi; ciascuno dichiara il proprio.
+
+**Il dettaglio di un dispositivo, `/devices/{id}`, non esiste ancora.** L'attività e le minacce di un dispositivo non sono esposte da nessuna parte.
+
+---
+
+## Documentation Release 1.10.0 — Dispositivi e statistiche — 2026-09-26
+
+### Changed
+
+**Specification 06 alla 1.5.0.** `/devices` e `/statistics` sulla finestra delle ventiquattro ore, dichiarata; regole di aggregazione; l'elenco dei dispositivi non porta attività e minacce; statistiche `null` a finestra vuota. Observed Period: una sola finestra per i quattro endpoint. Approvata il 2026-09-26.
+
+**Roadmap 1.3.8, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.10.0.
+
+---
+
 ## D2.2 — La cronologia del browser — 2026-09-26
 
 Trovato dalla prova come Lettore: il dominio aperto poco prima da un amministratore, nello stesso browser, compariva come collegamento già visitato.

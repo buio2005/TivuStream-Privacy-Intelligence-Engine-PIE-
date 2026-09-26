@@ -193,20 +193,20 @@ app.MapGet("/api/v1/health", (AcquisitionState state, AcquisitionRepository repo
     return Results.Ok(ApiResponse.Ok(report));
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
 
-app.MapGet("/api/v1/statistics", (AcquisitionRepository repository) =>
+// Over the same window as domains and devices, declared. A window without any
+// period answers with no statistics rather than a set of zeros, and rather
+// than "nothing acquired yet", which is false when older acquisitions exist.
+app.MapGet("/api/v1/statistics", (AcquisitionRepository repository, TimeProvider time) =>
 {
-    StoredAcquisition? stored = repository.GetLatest();
+    DateTimeOffset since = ObservationWindow.StartFor(time.GetUtcNow());
 
-    if (stored is null)
+    return Results.Ok(ApiResponse.Ok(new ObservedStatistics
     {
-        return Results.Json(
-            ApiResponse.Failed<Statistics>(
-                "AcquisitionPending",
-                "No acquisition has been recorded yet."),
-            statusCode: StatusCodes.Status503ServiceUnavailable);
-    }
-
-    return Results.Ok(ApiResponse.Ok(stored.Statistics));
+        Period = repository.GetPeriodRangeSince(since),
+        PeriodsObserved = repository.CountPeriodsSince(since),
+        PeriodsRequested = ObservationWindow.RequestedHours,
+        Statistics = repository.GetStatisticsSince(since),
+    }));
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
 
 app.MapGet("/api/v1/npss", (ScoreRepository scores) =>
@@ -225,22 +225,30 @@ app.MapGet("/api/v1/npss", (ScoreRepository scores) =>
     return Results.Ok(ApiResponse.Ok(score));
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
 
-app.MapGet("/api/v1/devices", (AcquisitionRepository repository) =>
+app.MapGet("/api/v1/devices", (AcquisitionRepository repository, TimeProvider time) =>
 {
-    return Results.Ok(ApiResponse.Ok(repository.GetLatestDevices()));
+    DateTimeOffset since = ObservationWindow.StartFor(time.GetUtcNow());
+
+    return Results.Ok(ApiResponse.Ok(new ObservedDevices
+    {
+        Period = repository.GetPeriodRangeSince(since),
+        PeriodsObserved = repository.CountPeriodsSince(since),
+        PeriodsRequested = ObservationWindow.RequestedHours,
+        Devices = repository.GetDevicesSince(since),
+    }));
 }).RequireAuthorization(AuthorizationPolicies.Administrator);
 
 // The window travels with the list. An empty list on its own cannot be told
 // apart from an hour that has only just begun.
 app.MapGet("/api/v1/domains", (AcquisitionRepository repository, TimeProvider time) =>
 {
-    DateTimeOffset since = DomainWindow.StartFor(time.GetUtcNow());
+    DateTimeOffset since = ObservationWindow.StartFor(time.GetUtcNow());
 
     return Results.Ok(ApiResponse.Ok(new ObservedDomains
     {
         Period = repository.GetPeriodRangeSince(since),
         PeriodsObserved = repository.CountPeriodsSince(since),
-        PeriodsRequested = DomainWindow.RequestedHours,
+        PeriodsRequested = ObservationWindow.RequestedHours,
         Domains = repository.GetDomainsSince(since),
     }));
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
@@ -251,7 +259,7 @@ app.MapGet("/api/v1/domains/{domain}", (
     AcquisitionRepository repository,
     TimeProvider time) =>
 {
-    DateTimeOffset since = DomainWindow.StartFor(time.GetUtcNow());
+    DateTimeOffset since = ObservationWindow.StartFor(time.GetUtcNow());
 
     Domain? found = repository.GetDomainsSince(since)
         .Find(candidate => string.Equals(candidate.Name, domain, StringComparison.OrdinalIgnoreCase));
@@ -281,7 +289,7 @@ app.MapGet("/api/v1/domains/{domain}", (
     {
         Period = repository.GetPeriodRangeSince(since),
         PeriodsObserved = repository.CountPeriodsSince(since),
-        PeriodsRequested = DomainWindow.RequestedHours,
+        PeriodsRequested = ObservationWindow.RequestedHours,
         Domain = found,
 
         // Read only when it may be shown, so that what is withheld is never

@@ -31,14 +31,29 @@ public sealed class EndpointTests : IDisposable
     // ------------------------------------------------------------------
 
     [Fact]
-    public async Task Statistics_before_any_acquisition_are_a_refusal_and_not_a_set_of_zeros()
+    public async Task Statistics_with_nothing_observed_are_absent_and_not_a_set_of_zeros()
     {
         (HttpStatusCode status, JsonElement body, _) = await _app.GetAsync("/api/v1/statistics");
 
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, status);
-        Assert.False(body.GetProperty("success").GetBoolean());
-        Assert.Equal("AcquisitionPending", body.GetProperty("error").GetProperty("code").GetString());
-        Assert.Equal(JsonValueKind.Null, body.GetProperty("data").ValueKind);
+        JsonElement data = body.GetProperty("data");
+
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("period").ValueKind);
+        Assert.Equal(0, data.GetProperty("periodsObserved").GetInt32());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("statistics").ValueKind);
+    }
+
+    [Fact]
+    public async Task Statistics_with_only_older_acquisitions_do_not_claim_nothing_was_ever_acquired()
+    {
+        Seed.Acquisition(_app, Seed.HoursAgo(30));
+
+        (HttpStatusCode status, JsonElement body, _) = await _app.GetAsync("/api/v1/statistics");
+
+        // "Nothing acquired yet" would be false: an acquisition exists, older
+        // than the window.
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("data").GetProperty("statistics").ValueKind);
     }
 
     [Fact]
@@ -96,7 +111,9 @@ public sealed class EndpointTests : IDisposable
 
         // Enumerations travel as names. A number would mean nothing to whoever
         // reads the answer.
-        Assert.Equal("LowerBound", body.GetProperty("data").GetProperty("uniqueDomainsQuality").GetString());
+        Assert.Equal(
+            "LowerBound",
+            body.GetProperty("data").GetProperty("statistics").GetProperty("uniqueDomainsQuality").GetString());
     }
 
     [Fact]
@@ -198,7 +215,70 @@ public sealed class EndpointTests : IDisposable
 
         Assert.Equal(
             "HardwareAddress",
-            body.GetProperty("data")[0].GetProperty("identityBasis").GetString());
+            body.GetProperty("data").GetProperty("devices")[0].GetProperty("identityBasis").GetString());
+    }
+
+    // ------------------------------------------------------------------
+    // Devices and statistics over the window
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public async Task Devices_cover_the_window_and_declare_it()
+    {
+        ObservationPeriod earlier = Seed.HoursAgo(5);
+        Device device = Seed.Device("10.0.0.5", DeviceIdentityBasis.NetworkAddress, earlier);
+
+        Seed.Acquisition(_app, Seed.HoursAgo(30), devices: [Seed.Device("10.0.0.99", DeviceIdentityBasis.NetworkAddress, Seed.HoursAgo(30))]);
+        Seed.Acquisition(_app, earlier, devices: [device]);
+        Seed.Acquisition(_app, Seed.HoursAgo(0));
+
+        (_, JsonElement body, _) = await _app.GetAsync("/api/v1/devices");
+
+        JsonElement data = body.GetProperty("data");
+
+        // The current hour knows nothing of it; the window does. The device
+        // older than the window is left out.
+        JsonElement only = Assert.Single(data.GetProperty("devices").EnumerateArray());
+
+        Assert.Equal("10.0.0.5", only.GetProperty("ipAddress").GetString());
+        Assert.Equal("Active", only.GetProperty("status").GetString());
+        Assert.Equal(2, data.GetProperty("periodsObserved").GetInt32());
+        Assert.Equal(24, data.GetProperty("periodsRequested").GetInt32());
+        Assert.Equal(earlier.Start, data.GetProperty("period").GetProperty("start").GetDateTimeOffset());
+    }
+
+    [Fact]
+    public async Task A_device_in_the_list_carries_no_empty_activity_or_threats_to_be_read_as_none()
+    {
+        ObservationPeriod period = Seed.HoursAgo(0);
+
+        Seed.Acquisition(_app, period, devices: [Seed.Device("10.0.0.5", DeviceIdentityBasis.NetworkAddress, period)]);
+
+        (_, JsonElement body, _) = await _app.GetAsync("/api/v1/devices");
+
+        JsonElement device = body.GetProperty("data").GetProperty("devices")[0];
+
+        Assert.False(device.TryGetProperty("domainActivities", out _));
+        Assert.False(device.TryGetProperty("threats", out _));
+    }
+
+    [Fact]
+    public async Task Statistics_are_summed_over_the_window_and_declare_it()
+    {
+        Seed.Acquisition(_app, Seed.HoursAgo(30));
+        Seed.Acquisition(_app, Seed.HoursAgo(2));
+        Seed.Acquisition(_app, Seed.HoursAgo(0));
+
+        (_, JsonElement body, _) = await _app.GetAsync("/api/v1/statistics");
+
+        JsonElement data = body.GetProperty("data");
+        JsonElement statistics = data.GetProperty("statistics");
+
+        // Two hours of a thousand queries each; the hour older than the window
+        // does not count.
+        Assert.Equal(2000, statistics.GetProperty("totalQueries").GetInt64());
+        Assert.Equal(2, data.GetProperty("periodsObserved").GetInt32());
+        Assert.Equal(Seed.HoursAgo(2).Start, data.GetProperty("period").GetProperty("start").GetDateTimeOffset());
     }
 
     // ------------------------------------------------------------------

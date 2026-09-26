@@ -4,7 +4,7 @@
 
 **Document:** API Specification
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 
 **Status:** Approved
 
@@ -132,7 +132,7 @@ La ragione non è formale. Un elenco vuoto senza il proprio periodo è ambiguo: 
 
 Il requisito discende dalla regola Absent Versus Unmeasurable della Network Privacy Specification.
 
-**Endpoint interessati.** `/domains` lo dichiara. `/devices` e `/statistics` presentano la stessa ambiguità e verranno allineati.
+**Endpoint interessati.** `/domains`, `/domains/{domain}`, `/devices` e `/statistics` coprono la stessa finestra, le ultime ventiquattro ore, e la dichiarano con gli stessi tre campi. Una sola finestra per tutto ciò che descrive la rete: due pagine che mostrassero intervalli diversi senza dirlo si contraddirebbero.
 
 ---
 
@@ -184,7 +184,52 @@ Comprende:
 /api/v1/devices
 ```
 
-Restituisce l'elenco dei dispositivi.
+Restituisce i dispositivi osservati nelle **ultime ventiquattro ore**, insieme all'intervallo effettivamente coperto (vedi Observed Period).
+
+```json
+{
+  "period": { "start": "...", "end": "..." },
+  "periodsObserved": 6,
+  "periodsRequested": 24,
+  "devices": [
+    {
+      "deviceId": "...",
+      "hostname": "laptop-maria",
+      "ipAddress": "192.168.1.20",
+      "macAddress": "aa:bb:cc:dd:ee:ff",
+      "vendor": null,
+      "operatingSystem": null,
+      "identityBasis": "HardwareAddress",
+      "status": "Active",
+      "firstSeen": "...",
+      "lastSeen": "...",
+      "observationQuality": "PeriodBounded"
+    }
+  ]
+}
+```
+
+Oggi restituisce i dispositivi del solo periodo più recente, cioè dell'ora in corso, e non lo dice: pochi minuti dopo lo scoccare dell'ora l'elenco è quasi vuoto, ed è indistinguibile da una rete in cui quasi nessun dispositivo è attivo.
+
+### Aggregation
+
+Un elemento per identificativo di dispositivo nella finestra.
+
+| Proprietà | Regola |
+| --- | --- |
+| `hostname`, `ipAddress`, `macAddress`, `vendor`, `operatingSystem`, `identityBasis` | Dal periodo **più recente** in cui il dispositivo compare, come la classificazione dei domini |
+| `firstSeen` | Il più antico fra i periodi inclusi |
+| `lastSeen` | Il più recente fra i periodi inclusi |
+| `observationQuality` | La qualità meno precisa fra quelle aggregate |
+| `status` | `Active`: un dispositivo compare nella finestra perché vi ha prodotto traffico |
+
+Ordinamento per indirizzo, come oggi.
+
+L'aggregazione è lecita perché l'identificativo è derivato in modo deterministico dall'indirizzo o dall'indirizzo hardware. Un dispositivo riconosciuto dall'indirizzo di rete che ha cambiato indirizzo nella finestra compare due volte, e `identityBasis` lo dichiara.
+
+### What The List Does Not Carry
+
+L'entità Device del Data Model comprende `domainActivities` e `threats`. L'elenco **non li porta**: oggi viaggiano come elenchi vuoti, e un elenco vuoto si legge «nessuna attività, nessuna minaccia» quando significa «non compreso in questa risposta». L'attività di un dispositivo appartiene al suo dettaglio, `/devices/{id}`, non ancora implementato.
 
 ---
 
@@ -409,7 +454,46 @@ Se la sorgente offra l'attività lo stabilisce l'acquisizione più recente, come
 /api/v1/statistics
 ```
 
-Restituisce le statistiche aggregate della rete.
+Restituisce le statistiche aggregate della rete nelle **ultime ventiquattro ore**, insieme all'intervallo effettivamente coperto (vedi Observed Period).
+
+```json
+{
+  "period": { "start": "...", "end": "..." },
+  "periodsObserved": 6,
+  "periodsRequested": 24,
+  "statistics": {
+    "totalQueries": 1000,
+    "blockedQueries": 100,
+    "cachedQueries": 400,
+    "failedQueries": 9,
+    "uniqueDomains": 250,
+    "uniqueDomainsQuality": "LowerBound",
+    "activeDevices": 3,
+    "encryptedQueries": 16,
+    "dnssecEnabled": true
+  }
+}
+```
+
+Oggi restituisce le statistiche del solo periodo più recente, cioè dell'ora in corso, e non lo dice.
+
+Quando nella finestra non esiste alcun periodo, `period` e `statistics` sono `null`. Una serie di zeri direbbe che la rete non ha interrogato nulla, quando non è stato osservato nulla. Oggi quel caso risponde `503 AcquisitionPending`, «nessuna acquisizione registrata», che è falso quando esistono acquisizioni più vecchie della finestra.
+
+### Aggregation
+
+| Proprietà | Regola |
+| --- | --- |
+| `totalQueries`, `blockedQueries`, `cachedQueries`, `failedQueries`, `encryptedQueries` | Somma dei periodi inclusi, lecita perché non si sovrappongono |
+| `uniqueDomains` | Il maggiore fra il valore orario più alto e i nomi distinti registrati nella finestra |
+| `uniqueDomainsQuality` | `LowerBound` quando la finestra comprende più di un periodo; altrimenti quella del periodo |
+| `activeDevices` | Il maggiore fra il valore orario più alto e gli identificativi distinti registrati nella finestra |
+| `dnssecEnabled` | Dal periodo più recente: è configurazione, non traffico |
+
+I domini distinti di ore diverse **non si sommano**: lo stesso dominio contattato in due ore verrebbe contato due volte. Il valore orario più alto e i nomi distinti conservati sono entrambi limiti inferiori (la sorgente restituisce elenchi troncati), e il maggiore dei due è ancora un limite inferiore.
+
+Per i dispositivi vale lo stesso ragionamento, con la riserva dell'identità: un dispositivo riconosciuto dall'indirizzo di rete che cambia indirizzo conta due volte, esattamente come in `/devices`.
+
+Il punteggio non cambia: il NPSS continua a essere calcolato come descritto nella NPSS Specification.
 
 ---
 
