@@ -8,6 +8,60 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone S1 — L'interfaccia servita dal motore — 2026-09-26
+
+Prima delle quattro milestone della Specification 19. Il motore serve l'interfaccia compilata sul proprio indirizzo: senza questo, in un'installazione l'interfaccia non esiste e non c'è nulla da mettere in HTTPS.
+
+### Added
+
+**`UseInterface`** (`InterfaceHosting.cs`), subito dopo le protezioni delle richieste e prima dell'autenticazione:
+* **Indirizzo sotto `/api` senza endpoint:** risponde `404 NotFound` nella struttura comune, mai con la pagina.
+* **Ogni altro indirizzo `GET` o `HEAD` che non è un file dell'interfaccia:** riceve `index.html`, perché le rotte dell'interfaccia esistono solo nel browser.
+* **Cache:** la pagina non viene mai memorizzata, così un aggiornamento arriva alla visita successiva. Gli altri file hanno un'impronta nel nome.
+* **Accesso libero:** la pagina che chiede la password deve caricarsi prima che qualcuno l'abbia data, e non porta dati. Le intestazioni di protezione valgono anche per lei.
+
+**`npm run build`** compila l'interfaccia in `backend/src/TivuStream.Pie.Api/wwwroot`, esclusa da git. Poi `dotnet run` la serve su `http://localhost:5000`. In sviluppo `npm run dev` resta com'era.
+
+### Decided
+
+**Un middleware dopo il routing, non indirizzi di riserva del framework.** Provati prima, avevano due difetti, trovati dalle prove:
+* **Riserva sotto `/api`:** prendeva il posto delle risposte del framework a un metodo o a un tipo di contenuto sbagliati, e un `405` o un `415` diventavano un «non esiste» fuorviante.
+* **Riserva dell'interfaccia:** scambiava `/domains/tracker.example` per un file mancante, per via del punto, e rispondeva `401`.
+
+Con il middleware l'elenco degli endpoint aperti a tutti resta quello di prima: `login` e `setup`.
+
+**Le prove dell'API girano in ambiente di produzione**, come `dotnet run`. In sviluppo il framework serviva anche l'interfaccia compilata nel progetto, e le prove dipendevano dall'averla compilata o no. Lo ha mostrato la prima compilazione del frontend.
+
+### Verified
+
+Dodici prove nuove, da 389 a 401 (T1): pagina senza accesso su quattro rotte, comprese quelle con un punto; pagina non memorizzata; file servito com'è; intestazioni di protezione; due indirizzi `/api` inesistenti in JSON; metodo e tipo di contenuto sbagliati che restano `405` e `415`; un endpoint esistente che chiede ancora l'accesso.
+
+Cinque difetti introdotti di proposito, tutti intercettati: `/api` inesistente servito con la pagina; rotte dell'interfaccia non riscritte; file esistenti riscritti; pagina memorizzata; interfaccia dietro l'autenticazione. Una modifica innocua non ha fatto fallire nulla.
+
+Provato sul motore vero su una porta a parte: `/` e `/domains/tracker.example` ricevono la pagina, `/api/v1/nowhere` un `404` in JSON, `/api/v1/domains` senza accesso un `401`.
+
+### Known Impact
+
+**Un file dell'interfaccia che non esiste riceve la pagina**, non un `404`. Un file mancante e una rotta dell'interfaccia non si distinguono dal solo indirizzo. Il browser mostra la pagina al posto del file, senza conseguenze sui dati.
+
+**Serve `npm run build` prima di `dotnet run`** perché il motore mostri l'interfaccia. La procedura d'installazione lo farà da sé.
+
+---
+
+## Documentation Release 1.11.0 — Transport Security — 2026-09-26
+
+### Added
+
+**Specification 19 - Transport Security, 1.0.0.** L'interfaccia servita dal motore; HTTP solo sul loopback e HTTPS sulla rete, porta `5443`; certificato generato da PIE per il solo server, con impronta, rinnovo e conservazione; certificato proprio; nomi del computer accettati; HSTS solo con un certificato proprio; proxy fidati, e richieste con intestazioni di inoltro non locali senza proxy dichiarati. Decisioni S1–S7, approvate il 2026-09-26.
+
+### Changed
+
+**Specification 02 alla 1.1.0:** il motore serve i file compilati del Frontend.
+
+**Roadmap 1.3.9, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.11.0. Le modifiche alla Specification 18 (HSTS, nomi accettati) entrano con S2.
+
+---
+
 ## Dispositivi e statistiche sulla stessa finestra — 2026-09-26
 
 Chiude il debito «`/devices` e `/statistics` non dichiarano il periodo a cui si riferiscono».

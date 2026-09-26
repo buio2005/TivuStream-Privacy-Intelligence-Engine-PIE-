@@ -121,3 +121,6 @@ logs/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# The compiled interface, produced by `npm run build` into the engine.
+backend/src/TivuStream.Pie.Api/wwwroot/

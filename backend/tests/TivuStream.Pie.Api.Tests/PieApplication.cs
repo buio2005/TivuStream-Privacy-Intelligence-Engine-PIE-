@@ -142,6 +142,16 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
     internal const string RemoteAddressHeader = "X-Test-Remote-Address";
 
     /// <summary>
+    /// The page of the stand-in interface.
+    /// </summary>
+    internal const string InterfacePage = "<!doctype html><title>stand-in interface</title>";
+
+    /// <summary>
+    /// A file of the stand-in interface.
+    /// </summary>
+    internal const string InterfaceScript = "console.log('stand-in script')";
+
+    /// <summary>
     /// The instant the host believes it is at the start: half past noon.
     /// </summary>
     internal static readonly DateTimeOffset Now = new(2026, 9, 1, 12, 30, 0, TimeSpan.Zero);
@@ -172,7 +182,17 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
     {
         Directory.CreateDirectory(_directory);
 
+        // A stand-in for the compiled interface, where the host looks for it.
+        string interfaceRoot = Directory.CreateDirectory(Path.Combine(_directory, "wwwroot", "assets")).Parent!.FullName;
+        File.WriteAllText(Path.Combine(interfaceRoot, "index.html"), InterfacePage);
+        File.WriteAllText(Path.Combine(interfaceRoot, "assets", "app.js"), InterfaceScript);
+
         builder.UseContentRoot(_directory);
+
+        // As `dotnet run` starts. In Development the framework would also
+        // serve the interface compiled into the project, and the tests would
+        // depend on whether anyone had built it.
+        builder.UseEnvironment(Environments.Production);
 
         builder.ConfigureAppConfiguration((_, configuration) =>
             configuration.AddInMemoryCollection(new Dictionary<string, string?>

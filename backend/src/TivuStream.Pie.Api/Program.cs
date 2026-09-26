@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.Extensions.Options;
 using TivuStream.Pie.Adapters.Technitium;
+using TivuStream.Pie.Api;
 using TivuStream.Pie.Api.Acquisition;
 using TivuStream.Pie.Api.Authentication;
 using TivuStream.Pie.Api.Classification;
@@ -162,6 +163,10 @@ app.UseFailureAnswers();
 // Before anything recognises the person: a request from another site is
 // refused whoever it claims to be.
 app.UseRequestProtection();
+
+// The interface, open to everyone: the page that asks for a password has to
+// load before anyone has given one. It carries no data.
+app.UseInterface();
 
 app.UseAuthentication();
 app.UseAuthorization();

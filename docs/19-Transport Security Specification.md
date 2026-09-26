@@ -1,0 +1,263 @@
+# 19 - Transport Security
+
+**Project:** TivuStream Privacy Intelligence Engine (PIE)
+
+**Document:** Transport Security Specification
+
+**Version:** 1.0.0
+
+**Status:** Approved
+
+**Last Updated:** 2026-09-26
+
+---
+
+# Purpose
+
+Questa specifica definisce **come si raggiunge PIE da un altro dispositivo della rete, con una connessione cifrata**.
+
+Oggi l'interfaccia si apre solo dal computer su cui PIE è in esecuzione. La Authentication Specification rifiuta ogni password che viaggi in chiaro fuori dal loopback, e nessuna connessione cifrata esiste. Dal telefono o da un altro computer di casa non si entra. È il limite d'uso più grande del progetto, ed è il criterio della Beta che manca: «l'interfaccia è raggiungibile in HTTPS».
+
+La specifica non modifica le regole della Authentication Specification sulle credenziali: le rende utilizzabili fuori dal loopback.
+
+---
+
+# Threat Model
+
+Gli avversari sono quelli della Authentication Specification. Qui conta soprattutto il primo: **un altro dispositivo della rete**, che osserva il traffico o si finge PIE.
+
+| Minaccia | Che cosa si vuole impedire |
+| --- | --- |
+| Ascolto sulla rete locale | Leggere password, cookie di sessione e dati di rete in transito |
+| Un dispositivo che si finge PIE | Raccogliere la password di chi crede di parlare con PIE |
+| Un proxy davanti a PIE configurato male | Far passare per locale, e quindi accettare, una password arrivata in chiaro |
+
+**Non considerato, e dichiarato:** chi controlla la rete **prima** del primo collegamento di un dispositivo e presenta un proprio certificato. Con un certificato generato da PIE, la protezione contro questo attacco è il confronto dell'impronta, che spetta alla persona (vedi Known Limits).
+
+---
+
+# Principles
+
+1. **Funziona senza servizi esterni.** Nessuna autorità di certificazione pubblica, nessun dominio, nessuna connessione a internet. È Local First.
+2. **Funziona senza configurazione.** Un'installazione nuova è raggiungibile in HTTPS dalla rete locale senza che nessuno scriva un file.
+3. **Chi ha di meglio lo usa.** Un certificato proprio, o un proxy che termina la connessione cifrata, sostituiscono quello generato.
+4. **Il compromesso è dichiarato.** Un certificato generato localmente fa comparire un avviso nel browser. Lo si dice, si spiega come verificarlo, non lo si nasconde.
+5. **Una password non viaggia mai in chiaro fuori dal loopback**, neppure attraverso un proxy.
+
+---
+
+# Scope
+
+**Comprende.**
+
+* l'interfaccia servita dal motore, sullo stesso indirizzo dell'API;
+* il certificato generato da PIE, la sua conservazione e il suo rinnovo;
+* un certificato fornito dall'operatore;
+* un proxy che termina la connessione cifrata davanti a PIE;
+* gli indirizzi su cui PIE ascolta e i nomi che accetta.
+
+**Non comprende.**
+
+* **Certificati da un'autorità pubblica** (Let's Encrypt e simili). Richiedono un dominio e una connessione a internet. Chi li ha li fornisce come certificato proprio.
+* **La procedura d'installazione**, che userà quanto definito qui (Installation Specification).
+* **L'accesso da fuori casa.** PIE è pensato per la rete locale. Esporlo a internet è una scelta dell'operatore, fuori da questa specifica.
+
+---
+
+# The Interface Served By The Engine
+
+Oggi l'interfaccia esiste solo attraverso il server di sviluppo di Vite, che inoltra `/api` al motore. In un'installazione non c'è nulla che la serva.
+
+**Il motore serve l'interfaccia compilata**, sullo stesso indirizzo e sulla stessa porta dell'API:
+
+* `/api/...` è l'API, come oggi. Un indirizzo `/api` sconosciuto risponde `404` nella struttura comune, mai con la pagina dell'interfaccia.
+* Ogni altro indirizzo riceve i file dell'interfaccia, e un indirizzo che non corrisponde a un file riceve `index.html`, perché le rotte dell'interfaccia (`/domains/...`) esistono solo nel browser.
+* I file compilati dell'interfaccia stanno nella cartella `wwwroot` del motore, prodotta dalla compilazione e non versionata.
+
+Un solo indirizzo significa un solo certificato, nessuna regola fra origini diverse, e la protezione su `Origin` della Authentication Specification che continua a funzionare così com'è.
+
+In sviluppo nulla cambia: `npm run dev` con il proxy verso il motore.
+
+---
+
+# Listening
+
+| Canale | Indirizzi | Porta predefinita | Scopo |
+| --- | --- | --- | --- |
+| HTTP | **solo loopback** | `5000` | Questo computer e lo sviluppo |
+| HTTPS | **tutte le interfacce** | `5443` | Gli altri dispositivi della rete |
+
+HTTP resta solo sul loopback: da un altro dispositivo non è raggiungibile, quindi non esiste un indirizzo in chiaro da cui tentare un accesso.
+
+Chi non vuole PIE raggiungibile dalla rete imposta `Transport:HttpsPort` a `0`: il canale HTTPS non si apre, e resta il comportamento di oggi.
+
+Alla prima apertura del canale HTTPS, Windows chiede se consentire le connessioni in ingresso. La procedura d'installazione lo spiegherà.
+
+---
+
+# Certificate
+
+## Generated By PIE
+
+Quando l'operatore non fornisce un certificato, **PIE ne genera uno** al primo avvio.
+
+| Proprietà | Valore |
+| --- | --- |
+| Algoritmo | ECDSA P-256 |
+| Validità | 397 giorni, il massimo che tutti i browser accettano |
+| Nomi | `localhost`, `127.0.0.1`, `::1`, il nome del computer, e gli indirizzi delle sue interfacce di rete attive, più i nomi elencati in `Transport:Names` |
+| Uso | Solo autenticazione di un server. Non può firmare altri certificati |
+| Conservazione | `data/tls/`, chiave privata leggibile solo dall'utente che esegue PIE |
+
+**Non è un'autorità di certificazione**, e non va installato come tale. Un'autorità locale eviterebbe gli avvisi, ma la sua chiave privata potrebbe firmare un certificato per qualunque sito, e chi la ottenesse leggerebbe il traffico di ogni dispositivo che la considera affidabile (vedi Decisions Taken, S1).
+
+**Rinnovo.** All'avvio PIE genera un certificato nuovo quando mancano meno di 30 giorni alla scadenza, oppure quando i nomi e gli indirizzi del computer non sono più quelli del certificato: un indirizzo cambiato dal router renderebbe il certificato non valido per il nome con cui lo si raggiunge. Un certificato nuovo fa ricomparire l'avviso nel browser, una volta per dispositivo.
+
+**Impronta.** All'avvio PIE scrive nell'output e nel registro l'impronta SHA-256 del certificato in uso, e gli indirizzi HTTPS su cui è raggiungibile. L'impronta non è un segreto. È ciò che la persona confronta con quella mostrata dal browser per sapere che sta parlando con il proprio PIE.
+
+## Provided By The Operator
+
+`Transport:Certificate:Path` indica un certificato proprio, in formato PFX (con `Transport:Certificate:Password`) oppure PEM (con `Transport:Certificate:KeyPath`). Quando è indicato, PIE non genera nulla e non rinnova nulla.
+
+Un certificato indicato ma illeggibile, scaduto o senza chiave **impedisce l'avvio**, con un messaggio che dice perché. Ripiegare in silenzio su un certificato generato cambierebbe l'impronta sotto gli occhi della persona senza dirglielo.
+
+La password del certificato, come ogni credenziale, sta solo in `appsettings.Local.json`.
+
+---
+
+# Names Accepted
+
+La Authentication Specification limita i nomi a cui PIE risponde (`AllowedHosts`) ai soli nomi del loopback, contro il DNS rebinding. Da un altro dispositivo PIE si raggiunge con il nome o l'indirizzo del computer, che oggi riceverebbero `400`.
+
+**I nomi accettati comprendono ora quelli del certificato**: il loopback, il nome del computer, gli indirizzi delle sue interfacce, e ciò che `AllowedHosts` o `Transport:Names` aggiungono. `*` continua a impedire l'avvio.
+
+La protezione contro il DNS rebinding resta intatta: l'attacco usa il nome di un sito malevolo che punta all'indirizzo locale, e quel nome non è fra quelli accettati. Gli indirizzi e il nome del computer non sono nomi che un sito esterno possa portare nell'intestazione `Host` del browser della vittima.
+
+---
+
+# Strict Transport Security
+
+La Authentication Specification chiede `Strict-Transport-Security` su ogni connessione cifrata. **Con un certificato generato da PIE non va inviata.**
+
+Un browser che ha ricevuto HSTS per un nome non permette più di accettare un avviso sul certificato di quel nome. Al primo rinnovo, o a un indirizzo cambiato, PIE diventerebbe irraggiungibile da quel dispositivo senza che la persona possa fare nulla, se non cancellare i dati del browser.
+
+HSTS è inviata **solo con un certificato fornito dall'operatore**, che si presume riconosciuto dai browser. Dietro un proxy, HSTS è compito del proxy.
+
+---
+
+# Behind A Proxy
+
+Un proxy che termina la connessione cifrata e inoltra a PIE in chiaro sulla stessa macchina fa arrivare ogni richiesta dal loopback. Senza altre regole, PIE accetterebbe come locale una password che dal telefono al proxy ha viaggiato in chiaro, se il proxy è configurato in chiaro.
+
+* `Transport:TrustedProxies` elenca gli indirizzi dei proxy di cui PIE si fida. Solo da quegli indirizzi PIE legge `X-Forwarded-For` e `X-Forwarded-Proto`: l'indirizzo del client e la cifratura sono quelli che il proxy dichiara, e le regole della Authentication Specification si applicano a quelli.
+* **Una richiesta dal loopback che porta un'intestazione di inoltro** (`X-Forwarded-For`, `X-Forwarded-Proto` o `Forwarded`), quando nessun proxy è dichiarato fidato, **non è trattata come locale**: una password vi riceve `TransportNotSecure`. Un browser su questo computer non manda mai quelle intestazioni. Chi le manda è un proxy, e un proxy non dichiarato non è una ragione per fidarsi.
+
+---
+
+# Configuration
+
+| Chiave | Predefinito | Significato |
+| --- | --- | --- |
+| `Transport:HttpsPort` | `5443` | Porta HTTPS su tutte le interfacce. `0` la chiude |
+| `Transport:Names` | vuoto | Nomi aggiuntivi, nel certificato generato e fra quelli accettati |
+| `Transport:Certificate:Path` | vuoto | Certificato proprio, PFX o PEM |
+| `Transport:Certificate:KeyPath` | vuoto | Chiave del certificato PEM |
+| `Transport:Certificate:Password` | vuoto | Password del certificato PFX, solo in `appsettings.Local.json` |
+| `Transport:TrustedProxies` | vuoto | Indirizzi dei proxy fidati |
+
+La porta HTTP resta quella di oggi, `5000`, sul solo loopback.
+
+---
+
+# What The Person Sees
+
+**All'avvio**, nell'output:
+
+```text
+PIE is reachable at:
+  https://Buietto-PC:5443
+  https://192.168.1.5:5443
+Certificate generated by PIE, valid until 2027-10-28.
+SHA-256 fingerprint: 3F:A2:...:9C
+```
+
+**Nel browser di un altro dispositivo**, al primo collegamento: l'avviso che la connessione non è privata. La persona apre i dettagli del certificato, confronta l'impronta con quella dell'output, e procede. Il testo esatto della procedura, con le schermate, appartiene alla procedura d'installazione.
+
+**Nell'interfaccia** non cambia nulla: le frasi della Authentication Specification su `TransportNotSecure` restano vere e sufficienti.
+
+---
+
+# Verification
+
+| # | Impegno | Verifica |
+| --- | --- | --- |
+| T1 | L'interfaccia è servita dal motore | Un indirizzo dell'interfaccia riceve `index.html`; un file esistente è servito; un `/api` sconosciuto riceve `404` nella struttura comune, non la pagina |
+| T2 | HTTP resta sul loopback | Nessun ascolto HTTP su un indirizzo diverso dal loopback |
+| T3 | Il certificato generato ha i nomi giusti e non firma altri certificati | Nomi del computer e delle interfacce presenti; uso limitato al server; nessuna capacità di autorità |
+| T4 | La chiave privata è protetta | Il file della chiave è leggibile solo dall'utente che esegue PIE |
+| T5 | Il certificato si rinnova quando deve, e solo allora | Vicino alla scadenza e con nomi cambiati: nuovo. Altrimenti: lo stesso, con la stessa impronta |
+| T6 | Un certificato proprio sostituisce quello generato | Nessuna generazione; certificato illeggibile o scaduto: avvio impedito con il motivo |
+| T7 | HSTS solo con un certificato proprio | Assente con il certificato generato, presente con quello proprio |
+| T8 | I nomi del computer sono accettati, gli altri no | `Host` con il nome o l'indirizzo del computer: accettato. Con un nome estraneo: `400`. `*`: avvio impedito |
+| T9 | Un proxy non dichiarato non rende locale una richiesta | Dal loopback con `X-Forwarded-For` e senza proxy fidati: una password riceve `TransportNotSecure` |
+| T10 | Un proxy dichiarato trasmette client e cifratura | Da un proxy fidato con `X-Forwarded-Proto: https`: password accettata, cookie `Secure`. Da un indirizzo non fidato: intestazioni ignorate |
+| T11 | Una prova sul campo | Dal telefono sulla rete di casa: avviso, impronta confrontata, accesso, domini letti |
+
+---
+
+# Implementation Milestones
+
+| Milestone | Contenuto |
+| --- | --- |
+| S1 | Interfaccia servita dal motore (T1), compilazione del frontend nella cartella del motore |
+| S2 | Canali e certificato generato: ascolto (T2), generazione, conservazione, rinnovo, impronta (T3–T5), nomi accettati (T8), HSTS (T7, metà) |
+| S3 | Certificato proprio e proxy fidati (T6, T7, T9, T10) |
+| S4 | Prova sul campo (T11), README e Roadmap |
+
+---
+
+# Consequences For Other Documents
+
+| Documento | Modifica |
+| --- | --- |
+| 18 - Authentication | Transport: HSTS solo con un certificato proprio; i nomi accettati comprendono quelli del computer; il rimando al proxy punta qui. Known Limits: la voce sul trasporto cifrato si chiude a S4 |
+| 12 - Installation | Il certificato generato, l'impronta, il firewall di Windows, il proxy di sistema e le VPN, il profilo del browser su un computer condiviso |
+| 02 - Architecture | Il motore serve l'interfaccia |
+| 13 - Roadmap | Il criterio di Beta sul trasporto cifrato, soddisfatto a S4 |
+
+---
+
+# Decisions Taken
+
+Da approvare. Per ciascuna, l'alternativa non scelta e il suo costo.
+
+| # | Decisione | Proposta | Alternativa non scelta e suo costo |
+| --- | --- | --- | --- |
+| **S1** | Certificato predefinito | **Generato da PIE, per il solo server**; avviso nel browser una volta per dispositivo, impronta da confrontare | *Un'autorità locale da installare sui dispositivi*: nessun avviso, ma installarla su un telefono è difficile, e la sua chiave potrebbe firmare un certificato per qualunque sito. *Nessun certificato predefinito*: nessun avviso, ma nessun accesso dalla rete finché l'operatore non ne procura uno |
+| **S2** | HSTS | **Solo con un certificato proprio** | *Sempre*, come dice oggi la Authentication Specification: al primo rinnovo del certificato generato il browser non permetterebbe più di entrare |
+| **S3** | Raggiungibile dalla rete per impostazione predefinita | **Sì**, HTTPS su tutte le interfacce, `5443`; `0` lo chiude | *No, da attivare*: più prudente, ma lascia l'installazione nel limite di oggi finché qualcuno non trova l'impostazione |
+| **S4** | Nomi accettati | **Anche il nome e gli indirizzi del computer**, automaticamente | *Solo quelli scritti in `AllowedHosts`*: la persona dovrebbe conoscere e scrivere l'indirizzo del proprio computer, che il router può cambiare |
+| **S5** | Interfaccia | **Servita dal motore**, stesso indirizzo | *Un server separato per l'interfaccia*: due processi, due certificati o un proxy, e regole fra origini diverse |
+| **S6** | Richiesta locale con intestazioni di inoltro e nessun proxy dichiarato | **Non locale** | *Locale*: un proxy configurato in chiaro farebbe accettare password viaggiate in chiaro sulla rete |
+| **S7** | Validità e rinnovo | **397 giorni**, rinnovo a 30 giorni dalla scadenza o con nomi cambiati | *Validità più lunga*: meno avvisi, ma alcuni sistemi, per esempio quelli di Apple, rifiutano certificati di durata superiore |
+
+---
+
+# Known Limits
+
+* **L'avviso del browser.** Un certificato generato localmente non è riconosciuto da nessun browser. La persona lo accetta una volta per dispositivo, e di nuovo a ogni rinnovo o cambio di indirizzo. È il prezzo di un'installazione che non dipende da servizi esterni. Chi vuole evitarlo fornisce un certificato proprio.
+* **Il primo collegamento si fida della persona.** Contro chi si finge PIE già al primo collegamento, la protezione è il confronto dell'impronta. Se la persona non lo fa, un dispositivo ostile sulla rete può presentare un proprio certificato.
+* **Un indirizzo cambiato richiede un riavvio.** Il certificato e i nomi accettati si ricalcolano all'avvio, non mentre PIE è in esecuzione.
+* **Il certificato generato vale per i nomi che il computer conosce.** Un nome assegnato dal router e sconosciuto al computer va aggiunto in `Transport:Names`.
+
+---
+
+# Related Specifications
+
+* 02 - Architecture
+* 06 - API
+* 10 - Frontend
+* 11 - Backend
+* 12 - Installation
+* 13 - Roadmap
+* 18 - Authentication

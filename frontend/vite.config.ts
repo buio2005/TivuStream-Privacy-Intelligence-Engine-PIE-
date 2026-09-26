@@ -18,6 +18,13 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    // The engine serves the interface on its own address: one address, one
+    // certificate, no rules between origins (Transport Security
+    // Specification). The output is produced, never versioned.
+    outDir: fileURLToPath(new URL('../backend/src/TivuStream.Pie.Api/wwwroot', import.meta.url)),
+    emptyOutDir: true,
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

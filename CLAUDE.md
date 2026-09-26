@@ -31,7 +31,7 @@ stop. The qualification is the product.
 ## Where things are
 
 ```text
-docs/           19 Specifications, the authoritative source
+docs/           20 Specifications, the authoritative source
 backend/        ASP.NET Core: Model, Core, Adapters, Storage, Api
 frontend/       Vue 3, TypeScript, bilingual from the first line
 scripts/        Helpers, including DNS traffic generation for testing
@@ -47,7 +47,7 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 389 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 401 tests, all must pass
 cd frontend && npm run test:unit -- --run        # 113 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000; a fresh database
@@ -55,6 +55,8 @@ cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000; a fresh dat
 cd backend/src/TivuStream.Pie.Api && dotnet run -- reset-password <name>
                                                   # restores access, from this machine
 cd frontend && npm run dev                        # proxies /api to :5000
+cd frontend && npm run build                      # compiles the interface into the engine's
+                                                  # wwwroot; the engine then serves it on :5000
 ```
 
 The Data Source is a Technitium DNS Server in Docker, named

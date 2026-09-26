@@ -4,11 +4,11 @@
 
 **Document:** Architecture Specification
 
-**Version:** 1.0.1
+**Version:** 1.1.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-26
 
 ---
 
@@ -100,6 +100,8 @@ Rappresenta l'unico punto di accesso ufficiale ai dati.
 Visualizza le informazioni prodotte dal Core.
 
 Il Frontend non esegue elaborazioni.
+
+In un'installazione i suoi file compilati sono **serviti dal motore**, sullo stesso indirizzo dell'API: un solo indirizzo, un solo certificato, nessuna regola fra origini diverse (Transport Security Specification). Il Frontend continua a comunicare con il Core esclusivamente attraverso le REST API.
 
 ---
 
