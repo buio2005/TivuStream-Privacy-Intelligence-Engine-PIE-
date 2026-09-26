@@ -76,7 +76,7 @@ Difetti introdotti di proposito: `configure` che scrive anche una connessione ch
 
 **Nessuna rotazione delle copie `.bak`** né registro dell'installazione su file; nessun pacchetto Docker né ARM: elencati in Not Yet Provided.
 
-**Le tre prove di `RecoveryProcessTests`** non sono state eseguite con la compilazione normale, perché il backend della persona era acceso.
+**Le tre prove di `RecoveryProcessTests`**, che passano solo con la compilazione normale, sono state eseguite a backend fermo: compilazione normale senza avvisi, 495 prove su 495 sul backend, 121 su 121 sul frontend.
 
 ---
 
