@@ -26,7 +26,7 @@ Seconda e ultima milestone della pagina di dettaglio. Esce dall'elenco dei debit
 
 **`stores/domainDetail.ts`**, separato da quello dell'elenco. Cambiando dominio il dettaglio precedente sparisce prima della lettura del nuovo, e una risposta arrivata in ritardo su un altro dominio viene scartata. È svuotato alla fine della sessione (F2).
 
-**Catalogo:** le frasi della Specification 10, più tre che la specifica approvata non aveva: l'intestazione della colonna dell'osservazione e le due del dispositivo non descritto. Sono ora nella Specification 10.
+**Catalogo:** le frasi della Specification 10, più tre che la specifica approvata non aveva: l'intestazione della colonna dell'osservazione e le due del dispositivo non descritto. Sono ora nella Specification 10, confermate il 2026-09-26.
 
 ### Changed
 
@@ -53,8 +53,6 @@ Dieci difetti introdotti di proposito, tutti intercettati: dettaglio precedente 
 Controllo dei tipi senza errori.
 
 ### Known Impact
-
-**Tre frasi attendono conferma**: `domainDetail.seen`, `domainDetail.deviceUndescribed`, `domainDetail.deviceUndescribedNote`, aggiunte alla Specification 10 durante D2.
 
 **La pagina non è stata provata nel browser.** Le prove montano la pagina con il catalogo vero e il motore simulato. La prima prova nel browser è della persona che lavora al progetto.
 
