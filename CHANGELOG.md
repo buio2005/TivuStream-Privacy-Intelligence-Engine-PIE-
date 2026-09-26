@@ -8,6 +8,50 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone S4 — HTTPS chiuso — 2026-09-26
+
+Ultima delle quattro milestone della Specification 19. Il trasporto cifrato è realizzato e provato sul campo. Il secondo criterio di Beta è soddisfatto.
+
+### Added
+
+**README, «Aprire PIE da un altro dispositivo».** In linguaggio semplice:
+* come preparare l'interfaccia e avviare PIE;
+* dove leggere indirizzi e impronta;
+* la richiesta del firewall di Windows;
+* quale indirizzo scegliere;
+* che cosa fare davanti all'avviso del browser: confrontare l'impronta, e non inserire la password se non coincide;
+* quando l'avviso ricompare.
+
+Poi il certificato proprio, come chiudere PIE alla rete, il proxy di sistema e le VPN, il profilo del browser su un computer condiviso.
+
+### Changed
+
+**Roadmap 1.4.0:** il criterio di Beta «Trasporto cifrato» è soddisfatto, con la prova dal portatile del 2026-09-26 (T11). Nella situazione della fase, autenticazione e HTTPS sono realizzati; resta il consolidamento a livelli.
+
+**Specification 18 alla 1.5.1:** la voce dei Known Limits sul trasporto cifrato rimanda alla Specification 19, realizzata.
+
+**CLAUDE.md:** tolto il debito sul trasporto. Aggiunti due debiti già dichiarati altrove:
+* le note per la futura procedura d'installazione, sparse nei Known Impact;
+* il punteggio calcolato sull'ora corrente, che si svuota a ogni cambio d'ora.
+
+### Verified
+
+Nessun codice cambiato. La prova sul campo T11 è quella del 2026-09-26, registrata in S3: dal portatile, impronta confrontata, accesso da amministratore riuscito.
+
+### Known Impact
+
+**Le due prove del comando `reset-password`** non sono state rieseguite dopo S3, perché il backend della persona era in esecuzione. S3 non tocca quel comando. Vanno rieseguite con la compilazione normale alla prossima modifica del backend.
+
+---
+
+## Documentation Release 1.13.0 — Trasporto cifrato realizzato — 2026-09-26
+
+### Changed
+
+**Roadmap 1.4.0**, **Specification 18 alla 1.5.1**, **README** con la sezione sull'accesso da altri dispositivi, **PROJECT_CONTEXT** allineato.
+
+---
+
 ## S3.1 — Quando un dominio è stato visto, detto in modo semplice — 2026-09-26
 
 Due difetti trovati dalla persona che lavora al progetto guardando la pagina dei domini dal portatile.

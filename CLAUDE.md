@@ -114,10 +114,11 @@ they set `X-Test-Remote-Address`.
 
 ## Known debts
 
-* Transport Security (Specification 19): S1 to S3 done, and the field test
-  from a laptop passed. S4, the README and the Beta criterion in the
-  Roadmap, is not done.
-* No installation procedure: the `installer/` directory is empty.
+* No installation procedure: the `installer/` directory is empty. Notes for
+  it are collected under Known Impact in the changelog (firewall prompt,
+  fingerprint, system proxy and VPN, browser profile, `npm run build`).
+* The NPSS is computed on the current hour only, while domains, devices and
+  statistics cover 24 hours: the score empties at every turn of the hour.
 * Tiered retention is designed in Specification 16 and not implemented; the
   database grows without limit.
 * Device, Alert and Recommendation Engines do not exist. Device Health is

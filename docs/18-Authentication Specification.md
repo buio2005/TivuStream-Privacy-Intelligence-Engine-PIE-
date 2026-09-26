@@ -4,7 +4,7 @@
 
 **Document:** Authentication Specification
 
-**Version:** 1.5.0
+**Version:** 1.5.1
 
 **Status:** Approved
 
@@ -571,7 +571,7 @@ Dichiarati, non nascosti.
 * **Solo due ruoli.** Non c'è un permesso per singola sezione né per singolo dispositivo.
 * **Nessun registro persistente degli accessi.** Esistono gli eventi nel registro applicativo, non uno storico interrogabile.
 * **PBKDF2 resiste meno di Argon2id** a un avversario con hardware dedicato. Vedi D3.
-* **Il trasporto cifrato non è definito qui.** Finché la Transport Security Specification non esiste e non è realizzata, l'accesso da altri dispositivi è possibile soltanto dietro un proxy che l'operatore configura a proprio rischio: `login` fuori dal loopback risponde `TransportNotSecure`.
+* **Il trasporto cifrato non è definito qui**, ma nella Transport Security Specification, realizzata il 2026-09-26. Dagli altri dispositivi si accede in HTTPS; `login` in chiaro fuori dal loopback continua a rispondere `TransportNotSecure`.
 
 ---
 

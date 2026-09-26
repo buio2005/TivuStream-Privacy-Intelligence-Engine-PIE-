@@ -198,11 +198,38 @@ Il dettaglio delle fasi è contenuto nella Roadmap Specification.
 
 # Stato del progetto
 
-**Documentation Release:** 1.12.1
+**Documentation Release:** 1.13.0
 
 **Project Status:** In Development
 
 **Development Status:** In Progress. Il progetto non è pronto all'uso: vedi la Roadmap Specification per ciò che manca.
+
+---
+
+# Aprire PIE da un altro dispositivo
+
+PIE si apre dal telefono o da un altro computer di casa, con una connessione cifrata. Non serve configurare nulla.
+
+1. Sul computer dove gira PIE, prepara l'interfaccia una volta: nella cartella `frontend`, `npm run build`.
+2. Avvia PIE: nella cartella `backend/src/TivuStream.Pie.Api`, `dotnet run`.
+3. All'avvio PIE scrive gli indirizzi a cui risponde e un'**impronta**, una lunga sequenza di lettere e numeri:
+
+   ```text
+   PIE is reachable at:
+     https://NOME-DEL-PC:5443
+     https://192.168.1.5:5443
+   SHA-256 fingerprint: D7:00:13:3B:...
+   ```
+
+4. La prima volta Windows chiede se consentire a PIE l'accesso alla rete. Rispondi sì, almeno per le reti private: senza permesso, dagli altri dispositivi la pagina non si apre.
+5. Sull'altro dispositivo apri uno degli indirizzi. Quello che comincia come quello del tuo router (spesso `192.168.`) è di solito quello giusto.
+6. Il browser avvisa che la connessione «non è privata». È normale: il certificato lo ha creato PIE e nessun browser lo conosce ancora. Apri i dettagli del certificato e controlla che l'impronta SHA-256 sia la stessa scritta da PIE. Se coincide, prosegui. Se non coincide, non inserire la password.
+
+L'avviso ricompare, una volta per dispositivo, quando PIE rinnova il certificato (circa una volta l'anno) o quando il router cambia l'indirizzo del computer.
+
+**Chi ha un certificato proprio** lo indica in `appsettings.Local.json` (`Transport:Certificate:Path`) e l'avviso scompare. **Chi non vuole PIE raggiungibile dalla rete** imposta `Transport:HttpsPort` a `0`. I dettagli sono nella Transport Security Specification.
+
+PIE legge il server DNS direttamente, senza passare da VPN o proxy del sistema. Su un computer usato da più persone conviene un profilo del browser dedicato a PIE: la cronologia conserva gli indirizzi delle pagine aperte.
 
 ---
 
