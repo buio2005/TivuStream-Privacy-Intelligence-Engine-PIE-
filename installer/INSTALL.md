@@ -115,7 +115,9 @@ L'avviso ricompare, una volta per dispositivo, quando PIE rinnova il certificato
 
 ## Cose da sapere
 
-**VPN e proxy.** PIE si collega a Technitium direttamente, senza passare da una VPN o da un proxy impostati sul computer. Se un altro dispositivo non riesce ad aprire PIE mentre usa una VPN, spegnila e riprova.
+**Rete di casa pubblica o privata.** Windows segna spesso la rete di casa come «pubblica», e su una rete pubblica PIE non si apre dagli altri dispositivi: il telefono aspetta e poi dice che il tempo è scaduto. Lo script d'installazione se ne accorge e chiede se segnarla come privata. Puoi farlo anche dopo, in **Impostazioni → Rete e Internet**, nelle proprietà della connessione, alla voce **Profilo di rete**. PIE non si apre mai sulle reti pubbliche, come il Wi-Fi di un bar.
+
+**VPN e proxy.** PIE si collega a Technitium direttamente, senza passare da una VPN o da un proxy impostati sul computer. Una VPN accesa sul telefono, invece, di solito manda tutto dentro il suo tunnel, e l'indirizzo di PIE, che esiste solo in casa, non si raggiunge. Cerca nell'app della VPN l'opzione che lascia fuori la rete locale («Consenti accesso alla rete locale», *Allow LAN*, o lo *split tunneling*): con quella attiva, PIE si apre anche a VPN accesa. Altrimenti spegni la VPN mentre usi PIE.
 
 **Computer usato da più persone.** La cronologia del browser conserva gli indirizzi delle pagine aperte, e alcune pagine di PIE hanno il nome di un dominio nell'indirizzo. Se il computer è condiviso, usa per PIE un profilo del browser dedicato.
 

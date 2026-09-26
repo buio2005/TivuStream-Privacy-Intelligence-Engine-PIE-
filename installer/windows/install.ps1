@@ -225,6 +225,33 @@ New-NetFirewallRule -DisplayName $FirewallRule `
 $done.Add("firewall rule '$FirewallRule', private networks only")
 Write-Host "Port $HttpsPort opened for PIE, on private networks only."
 
+# Windows often marks a home network as public, and the rule above then does
+# not apply to it: other devices would time out and nobody would say why
+# (field test of 2026-09-27). The person is asked; nothing is changed without
+# an answer, and PIE is never opened on public networks.
+$homeNetworks = @(Get-NetConnectionProfile -ErrorAction SilentlyContinue | Where-Object {
+    $_.NetworkCategory -eq 'Public' -and
+    (Get-NetIPAddress -InterfaceIndex $_.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+        Where-Object { $_.IPAddress -match '^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)' })
+})
+
+foreach ($network in $homeNetworks) {
+    Write-Host ''
+    Write-Host "Windows marks the network '$($network.Name)' ($($network.InterfaceAlias)) as public." -ForegroundColor Yellow
+    Write-Host 'On a public network, other devices cannot open PIE. If this is your home network, it should be private.'
+    $answer = Read-Host 'Mark it as private? [y/N]'
+
+    if ($answer -match '^[yY]') {
+        Set-NetConnectionProfile -InterfaceIndex $network.InterfaceIndex -NetworkCategory Private
+        $done.Add("network '$($network.Name)' marked as private")
+        Write-Host 'Marked as private.'
+    }
+    else {
+        Write-Host 'Left as it is. PIE opens on this computer; to open it from other devices, mark the network as private'
+        Write-Host 'later in Settings, Network and Internet, under the properties of the connection.'
+    }
+}
+
 # ------------------------------------------------------------------
 Step 'Starting PIE'
 

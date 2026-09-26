@@ -35,7 +35,11 @@ Due verifiche aggiunte a prove esistenti, 495 in tutto, frontend 121: l'eseguibi
 
 **La guida sul token di Technitium** dice di togliere l'utente dal gruppo Everyone, che gli darebbe permessi in più, e di creare il token da Administration → Sessions senza uscire da Technitium: la persona non sapeva se dovesse entrare come l'utente nuovo. Incollare con il tasto destro, e controllare i 64 caratteri.
 
+**Dal telefono il tempo scadeva.** Windows segnava come pubblica la rete di casa (`WINDTRE-BF8E10`, Ethernet), e la regola del firewall vale solo per le reti private. Con la rete segnata come privata, il telefono ha aperto PIE in HTTPS. Decisione della persona del 2026-09-27: PIE non si apre mai sulle reti pubbliche; lo script d'installazione, quando una rete con un indirizzo di casa (10.x, 172.16–31.x, 192.168.x) è segnata come pubblica, lo dice e **chiede** se segnarla come privata, con «no» come risposta predefinita, e altrimenti spiega dove farlo dopo. La guida lo spiega, e spiega che una VPN sul telefono va configurata per lasciare fuori la rete locale.
+
 ### Known Impact
+
+**Una VPN che usa indirizzi 10.x** verrebbe proposta dallo script come rete da segnare privata, se Windows la considera pubblica. La domanda nomina la rete e la scheda, e la risposta predefinita è no.
 
 **Nel Visualizzatore eventi i messaggi di PIE compaiono sotto «le informazioni seguenti erano incluse nell'evento»**: l'origine registrata con `New-EventLog` usa il file dei messaggi di .NET Framework, che non conosce gli identificativi degli eventi. Il testo c'è, la presentazione no.
 
