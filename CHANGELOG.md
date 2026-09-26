@@ -8,6 +8,70 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Il punteggio sulle ventiquattro ore — 2026-09-26
+
+Il NPSS valuta le ultime ventiquattro ore, come le pagine dei domini, dei dispositivi e delle statistiche. Prima valutava l'ora in corso, e a ogni cambio d'ora senza traffico il punteggio spariva: nel pomeriggio del 2026-09-26 la persona che lavora al progetto lo ha visto passare da 56 a «non misurabile», copertura 27%, solo perché l'ora nuova non aveva ancora interrogazioni.
+
+### Changed
+
+**Algoritmo 4.0.0** (`NpssEngine`). Il Core non cambia nei calcoli: cambia ciò che riceve.
+* **Dati del traffico:** il servizio di acquisizione gli passa statistiche, domini e attività **della finestra**, riletti da ciò che ha appena registrato: `GetStatisticsSince`, `GetDomainsSince` e la nuova `GetAllActivitiesSince`.
+* **Configurazione:** resta quella dell'acquisizione corrente, perché è lo stato di adesso.
+* **Soglia delle cento interrogazioni:** vale per la finestra.
+
+**Trend.** Si confronta solo con un punteggio della stessa versione dell'algoritmo, oltre che della stessa copertura. Un punteggio su un'ora e uno su un giorno non misurano la stessa cosa.
+
+**`/npss` dichiara la finestra.** La risposta diventa `{ period, periodsObserved, periodsRequested, score }`. La finestra è quella che termina con il periodo in cui il punteggio è stato prodotto (`ScoreRepository.GetLatestScoredPeriod`): se le acquisizioni si fermano, la risposta non finge che valga fino ad adesso. `GetPeriodRangeSince` e `CountPeriodsSince` accettano una fine.
+
+**Dashboard.** Sotto copertura e versione compare la riga del periodo già usata dai domini: intervallo, ore osservate su quelle richieste, ora in corso, ore mancanti. Nessuna frase nuova.
+
+### Verified
+
+Otto prove nuove, da 429 a 437 sul backend e da 119 a 121 sul frontend.
+
+| Livello | Cosa si verifica |
+| --- | --- |
+| Core | Trend calcolato con la stessa versione e copertura; nessun trend con la versione 3; nessun trend con copertura diversa |
+| Storage | Attività di tutti i domini sommata sulla finestra, l'ora precedente esclusa; una finestra che termina prima del presente |
+| API | La finestra del punteggio termina con il periodo in cui è stato prodotto, anche se le acquisizioni sono proseguite senza punteggio |
+| Frontend | La dashboard dice quali ore ha il punteggio, e la frase sulle ore mancanti; nessuna riga se la finestra manca |
+
+**Il trend quando esiste un punteggio complessivo è ora verificato.** Le prove del Core lo dichiaravano non verificabile, perché nessun dato raggiungeva la copertura minima senza la classificazione. La classificazione esiste: la nota è sostituita dalle prove.
+
+**Sul motore vero**, su una copia del database della persona, con zero interrogazioni nell'ora in corso: punteggio **57 su 100, copertura 67%**. Privacy e minacce sono misurate grazie al traffico delle 13:00, dentro la finestra. Con l'algoritmo 3, nella stessa situazione: punteggio trattenuto, copertura 27%.
+
+Quattro difetti introdotti di proposito, tutti intercettati:
+* trend fra versioni diverse;
+* fine della finestra ignorata;
+* attività di tutti i domini fuori finestra;
+* finestra del punteggio che termina adesso.
+
+Una modifica innocua non ha fatto fallire nulla.
+
+### Known Impact
+
+**Il collegamento nel servizio di acquisizione non ha una prova automatica.** Il servizio dipende dall'adapter concreto, e nessuna prova lo esercita, come già prima. È verificato sul motore vero, sopra.
+
+**Serve riavviare il backend.** L'interfaccia è ricompilata per la nuova forma di `/npss`: con il backend precedente ancora acceso, la dashboard non legge il punteggio.
+
+**Lo storico** contiene punteggi della versione 3, calcolati su un'ora, e della 4. La versione è conservata con ciascuno.
+
+**Le due prove del comando `reset-password`** restano da rieseguire con la compilazione normale: il backend della persona era in esecuzione.
+
+---
+
+## Documentation Release 1.14.0 — Il punteggio sulle ventiquattro ore — 2026-09-26
+
+### Changed
+
+**Specification 07 alla 4.0.0:** nuova sezione Evaluation Window; Minimum Observation sulla finestra; trend solo fra punteggi della stessa versione. Approvata il 2026-09-26.
+
+**Specification 06 alla 1.6.0:** `/npss` dichiara la finestra valutata; Observed Period comprende `/npss`. Approvata il 2026-09-26.
+
+**Roadmap, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.14.0.
+
+---
+
 ## Milestone S4 — HTTPS chiuso — 2026-09-26
 
 Ultima delle quattro milestone della Specification 19. Il trasporto cifrato è realizzato e provato sul campo. Il secondo criterio di Beta è soddisfatto.

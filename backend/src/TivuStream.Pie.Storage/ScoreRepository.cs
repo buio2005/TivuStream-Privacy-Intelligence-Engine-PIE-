@@ -181,6 +181,37 @@ public sealed class ScoreRepository
         }
     }
 
+    /// <summary>
+    /// Returns the period in which the most recent score was produced.
+    /// </summary>
+    /// <remarks>
+    /// A score describes the twenty-four hours ending with this period. When
+    /// acquisitions have stopped, that is not the window ending now.
+    /// </remarks>
+    public ObservationPeriod? GetLatestScoredPeriod()
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText =
+            """
+            SELECT   p.period_start, p.period_end
+            FROM     observation_period p
+            INNER JOIN score s ON s.observation_period_id = p.id
+            ORDER BY p.period_start DESC
+            LIMIT    1;
+            """;
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        return reader.Read()
+            ? new ObservationPeriod(
+                DateTimeOffset.Parse(reader.GetString(0), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+                DateTimeOffset.Parse(reader.GetString(1), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind))
+            : null;
+    }
+
     private static long? FindLatestScoredPeriod(SqliteConnection connection)
     {
         using SqliteCommand command = connection.CreateCommand();

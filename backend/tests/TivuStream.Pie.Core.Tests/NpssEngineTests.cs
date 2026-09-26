@@ -453,18 +453,56 @@ public sealed class NpssEngineTests
         Assert.Null(score.Trend);
     }
 
-    // NOTE, recorded rather than worked around.
-    //
-    // The rules governing the trend when a summary does exist cannot be
-    // exercised yet: no combination of inputs reaches the minimum coverage,
-    // because the areas depending on domain classification and on the device
-    // engine account for sixty of the hundred points and neither exists.
-    //
-    // That branch of the engine is therefore written but never executed, and
-    // remains unverified until the classification engine is available.
-    //
-    // Lowering the threshold to make the tests pass would verify a rule the
-    // product does not apply.
+    [Fact]
+    public void A_score_that_went_up_since_the_previous_one_of_the_same_kind_is_improving()
+    {
+        Npss first = Evaluate(Tracked(blocked: true));
+
+        Assert.NotNull(first.OverallScore);
+
+        Npss next = Evaluate(Tracked(blocked: true) with
+        {
+            PreviousOverallScore = first.OverallScore - 5,
+            PreviousCoverage = first.Coverage,
+            PreviousAlgorithmVersion = NpssEngine.AlgorithmVersion,
+        });
+
+        Assert.Equal(ScoreTrend.Improving, next.Trend);
+    }
+
+    [Fact]
+    public void A_score_produced_by_another_version_of_the_algorithm_gives_no_trend()
+    {
+        Npss first = Evaluate(Tracked(blocked: true));
+
+        Npss next = Evaluate(Tracked(blocked: true) with
+        {
+            PreviousOverallScore = first.OverallScore - 5,
+            PreviousCoverage = first.Coverage,
+            PreviousAlgorithmVersion = "3.0.0",
+        });
+
+        // Version 3 read one hour, version 4 reads a day: the two do not
+        // measure the same thing, and a direction between them would be
+        // invented.
+        Assert.NotNull(next.OverallScore);
+        Assert.Null(next.Trend);
+    }
+
+    [Fact]
+    public void A_score_with_a_different_coverage_gives_no_trend()
+    {
+        Npss first = Evaluate(Tracked(blocked: true));
+
+        Npss next = Evaluate(Tracked(blocked: true) with
+        {
+            PreviousOverallScore = first.OverallScore - 5,
+            PreviousCoverage = first.Coverage - 10,
+            PreviousAlgorithmVersion = NpssEngine.AlgorithmVersion,
+        });
+
+        Assert.Null(next.Trend);
+    }
 
     // ------------------------------------------------------------------
     // Fixtures

@@ -47,8 +47,8 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 431 tests, all must pass
-cd frontend && npm run test:unit -- --run        # 119 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 437 tests, all must pass
+cd frontend && npm run test:unit -- --run        # 121 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # :5000 on this machine, https :5443 on the
                                                   # network with a certificate PIE generates
@@ -117,8 +117,6 @@ they set `X-Test-Remote-Address`.
 * No installation procedure: the `installer/` directory is empty. Notes for
   it are collected under Known Impact in the changelog (firewall prompt,
   fingerprint, system proxy and VPN, browser profile, `npm run build`).
-* The NPSS is computed on the current hour only, while domains, devices and
-  statistics cover 24 hours: the score empties at every turn of the hour.
 * Tiered retention is designed in Specification 16 and not implemented; the
   database grows without limit.
 * Device, Alert and Recommendation Engines do not exist. Device Health is

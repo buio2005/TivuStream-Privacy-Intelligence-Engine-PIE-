@@ -8,6 +8,8 @@ using TivuStream.Pie.Model.Entities;
 using TivuStream.Pie.Model.Enums;
 using TivuStream.Pie.Storage;
 
+using TivuStream.Pie.Api.Contracts;
+
 namespace TivuStream.Pie.Api.Acquisition;
 
 /// <summary>
@@ -194,13 +196,20 @@ internal sealed class AcquisitionService : BackgroundService
 
             (int observedPeriods, int expectedPeriods) = MeasureContinuity(period);
 
+            // The score reads the last twenty-four hours, as the pages do, not
+            // the hour in progress: that emptied at every turn of the clock
+            // (NPSS Specification, Evaluation Window). Read back from what was
+            // just recorded, so the traffic of this period is included.
+            // The configuration is the present state and comes from now.
+            DateTimeOffset since = ObservationWindow.StartFor(period.Start);
+
             Npss score = _engine.Evaluate(new NpssEvaluationInput
             {
-                Statistics = statistics,
+                Statistics = _repository.GetStatisticsSince(since) ?? statistics,
                 Configuration = configuration,
                 SourceReachable = dataSource.Status == DataSourceStatus.Online,
-                Domains = domains,
-                DomainActivities = activities,
+                Domains = _repository.GetDomainsSince(since),
+                DomainActivities = _repository.GetAllActivitiesSince(since),
 
                 // Declared rather than inferred from an empty result. Without
                 // lists every domain is unclassified, and reading that as an
@@ -214,6 +223,7 @@ internal sealed class AcquisitionService : BackgroundService
                 ExpectedPeriods = expectedPeriods,
                 PreviousOverallScore = previous?.OverallScore,
                 PreviousCoverage = previous?.Coverage,
+                PreviousAlgorithmVersion = previous?.AlgorithmVersion,
             });
 
             _scoreRepository.Save(dataSource.Id, period, score);

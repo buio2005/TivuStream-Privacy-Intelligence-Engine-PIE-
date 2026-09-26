@@ -4,11 +4,11 @@
 
 **Document:** Network Privacy & Security Score (NPSS) Specification
 
-**Version:** 3.1.0
+**Version:** 4.0.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-26
 
 ---
 
@@ -77,6 +77,28 @@ I pesi definiti in questa specifica costituiscono una **posizione editoriale dic
 Sono motivati, versionati insieme all'algoritmo e rivedibili. Non derivano da uno standard di settore, perché non ne esiste uno per questo tipo di valutazione.
 
 Dichiararlo è parte del principio di Transparency: un giudizio presentato come misura è una misura falsa.
+
+---
+
+# Evaluation Window
+
+Il punteggio valuta la rete sulle **ultime ventiquattro ore**, la stessa finestra di domini, dispositivi e statistiche (API Specification, Observed Period).
+
+Fino alla versione 3 valutava la sola ora in corso. Il risultato si svuotava a ogni cambio d'ora: alle 3:05 di notte, con la rete ferma, privacy e minacce diventavano non misurabili, la copertura scendeva sotto il minimo e il punteggio spariva fino al mattino. Una pagina diceva «ecco i domini delle ultime ventiquattro ore», l'altra «non ho dati sufficienti».
+
+| Dato | Da dove viene |
+| --- | --- |
+| Traffico: interrogazioni totali, fallite, cifrate | Somma dei periodi della finestra |
+| Domini e loro classificazione | I domini della finestra, aggregati come in `/domains`: occorrenze sommate, classificazione del periodo più recente |
+| Attività per dispositivo, per il blocco dei domini a rischio | L'attività della finestra, sommata per dispositivo, dominio, esito e trasporto |
+| Configurazione del servizio | L'acquisizione più recente: è lo stato attuale, non traffico |
+| Continuità dell'osservazione | Invariata: periodi osservati su quelli attesi nelle ventiquattro ore |
+
+La soglia di Minimum Observation, cento interrogazioni, vale ora per la finestra e non per l'ora. Una casa che usa la rete poche volte al giorno raggiunge la soglia; una rete osservata da pochi minuti ancora no.
+
+Il punteggio si ricalcola a ogni acquisizione, come prima. Ogni valore conservato nello storico descrive le ventiquattro ore che terminano con il periodo in cui è stato prodotto.
+
+**Trend.** Si confronta solo con un punteggio prodotto dalla stessa versione dell'algoritmo, oltre che con la stessa copertura. Un punteggio della versione 3, calcolato su un'ora, non è confrontabile con uno della versione 4, calcolato su un giorno.
 
 ---
 
@@ -314,7 +336,7 @@ Ne condividono due condizioni.
 
 ## Minimum Observation
 
-Sotto **cento interrogazioni** nel periodo, gli indicatori di queste due aree sono **non misurabili**.
+Sotto **cento interrogazioni** nella finestra di valutazione (vedi Evaluation Window), gli indicatori di queste due aree sono **non misurabili**.
 
 Una rete che non ha contattato alcun dominio di tracciamento in tre interrogazioni non è una rete protetta: è una rete che non è stata osservata abbastanza.
 

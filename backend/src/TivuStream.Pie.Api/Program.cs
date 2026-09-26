@@ -27,6 +27,7 @@ using TivuStream.Pie.Api.Contracts;
 using TivuStream.Pie.Api.Storage;
 using TivuStream.Pie.Api.Transport;
 using TivuStream.Pie.Core;
+using TivuStream.Pie.Model;
 using TivuStream.Pie.Model.Entities;
 using TivuStream.Pie.Storage;
 using TivuStream.Pie.Storage.Schema;
@@ -266,20 +267,31 @@ app.MapGet("/api/v1/statistics", (AcquisitionRepository repository, TimeProvider
     }));
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
 
-app.MapGet("/api/v1/npss", (ScoreRepository scores) =>
+app.MapGet("/api/v1/npss", (ScoreRepository scores, AcquisitionRepository repository) =>
 {
     Npss? score = scores.GetLatest();
 
-    if (score is null)
+    if (score is null || scores.GetLatestScoredPeriod() is not ObservationPeriod produced)
     {
         return Results.Json(
-            ApiResponse.Failed<Npss>(
+            ApiResponse.Failed<ObservedScore>(
                 "ScorePending",
                 "No score has been produced yet."),
             statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 
-    return Results.Ok(ApiResponse.Ok(score));
+    // The window the score evaluated: the twenty-four hours ending with the
+    // period it was produced in, which is not the present when acquisitions
+    // have stopped.
+    DateTimeOffset since = ObservationWindow.StartFor(produced.Start);
+
+    return Results.Ok(ApiResponse.Ok(new ObservedScore
+    {
+        Period = repository.GetPeriodRangeSince(since, produced.Start),
+        PeriodsObserved = repository.CountPeriodsSince(since, produced.Start),
+        PeriodsRequested = ObservationWindow.RequestedHours,
+        Score = score,
+    }));
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
 
 app.MapGet("/api/v1/devices", (AcquisitionRepository repository, TimeProvider time) =>

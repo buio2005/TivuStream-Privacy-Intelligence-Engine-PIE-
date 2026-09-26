@@ -12,7 +12,7 @@ namespace TivuStream.Pie.Core;
 public sealed record NpssEvaluationInput
 {
     /// <summary>
-    /// Statistics of the period being evaluated.
+    /// Statistics of the window being evaluated, the last twenty-four hours.
     /// </summary>
     public required Statistics Statistics { get; init; }
 
@@ -27,12 +27,12 @@ public sealed record NpssEvaluationInput
     public required bool SourceReachable { get; init; }
 
     /// <summary>
-    /// Domains observed in the period, already classified.
+    /// Domains observed in the window, already classified.
     /// </summary>
     public IReadOnlyList<Domain> Domains { get; init; } = [];
 
     /// <summary>
-    /// Interactions between devices and domains in the period.
+    /// Interactions between devices and domains in the window.
     /// </summary>
     public IReadOnlyList<DomainActivity> DomainActivities { get; init; } = [];
 
@@ -75,4 +75,9 @@ public sealed record NpssEvaluationInput
     /// Coverage of the previous evaluation, when one exists.
     /// </summary>
     public decimal? PreviousCoverage { get; init; }
+
+    /// <summary>
+    /// Algorithm version of the previous evaluation, when one exists.
+    /// </summary>
+    public string? PreviousAlgorithmVersion { get; init; }
 }

@@ -26,13 +26,18 @@ afterEach(() => {
 enableAutoUnmount(afterEach)
 
 const score = answer({
-  overallScore: 62,
-  status: 'Fair',
-  trend: null,
-  coverage: 85,
-  algorithmVersion: '3.0.0',
-  generatedAt: '2026-09-01T12:00:00Z',
-  breakdown: [],
+  period: { start: '2026-09-01T11:00:00Z', end: '2026-09-01T13:00:00Z' },
+  periodsObserved: 2,
+  periodsRequested: 24,
+  score: {
+    overallScore: 62,
+    status: 'Fair',
+    trend: null,
+    coverage: 85,
+    algorithmVersion: '4.0.0',
+    generatedAt: '2026-09-01T12:00:00Z',
+    breakdown: [],
+  },
 })
 
 async function start(routes: Parameters<typeof stubEngine>[0], locale: 'en' | 'it' = 'en', path = '/') {
@@ -284,6 +289,7 @@ describe('F2: nothing of the network survives leaving', () => {
 
   function expectEmpty() {
     expect(useScoreStore().score).toBeNull()
+    expect(useScoreStore().period).toBeNull()
     expect(useDomainsStore().domains).toEqual([])
     expect(useDomainsStore().periodsObserved).toBe(0)
     expect(useDomainDetailStore().detail).toBeNull()

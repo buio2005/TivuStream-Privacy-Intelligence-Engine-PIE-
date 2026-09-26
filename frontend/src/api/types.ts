@@ -47,6 +47,17 @@ export interface Npss {
   breakdown: ScoreComponent[]
 }
 
+/**
+ * The latest score, with the window it evaluated: the twenty-four hours
+ * ending with the period in which it was produced.
+ */
+export interface ObservedScore {
+  period: ObservationPeriod | null
+  periodsObserved: number
+  periodsRequested: number
+  score: Npss
+}
+
 export type MeasurementQuality = 'Exact' | 'LowerBound' | 'PeriodBounded' | 'Estimated'
 
 export type ConfidenceLevel = 'Low' | 'Medium' | 'High'

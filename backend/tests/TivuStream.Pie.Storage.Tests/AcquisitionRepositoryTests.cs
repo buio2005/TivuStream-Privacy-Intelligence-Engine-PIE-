@@ -572,6 +572,51 @@ public sealed class AcquisitionRepositoryTests : IDisposable
         Assert.Null(_database.Acquisitions.GetStatisticsSince(TestDatabase.PeriodAt(1).Start));
     }
 
+    [Fact]
+    public void The_activity_of_every_domain_over_a_window_is_summed_per_device_domain_outcome_and_transport()
+    {
+        ObservationPeriod before = TestDatabase.PeriodAt(0);
+        ObservationPeriod first = TestDatabase.PeriodAt(1);
+        ObservationPeriod second = TestDatabase.PeriodAt(2);
+        Guid device = Guid.NewGuid();
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(before, activities: [Activity(device, "a.example", before, queries: 100, blocked: false)]));
+        _database.Acquisitions.Save(TestDatabase.Acquisition(first, activities:
+        [
+            Activity(device, "a.example", first, queries: 3, blocked: false),
+            Activity(device, "b.example", first, queries: 2, blocked: true),
+        ]));
+        _database.Acquisitions.Save(TestDatabase.Acquisition(second, activities: [Activity(device, "a.example", second, queries: 4, blocked: false)]));
+
+        List<DomainActivity> found = _database.Acquisitions.GetAllActivitiesSince(first.Start);
+
+        Assert.Equal(2, found.Count);
+
+        DomainActivity a = found.Single(activity => activity.Domain == "a.example");
+
+        // The hour before the window does not count.
+        Assert.Equal(7, a.QueryCount);
+        Assert.Equal(first.Start, a.FirstSeen);
+        Assert.Equal(second.End, a.LastSeen);
+        Assert.True(found.Single(activity => activity.Domain == "b.example").Blocked);
+    }
+
+    [Fact]
+    public void A_window_can_end_before_the_present()
+    {
+        ObservationPeriod first = TestDatabase.PeriodAt(0);
+        ObservationPeriod second = TestDatabase.PeriodAt(1);
+        ObservationPeriod third = TestDatabase.PeriodAt(2);
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(first));
+        _database.Acquisitions.Save(TestDatabase.Acquisition(second));
+        _database.Acquisitions.Save(TestDatabase.Acquisition(third));
+
+        // The window a score produced in the second hour evaluated.
+        Assert.Equal(2, _database.Acquisitions.CountPeriodsSince(first.Start, second.Start));
+        Assert.Equal(new ObservationPeriod(first.Start, second.End), _database.Acquisitions.GetPeriodRangeSince(first.Start, second.Start));
+    }
+
     // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------

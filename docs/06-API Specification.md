@@ -4,7 +4,7 @@
 
 **Document:** API Specification
 
-**Version:** 1.5.0
+**Version:** 1.6.0
 
 **Status:** Approved
 
@@ -132,7 +132,7 @@ La ragione non è formale. Un elenco vuoto senza il proprio periodo è ambiguo: 
 
 Il requisito discende dalla regola Absent Versus Unmeasurable della Network Privacy Specification.
 
-**Endpoint interessati.** `/domains`, `/domains/{domain}`, `/devices` e `/statistics` coprono la stessa finestra, le ultime ventiquattro ore, e la dichiarano con gli stessi tre campi. Una sola finestra per tutto ciò che descrive la rete: due pagine che mostrassero intervalli diversi senza dirlo si contraddirebbero.
+**Endpoint interessati.** `/domains`, `/domains/{domain}`, `/devices`, `/statistics` e `/npss` coprono la stessa finestra, le ultime ventiquattro ore, e la dichiarano con gli stessi tre campi. Una sola finestra per tutto ciò che descrive la rete: due pagine che mostrassero intervalli diversi senza dirlo si contraddirebbero.
 
 ---
 
@@ -172,7 +172,8 @@ Comprende:
 * punteggio;
 * dettaglio;
 * storico;
-* trend.
+* trend;
+* la finestra valutata, con `period`, `periodsObserved`, `periodsRequested`, come ogni risposta che descrive ciò che è stato osservato (vedi Observed Period). È la finestra di ventiquattro ore che termina con il periodo in cui il punteggio è stato prodotto (NPSS Specification, Evaluation Window).
 
 ---
 

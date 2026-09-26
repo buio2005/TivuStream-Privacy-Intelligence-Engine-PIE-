@@ -545,6 +545,58 @@ public sealed class AcquisitionRepository
     }
 
     /// <summary>
+    /// Returns the activity towards every domain since the given instant,
+    /// aggregated per device, domain, outcome and transport.
+    /// </summary>
+    /// <remarks>
+    /// What the score reads to tell blocked queries from answered ones over
+    /// its window (NPSS Specification, Evaluation Window). Summed for the
+    /// reason that makes the detail of a domain lawful: periods that do not
+    /// overlap, and a device identifier derived deterministically.
+    /// </remarks>
+    /// <param name="since">Beginning of the window, inclusive.</param>
+    public List<DomainActivity> GetAllActivitiesSince(DateTimeOffset since)
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText =
+            $"""
+            SELECT      a.device_id, a.domain, a.blocked, a.protocol,
+                        SUM(a.query_count), MIN(a.first_seen), MAX(a.last_seen),
+                        {LeastPreciseQuality}
+            FROM        domain_activity a
+            INNER JOIN  observation_period p ON p.id = a.observation_period_id
+            WHERE       p.period_start >= $since
+            GROUP BY    a.device_id, a.domain, a.blocked, a.protocol;
+            """;
+
+        command.Parameters.AddWithValue("$since", Format(since));
+
+        List<DomainActivity> activities = [];
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            activities.Add(new DomainActivity
+            {
+                DeviceId = Guid.Parse(reader.GetString(0), CultureInfo.InvariantCulture),
+                Domain = reader.GetString(1),
+                Blocked = reader.GetInt64(2) != 0,
+                Protocol = reader.GetString(3),
+                QueryCount = reader.GetInt64(4),
+                FirstSeen = ReadInstant(reader, 5),
+                LastSeen = ReadInstant(reader, 6),
+                ObservationQuality = (MeasurementQuality)reader.GetInt32(7),
+            });
+        }
+
+        return activities;
+    }
+
+    /// <summary>
     /// Returns the interval actually covered by the periods recorded since the
     /// given instant.
     /// </summary>
@@ -553,7 +605,11 @@ public sealed class AcquisitionRepository
     /// installation running for six hours must not report a day.
     /// </remarks>
     /// <param name="since">Beginning of the window, inclusive.</param>
-    public ObservationPeriod? GetPeriodRangeSince(DateTimeOffset since)
+    /// <param name="until">
+    /// Beginning of the last period to include, when the window ends before
+    /// the present: the window a stored score was computed over.
+    /// </param>
+    public ObservationPeriod? GetPeriodRangeSince(DateTimeOffset since, DateTimeOffset? until = null)
     {
         using SqliteConnection connection = _connectionFactory.Open();
 
@@ -563,10 +619,12 @@ public sealed class AcquisitionRepository
             """
             SELECT MIN(period_start), MAX(period_end)
             FROM   observation_period
-            WHERE  period_start >= $since;
+            WHERE  period_start >= $since
+              AND  ($until IS NULL OR period_start <= $until);
             """;
 
         command.Parameters.AddWithValue("$since", Format(since));
+        command.Parameters.AddWithValue("$until", until is null ? DBNull.Value : Format(until.Value));
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -608,7 +666,8 @@ public sealed class AcquisitionRepository
     /// instant.
     /// </summary>
     /// <param name="since">Beginning of the interval to count over.</param>
-    public int CountPeriodsSince(DateTimeOffset since)
+    /// <param name="until">Beginning of the last period to count, when the window ends before the present.</param>
+    public int CountPeriodsSince(DateTimeOffset since, DateTimeOffset? until = null)
     {
         using SqliteConnection connection = _connectionFactory.Open();
 
@@ -618,10 +677,12 @@ public sealed class AcquisitionRepository
             """
             SELECT COUNT(*)
             FROM   observation_period
-            WHERE  period_start >= $since;
+            WHERE  period_start >= $since
+              AND  ($until IS NULL OR period_start <= $until);
             """;
 
         command.Parameters.AddWithValue("$since", Format(since));
+        command.Parameters.AddWithValue("$until", until is null ? DBNull.Value : Format(until.Value));
 
         object? result = command.ExecuteScalar();
 

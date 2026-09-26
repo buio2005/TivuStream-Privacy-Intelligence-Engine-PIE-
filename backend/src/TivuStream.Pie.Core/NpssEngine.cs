@@ -24,7 +24,7 @@ public sealed class NpssEngine
     /// Independent of the version of the project, as the specification
     /// requires. Scores produced by different versions are not comparable.
     /// </remarks>
-    public const string AlgorithmVersion = "3.0.0";
+    public const string AlgorithmVersion = "4.0.0";
 
     /// <summary>
     /// Queries below which the areas based on classification are not
@@ -605,8 +605,12 @@ public sealed class NpssEngine
     private static ScoreTrend? ResolveTrend(NpssEvaluationInput input, decimal overall, decimal coverage)
     {
         // A change in coverage interrupts the series: two scores computed over
-        // different portions of the evaluation system are not comparable.
-        if (input.PreviousOverallScore is null || input.PreviousCoverage != coverage)
+        // different portions of the evaluation system are not comparable. So
+        // does a change of algorithm: a score over one hour and a score over a
+        // day do not measure the same thing.
+        if (input.PreviousOverallScore is null
+            || input.PreviousCoverage != coverage
+            || input.PreviousAlgorithmVersion != AlgorithmVersion)
         {
             return null;
         }

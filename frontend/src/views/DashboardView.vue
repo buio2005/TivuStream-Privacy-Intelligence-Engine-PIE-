@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useScoreStore } from '@/stores/score'
 import FactorList from '@/components/FactorList.vue'
+import PeriodLine from '@/components/PeriodLine.vue'
 import TermNote from '@/components/TermNote.vue'
 
 /**
@@ -30,7 +31,7 @@ const hasLowerBound = computed(() =>
 )
 
 const store = useScoreStore()
-const { score, loading, failure } = storeToRefs(store)
+const { score, period, periodsObserved, periodsRequested, loading, failure } = storeToRefs(store)
 
 onMounted(store.load)
 </script>
@@ -67,6 +68,18 @@ onMounted(store.load)
         &middot;
         {{ $t('score.algorithm', { version: score.algorithmVersion }) }}
       </p>
+
+      <!--
+        The score reads the last twenty-four hours, as the domains do, and
+        says which hours it had. Without this line, a score that weighs one
+        observed hour would look like a judgement on the whole day.
+      -->
+      <PeriodLine
+        v-if="period"
+        :period="period"
+        :periods-observed="periodsObserved"
+        :periods-requested="periodsRequested"
+      />
 
       <nav class="terms">
         <TermNote term="coverage" />

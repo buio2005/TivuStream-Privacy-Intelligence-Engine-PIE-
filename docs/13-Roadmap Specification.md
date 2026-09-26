@@ -4,7 +4,7 @@
 
 **Document:** Project Roadmap Specification
 
-**Version:** 1.4.0
+**Version:** 1.4.1
 
 **Status:** Approved
 
@@ -33,7 +33,7 @@ La roadmap ha i seguenti obiettivi.
 
 # Current Status
 
-**Documentation Release:** 1.13.0
+**Documentation Release:** 1.14.0
 
 **Project Status:** In Development
 

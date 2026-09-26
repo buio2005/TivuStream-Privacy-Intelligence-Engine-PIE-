@@ -148,12 +148,43 @@ public sealed class EndpointTests : IDisposable
 
         (HttpStatusCode status, JsonElement body, _) = await _app.GetAsync("/api/v1/npss");
 
-        JsonElement data = body.GetProperty("data");
+        JsonElement data = body.GetProperty("data").GetProperty("score");
 
         Assert.Equal(HttpStatusCode.OK, status);
         Assert.Equal(JsonValueKind.Null, data.GetProperty("overallScore").ValueKind);
         Assert.Equal(JsonValueKind.Null, data.GetProperty("status").ValueKind);
         Assert.Equal(40m, data.GetProperty("coverage").GetDecimal());
+    }
+
+    [Fact]
+    public async Task The_score_declares_the_window_it_evaluated_ending_with_the_period_it_was_produced_in()
+    {
+        ObservationPeriod scored = Seed.HoursAgo(3);
+
+        Seed.Acquisition(_app, Seed.HoursAgo(5));
+        Seed.Acquisition(_app, scored);
+        Seed.Score(_app, scored, new Npss
+        {
+            OverallScore = null,
+            Status = null,
+            Coverage = 40m,
+            AlgorithmVersion = "4.0.0",
+            GeneratedAt = PieApplication.Now,
+            Breakdown = [],
+        });
+
+        // Acquired later, with no score: acquisitions went on, scoring did
+        // not. The window of the score still ends where the score was made.
+        Seed.Acquisition(_app, Seed.HoursAgo(0));
+
+        (_, JsonElement body, _) = await _app.GetAsync("/api/v1/npss");
+
+        JsonElement data = body.GetProperty("data");
+
+        Assert.Equal(2, data.GetProperty("periodsObserved").GetInt32());
+        Assert.Equal(24, data.GetProperty("periodsRequested").GetInt32());
+        Assert.Equal(Seed.HoursAgo(5).Start, data.GetProperty("period").GetProperty("start").GetDateTimeOffset());
+        Assert.Equal(scored.End, data.GetProperty("period").GetProperty("end").GetDateTimeOffset());
     }
 
     [Fact]
@@ -188,7 +219,7 @@ public sealed class EndpointTests : IDisposable
 
         (_, JsonElement body, _) = await _app.GetAsync("/api/v1/npss");
 
-        JsonElement area = body.GetProperty("data").GetProperty("breakdown")[0];
+        JsonElement area = body.GetProperty("data").GetProperty("score").GetProperty("breakdown")[0];
         JsonElement factor = area.GetProperty("factors")[0];
 
         Assert.Equal("NetworkIntegrity", area.GetProperty("component").GetString());

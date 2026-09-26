@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import DashboardView from '@/views/DashboardView.vue'
-import type { Npss, ScoreComponent, ScoreFactor } from '@/api/types'
+import type { Npss, ObservedScore, ScoreComponent, ScoreFactor } from '@/api/types'
 import { answer, mountView, refusal } from './support'
 
 // Frontend Specification: the interface renders facts in words, and the
@@ -19,16 +19,22 @@ function area(
   return { component, state, score: 12.5, maxScore: 25, weight: 25, factors }
 }
 
-function score(overrides: Partial<Npss> = {}): Npss {
+function score(overrides: Partial<Npss> = {}, window: Partial<ObservedScore> = {}): ObservedScore {
   return {
-    overallScore: 62,
-    status: 'Fair',
-    trend: null,
-    coverage: 85,
-    algorithmVersion: '1.0',
-    generatedAt: '2026-09-01T12:00:00Z',
-    breakdown: [area('DnsSecurity')],
-    ...overrides,
+    period: { start: '2026-09-01T07:00:00Z', end: '2026-09-01T12:00:00Z' },
+    periodsObserved: 5,
+    periodsRequested: 24,
+    score: {
+      overallScore: 62,
+      status: 'Fair',
+      trend: null,
+      coverage: 85,
+      algorithmVersion: '4.0.0',
+      generatedAt: '2026-09-01T12:00:00Z',
+      breakdown: [area('DnsSecurity')],
+      ...overrides,
+    },
+    ...window,
   }
 }
 
@@ -163,5 +169,22 @@ describe('Dashboard: every reason is shown, and shown in the language being read
       answer(score({ breakdown: [area('DeviceHealth', [{ code: 'EnginesNotImplemented', values: {} }], 'NotMeasurable')] })),
     )
     expect(oneMissing.text()).toContain('What “not measurable” means')
+  })
+})
+
+describe('Dashboard: the window the score evaluated', () => {
+  it('says which hours the score had, as the domains do', async () => {
+    const view = await mountView(DashboardView, answer(score({}, { periodsObserved: 3 })))
+
+    expect(view.text()).toContain('3 hours observed out of the 24 requested')
+
+    // Five hours in the interval, three observed.
+    expect(view.text()).toContain('PIE was off or could not collect data')
+  })
+
+  it('shows no window when none was declared', async () => {
+    const view = await mountView(DashboardView, answer(score({}, { period: null, periodsObserved: 0 })))
+
+    expect(view.find('.period').exists()).toBe(false)
   })
 })
