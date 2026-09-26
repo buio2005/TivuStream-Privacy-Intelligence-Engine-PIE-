@@ -198,7 +198,7 @@ Il dettaglio delle fasi è contenuto nella Roadmap Specification.
 
 # Stato del progetto
 
-**Documentation Release:** 1.14.0
+**Documentation Release:** 1.15.0
 
 **Project Status:** In Development
 
@@ -230,6 +230,27 @@ L'avviso ricompare, una volta per dispositivo, quando PIE rinnova il certificato
 **Chi ha un certificato proprio** lo indica in `appsettings.Local.json` (`Transport:Certificate:Path`) e l'avviso scompare. **Chi non vuole PIE raggiungibile dalla rete** imposta `Transport:HttpsPort` a `0`. I dettagli sono nella Transport Security Specification.
 
 PIE legge il server DNS direttamente, senza passare da VPN o proxy del sistema. Su un computer usato da più persone conviene un profilo del browser dedicato a PIE: la cronologia conserva gli indirizzi delle pagine aperte.
+
+---
+
+# Quanto a lungo PIE conserva i dati
+
+PIE tiene sul tuo computer un riassunto di ciò che la rete ha fatto, mai l'elenco delle singole richieste. Con il tempo lo riassume ancora di più, e alla fine lo cancella.
+
+| Per quanto tempo | Che cosa resta |
+| --- | --- |
+| Ultimi 30 giorni | Ora per ora: quali domini, quante richieste, da quale dispositivo |
+| Fino a 12 mesi | Giorno per giorno, con le stesse informazioni |
+| Fino a 5 anni | Mese per mese: quali domini e quali dispositivi, ma non più quale dispositivo ha contattato quale dominio |
+| Oltre | Niente |
+
+Ogni giorno e ogni mese ricorda quante ore sono state davvero osservate. Un giorno in cui PIE è rimasto spento non sembra un giorno tranquillo.
+
+Ciò che viene cancellato è cancellato davvero: PIE lo sovrascrive nel file, non lo segna soltanto come eliminato.
+
+**Riassumere non si può annullare.** Se riduci questi tempi, alla prossima ora PIE riassume o cancella ciò che è più vecchio, e il dettaglio non torna indietro. Se vuoi comunque farlo, i valori stanno in `appsettings.Local.json`, sotto `Storage:Retention`: `HourlyDays`, `DailyMonths`, `MonthlyYears`. Un valore troppo basso non viene corretto in silenzio: PIE non si avvia e dice quale valore cambiare.
+
+Prima di aggiornare la struttura del database, PIE ne fa una copia accanto al file (`pie.db.schema-…bak`). Le copie non vengono cancellate da sole: contengono gli stessi dati, e puoi eliminarle tu quando l'aggiornamento ti sembra riuscito.
 
 ---
 

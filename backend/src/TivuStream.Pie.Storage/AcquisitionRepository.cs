@@ -11,23 +11,6 @@ namespace TivuStream.Pie.Storage;
 /// </summary>
 public sealed class AcquisitionRepository
 {
-    /// <summary>
-    /// The least precise observation quality among the rows aggregated, as the
-    /// numeric value of <see cref="MeasurementQuality"/>.
-    /// </summary>
-    /// <remarks>
-    /// A total is known no better than its vaguest part.
-    /// </remarks>
-    private const string LeastPreciseQuality =
-        """
-        MAX(CASE observation_quality
-                WHEN 'Exact'         THEN 0
-                WHEN 'LowerBound'    THEN 1
-                WHEN 'PeriodBounded' THEN 2
-                ELSE 3
-            END)
-        """;
-
     private readonly SqliteConnectionFactory _connectionFactory;
 
     /// <summary>
@@ -233,7 +216,7 @@ public sealed class AcquisitionRepository
                          MIN(first_seen)   AS first_seen,
                          MAX(last_seen)    AS last_seen,
                          MAX(period_start) AS latest_period,
-                         {LeastPreciseQuality} AS quality_rank
+                         {StoredQuality.LeastPreciseRank} AS quality_rank
                 FROM     windowed
                 GROUP BY device_id
             )
@@ -416,7 +399,7 @@ public sealed class AcquisitionRepository
                          MAX(last_seen)    AS last_seen,
                          SUM(occurrences)  AS occurrences,
                          MAX(period_start) AS latest_period,
-                         {LeastPreciseQuality} AS quality_rank
+                         {StoredQuality.LeastPreciseRank} AS quality_rank
                 FROM     windowed
                 GROUP BY name
             )
@@ -490,7 +473,7 @@ public sealed class AcquisitionRepository
                          SUM(query_count) AS query_count,
                          MIN(first_seen)  AS first_seen,
                          MAX(last_seen)   AS last_seen,
-                         {LeastPreciseQuality} AS quality_rank
+                         {StoredQuality.LeastPreciseRank} AS quality_rank
                 FROM     windowed
                 GROUP BY device_id, blocked, protocol
             ),
@@ -565,7 +548,7 @@ public sealed class AcquisitionRepository
             $"""
             SELECT      a.device_id, a.domain, a.blocked, a.protocol,
                         SUM(a.query_count), MIN(a.first_seen), MAX(a.last_seen),
-                        {LeastPreciseQuality}
+                        {StoredQuality.LeastPreciseRank}
             FROM        domain_activity a
             INNER JOIN  observation_period p ON p.id = a.observation_period_id
             WHERE       p.period_start >= $since
@@ -740,6 +723,9 @@ public sealed class AcquisitionRepository
         command.ExecuteNonQuery();
     }
 
+    // Only an hour is ever observed again. A consolidated day that happens to
+    // begin at the same instant is history, not an earlier observation of this
+    // hour, and removing it would erase a day for the sake of an hour.
     private static void RemovePeriod(
         SqliteConnection connection,
         SqliteTransaction transaction,
@@ -753,7 +739,8 @@ public sealed class AcquisitionRepository
             """
             DELETE FROM observation_period
             WHERE data_source_id = $dataSourceId
-              AND period_start = $periodStart;
+              AND period_start = $periodStart
+              AND granularity = 'Hour';
             """;
 
         command.Parameters.AddWithValue("$dataSourceId", dataSourceId.ToString());

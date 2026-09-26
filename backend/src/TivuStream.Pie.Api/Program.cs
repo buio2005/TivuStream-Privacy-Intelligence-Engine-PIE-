@@ -47,6 +47,11 @@ MachineNames? machine = transport.HttpsPort > 0 ? MachineNames.Discover(transpor
 // rather than being discovered later.
 string[] allowedHosts = HostPolicy.AllowedHosts(builder.Configuration, machine);
 
+// A retention below its minimum stops the start rather than being corrected:
+// consolidation cannot be undone.
+RetentionOptions retention = builder.Configuration.GetSection(RetentionOptions.SectionName).Get<RetentionOptions>() ?? new();
+retention.Validate();
+
 // A certificate of the operator's that cannot be used stops the start here,
 // with the reason, before anything else happens.
 X509Certificate2? provided = transport.Certificate.IsProvided
@@ -138,6 +143,12 @@ builder.Services.AddSingleton<NpssEngine>();
 builder.Services.AddSingleton<AcquisitionState>();
 builder.Services.AddHostedService<AcquisitionService>();
 
+builder.Services.AddSingleton(serviceProvider => new PeriodConsolidator(
+    serviceProvider.GetRequiredService<SqliteConnectionFactory>(),
+    retention,
+    TimeZoneInfo.Local));
+builder.Services.AddHostedService<RetentionService>();
+
 // Reaching a list is the only request PIE makes outside its own Data Source.
 // It carries nothing about the network being observed.
 builder.Services
@@ -173,12 +184,19 @@ if (migration.DatabaseWasCreated)
 }
 else if (migration.SchemaChanged)
 {
+    if (migration.BackupPath is not null)
+    {
+        SchemaLog.BackedUp(app.Logger, migration.BackupPath);
+    }
+
     SchemaLog.Updated(app.Logger, migration.InitialVersion, migration.FinalVersion);
 }
 else
 {
     SchemaLog.Unchanged(app.Logger, migration.FinalVersion);
 }
+
+RetentionLog.Configured(app.Logger, retention.HourlyDays, retention.DailyMonths, retention.MonthlyYears);
 
 // Restoring access to an account is done at the terminal, by someone who has
 // the machine, and never starts the service. It runs once the schema is ready

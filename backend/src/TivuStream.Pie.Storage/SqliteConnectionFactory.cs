@@ -83,6 +83,12 @@ public sealed class SqliteConnectionFactory
     /// Foreign keys are enabled on every connection: SQLite leaves them off
     /// by default, and a reference that is not enforced is a reference that
     /// will eventually be wrong.
+    /// <para>
+    /// Secure deletion is enabled for the same reason on every connection:
+    /// without it, a deleted row stays readable in the free pages of the file
+    /// until they are reused, and the detail removed by consolidation, or a
+    /// closed session, would not really be gone.
+    /// </para>
     /// </remarks>
     public SqliteConnection Open()
     {
@@ -93,7 +99,7 @@ public sealed class SqliteConnectionFactory
             connection.Open();
 
             using SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "PRAGMA foreign_keys = ON;";
+            command.CommandText = "PRAGMA foreign_keys = ON; PRAGMA secure_delete = ON;";
             command.ExecuteNonQuery();
 
             return connection;

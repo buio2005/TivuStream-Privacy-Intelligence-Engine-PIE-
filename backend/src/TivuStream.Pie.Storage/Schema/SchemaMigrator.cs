@@ -21,6 +21,7 @@ public sealed class SchemaMigrator
         new Migration0009Factors(),
         new Migration0010Accounts(),
         new Migration0011Sessions(),
+        new Migration0012Consolidation(),
     ];
 
     private readonly SqliteConnectionFactory _connectionFactory;
@@ -78,6 +79,8 @@ public sealed class SchemaMigrator
             };
         }
 
+        string? backupPath = currentVersion > 0 ? Backup(connection, currentVersion) : null;
+
         List<string> applied = [];
 
         foreach (IMigration migration in Migrations.OrderBy(migration => migration.Version))
@@ -99,7 +102,40 @@ public sealed class SchemaMigrator
             InitialVersion = currentVersion,
             FinalVersion = ExpectedVersion,
             AppliedMigrations = applied,
+            BackupPath = backupPath,
         };
+    }
+
+    /// <summary>
+    /// Copies the database, as it is, beside itself before its schema changes.
+    /// </summary>
+    /// <remarks>
+    /// Persistence Specification, Schema Management: a migration is preceded
+    /// by a backup. A migration that fails is rolled back, but one that
+    /// succeeds and turns out to be wrong cannot be, and the data behind it is
+    /// the person's history. The copy is taken through SQLite, so that it is
+    /// consistent even while another connection is open. Its name carries the
+    /// schema version and the instant, so that no earlier copy is overwritten.
+    /// </remarks>
+    private string Backup(SqliteConnection connection, int currentVersion)
+    {
+        string path = string.Create(
+            CultureInfo.InvariantCulture,
+            $"{_connectionFactory.DatabasePath}.schema-{currentVersion:00}.{DateTimeOffset.UtcNow:yyyyMMdd'T'HHmmss'Z'}.bak");
+
+        try
+        {
+            using SqliteConnection destination = new(
+                new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+
+            connection.BackupDatabase(destination);
+
+            return path;
+        }
+        catch (SqliteException exception)
+        {
+            throw new StorageException("The database could not be backed up before its schema was updated.", exception);
+        }
     }
 
     private static void Apply(SqliteConnection connection, IMigration migration)

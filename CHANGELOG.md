@@ -8,6 +8,99 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## La conservazione a livelli — 2026-09-26
+
+Il database smette di crescere senza limite. Il dettaglio orario resta per trenta giorni, poi diventa giorni, poi mesi, poi viene cancellato, come la Specification 16 prevedeva da sempre e il codice non faceva.
+
+### Added
+
+**Consolidamento** (`PeriodConsolidator`, Storage). Un giorno o un mese consolidato è un periodo di osservazione come le ore che sostituisce, solo più lungo, e porta con sé le **ore davvero osservate**. Si consolida sempre un giorno o un mese intero, in una sola transazione: si scrive l'aggregato, si cancella il dettaglio.
+
+| Dato | Giorno | Mese |
+| --- | --- | --- |
+| Conteggi delle interrogazioni | Somma esatta | Somma esatta |
+| Domini distinti, dispositivi attivi | Limite inferiore | Limite inferiore |
+| Domini, dispositivi | Uno per nome o identificativo, dal periodo più recente | Come il giorno |
+| Attività dispositivo → dominio | Sommata | **Non conservata** |
+| Punteggio | L'ultimo del giorno, invariato | L'ultimo del mese, invariato |
+
+**Giorni e mesi seguono l'ora locale** del computer, arrotondati all'ora. Il giorno del cambio d'ora dura ventitré o venticinque ore, e il periodo lo dice.
+
+**Un'ora osservata dopo il consolidamento del suo giorno** confluisce nel giorno al passaggio successivo, invece di sovrapporsi. Se il fuso orario del computer cambia, il nuovo giorno comincia dove finisce il precedente.
+
+**Servizio pianificato** (`RetentionService`): all'avvio e poi una volta all'ora, mai durante una richiesta. Il registro riporta solo conteggi, e all'avvio la ritenzione in vigore.
+
+**Configurazione** in `Storage:Retention` (`HourlyDays` 30, `DailyMonths` 12, `MonthlyYears` 5). Un valore sotto il minimo (2 giorni, 1 mese, 1 anno) **impedisce l'avvio** e nomina il parametro. Una ritenzione più fine prevale su una più grossolana.
+
+**Cancellazione sicura.** Ogni connessione abilita `secure_delete`: le righe cancellate vengono sovrascritte, non restano leggibili nelle pagine libere del file.
+
+**Copia prima di ogni migrazione.** La Specification 16 la richiedeva e il migratore non la faceva, senza che fosse dichiarato: era un difetto, trovato provando questa modifica sul database vero. Prima di aggiornare uno schema che contiene dati, `SchemaMigrator` copia il database accanto a sé (`pie.db.schema-11.<istante>.bak`), attraverso SQLite, e il registro dice dove.
+
+**Migrazione 0012:** `observation_period` ottiene `granularity` e `observed_hours`. Ogni periodo esistente è un'ora osservata una volta.
+
+**README, «Quanto a lungo PIE conserva i dati»**, in parole semplici: che cosa resta per quanto tempo, che riassumere non si può annullare, dove stanno i valori, le copie prima degli aggiornamenti.
+
+### Changed
+
+**Riosservare un'ora non cancella mai un giorno.** La sostituzione di un periodo, e la ricerca del periodo a cui appartiene un punteggio, riguardano solo le ore. Un'ora con lo stesso inizio di un giorno consolidato, possibile solo con l'orologio spostato indietro di un mese, viene rifiutata invece di cancellare il giorno.
+
+**La regola sulla qualità meno precisa** è scritta una volta sola (`StoredQuality`), perché la lettura della finestra e il consolidamento la applicano entrambi.
+
+### Verified
+
+Ventisette prove nuove sul backend, da 437 a 464. Frontend invariato, 121.
+
+| Livello | Cosa si verifica |
+| --- | --- |
+| Storage, consolidamento | Un giorno con le sue ore osservate; conteggi sommati; domini distinti come limite inferiore; occorrenze sommate e classificazione più recente; attività sommata per dispositivo, dominio ed esito; giorno intero e solo quando è abbastanza vecchio; ore recenti intatte; rieseguire non cambia nulla; un'ora tardiva confluisce nel giorno; riosservare un'ora non cancella il giorno; fuso orario locale; giorno di ventitré ore a Roma; ultimo punteggio conservato; nessun punteggio inventato; mese senza attività dei dispositivi; ritenzione più fine prevalente; nulla oltre la ritenzione mensile; cancellazione sicura attiva; valori sotto il minimo rifiutati e nominati |
+| Storage, migrazione | Copia di uno schema più vecchio, con i dati com'erano; nessuna copia di uno schema già aggiornato o di un database nuovo |
+| API | L'avvio si ferma con una ritenzione sotto il minimo; la ritenzione in vigore è dichiarata all'avvio; il servizio consolida all'avvio e il registro non contiene domini |
+
+Sette difetti introdotti di proposito, tutti intercettati:
+* attività dei dispositivi conservata nei mesi;
+* ore osservate non sommate;
+* riosservare un'ora cancella il giorno;
+* primo punteggio del giorno al posto dell'ultimo;
+* cancellazione sicura disattivata;
+* ritenzione più fine ignorata;
+* interrogazioni non sommate.
+
+Anche togliere la verifica della configurazione all'avvio fa fallire la prova corrispondente.
+
+**Una prova dipendeva dal caso.** In .NET 10 un `BackgroundService` esegue il suo lavoro su un thread a parte: la prova del servizio fermava il servizio prima che consolidasse, e passava da sola solo per tempismo. Ora aspetta il consolidamento.
+
+**Su una copia del database della persona**, con dati dal 3 agosto: schema dalla versione 11 alla 12, copia scritta, **due giorni consolidati**. Il 3 agosto (ora italiana, dalle 22:00 UTC del 2) ha cinque ore osservate, 156 interrogazioni (114 + 18 + 24) e 6 domini distinti, dichiarati come limite inferiore. Le ore dal 31 agosto in poi sono intatte; il punteggio subito dopo è 57, copertura 67%, come prima.
+
+### Known Impact
+
+**Nulla legge ancora giorni e mesi.** Tutte le pagine leggono le ultime ventiquattro ore, che sono sempre ore. Lo storico serve alla futura pagina dello storico e ai confronti nel tempo. Quando esisterà, l'ultimo punteggio di un mese va presentato come ciò che è: il punteggio dell'ultimo giorno del mese, non del mese.
+
+**Le copie prima delle migrazioni non vengono mai cancellate.** Contengono il dettaglio orario com'era, e quindi sfuggono alla ritenzione. Il README lo dice e suggerisce di eliminarle quando l'aggiornamento è riuscito. Una rotazione delle copie va decisa con la procedura d'installazione, che prevede anch'essa una copia prima di ogni aggiornamento.
+
+**`StoredPeriods` in `/health`** conta i periodi di ogni livello, non le ore. Il campo non dice di contare ore, e nessuna pagina lo mostra.
+
+**La ritenzione non è ancora dichiarata nell'interfaccia**, solo nel README. La Specification 16 chiede che sia dichiarata alla persona: va fatto con la pagina delle impostazioni o con l'installazione.
+
+**La persona non può ancora cancellare i dati dall'interfaccia**, come la Specification 16 prevede. Oggi l'unico modo è eliminare il file del database a servizio fermo.
+
+**Il primo avvio sul database vero consoliderà il 3 e il 4 agosto**, dopo aver scritto la copia. È irreversibile nel database, non nella copia.
+
+**Le due prove di `RecoveryProcessTests`** non sono state eseguite con la compilazione normale, perché il backend della persona era acceso: passano solo così. Vanno rieseguite a backend fermo.
+
+---
+
+## Documentation Release 1.15.0 — La conservazione a livelli — 2026-09-26
+
+### Changed
+
+**Specification 16 alla 1.3.0:** la sezione Retention definisce periodi consolidati, ore osservate, confini di giorni e mesi nel fuso locale, quando si consolida, che cosa contiene un periodo consolidato, attività dei dispositivi oltre i trenta giorni (scelta editoriale), punteggio nei periodi consolidati, ricalcolo, cancellazione effettiva, configurazione con minimi e precedenza della ritenzione più fine. Approvata il 2026-09-26; la precedenza è stata aggiunta durante la realizzazione, come conseguenza dei minimi approvati.
+
+**Roadmap 1.5.0:** il criterio di Beta «Ritenzione» è soddisfatto.
+
+**README, PROJECT_CONTEXT e CLAUDE.md** allineati alla Documentation Release 1.15.0.
+
+---
+
 ## Il punteggio sulle ventiquattro ore — 2026-09-26
 
 Il NPSS valuta le ultime ventiquattro ore, come le pagine dei domini, dei dispositivi e delle statistiche. Prima valutava l'ora in corso, e a ogni cambio d'ora senza traffico il punteggio spariva: nel pomeriggio del 2026-09-26 la persona che lavora al progetto lo ha visto passare da 56 a «non misurabile», copertura 27%, solo perché l'ora nuova non aveva ancora interrogazioni.

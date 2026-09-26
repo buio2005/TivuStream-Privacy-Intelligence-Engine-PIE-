@@ -29,6 +29,12 @@ public sealed record MigrationOutcome
     public IReadOnlyList<string> AppliedMigrations { get; init; } = [];
 
     /// <summary>
+    /// Where the copy taken before the schema changed was written, when it
+    /// changed on a database that already held data.
+    /// </summary>
+    public string? BackupPath { get; init; }
+
+    /// <summary>
     /// Indicates whether the database was created by this run.
     /// </summary>
     public bool DatabaseWasCreated => InitialVersion == 0;

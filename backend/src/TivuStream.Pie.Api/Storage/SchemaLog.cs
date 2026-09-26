@@ -20,6 +20,11 @@ internal static partial class SchemaLog
 
     [LoggerMessage(
         Level = LogLevel.Information,
+        Message = "Copy of the database taken before the update: {Path}")]
+    internal static partial void BackedUp(ILogger logger, string path);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
         Message = "Database schema already at version {Version}.")]
     internal static partial void Unchanged(ILogger logger, int version);
 }

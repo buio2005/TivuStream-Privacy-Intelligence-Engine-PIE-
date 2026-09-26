@@ -4,7 +4,7 @@
 
 **Document:** Project Roadmap Specification
 
-**Version:** 1.4.1
+**Version:** 1.5.0
 
 **Status:** Approved
 
@@ -33,11 +33,11 @@ La roadmap ha i seguenti obiettivi.
 
 # Current Status
 
-**Documentation Release:** 1.14.0
+**Documentation Release:** 1.15.0
 
 **Project Status:** In Development
 
-**Development Status:** In Progress. Il repository non è pubblico. Dei criteri di Beta sono soddisfatti quello sull'autenticazione (Specification 18, milestone A1–A7) e quello sul trasporto cifrato (Specification 19, milestone S1–S4, con una prova da un portatile sulla rete di casa il 2026-09-26); gli altri no, o non sono stati verificati: vedi Release Criteria.
+**Development Status:** In Progress. Il repository non è pubblico. Dei criteri di Beta sono soddisfatti quello sull'autenticazione (Specification 18, milestone A1–A7), quello sul trasporto cifrato (Specification 19, milestone S1–S4, con una prova da un portatile sulla rete di casa il 2026-09-26) e quello sulla ritenzione (Specification 16 alla 1.3.0, consolidamento attivo dal 2026-09-26); gli altri no, o non sono stati verificati: vedi Release Criteria.
 
 ---
 
@@ -71,7 +71,7 @@ Obiettivi.
 
 **Status:** In Progress
 
-**Situazione:** Esistono il Unified Data Model, il sistema di configurazione, la persistenza e sei endpoint di lettura. L'autenticazione (Specification 18) e HTTPS (Specification 19) sono realizzati. Manca il consolidamento a livelli della Specification 16.
+**Situazione:** Esistono il Unified Data Model, il sistema di configurazione, la persistenza e sei endpoint di lettura. L'autenticazione (Specification 18), HTTPS (Specification 19) e il consolidamento a livelli (Specification 16) sono realizzati.
 
 ---
 

@@ -246,7 +246,8 @@ public sealed class ScoreRepository
             SELECT id
             FROM   observation_period
             WHERE  data_source_id = $dataSourceId
-              AND  period_start = $periodStart;
+              AND  period_start = $periodStart
+              AND  granularity = 'Hour';
             """;
 
         command.Parameters.AddWithValue("$dataSourceId", dataSourceId.ToString());

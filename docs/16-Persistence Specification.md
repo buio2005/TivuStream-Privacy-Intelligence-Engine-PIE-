@@ -4,11 +4,11 @@
 
 **Document:** Persistence Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-19
+**Last Updated:** 2026-09-26
 
 ---
 
@@ -167,6 +167,126 @@ I valori predefiniti sono configurabili.
 Il consolidamento è **irreversibile**: l'utente deve poterlo comprendere prima di ridurre la ritenzione del dettaglio.
 
 I dati di riferimento sono esclusi dalla ritenzione. Non descrivono un momento e non invecchiano insieme alle osservazioni.
+
+---
+
+## Consolidated Periods
+
+Un aggregato giornaliero o mensile è a sua volta un **periodo di osservazione**, più lungo. Vale per esso tutto ciò che vale per i periodi: non si sovrappone ad altri, è immutabile, è aggregabile.
+
+Ogni periodo conserva due informazioni in più, interne allo Storage ed estranee al Unified Data Model:
+
+| Informazione        | Significato                                                        |
+| ------------------- | ------------------------------------------------------------------- |
+| Livello             | Ora, giorno o mese                                                  |
+| Ore osservate       | Quante ore osservate sono confluite nel periodo; 1 per un'ora       |
+
+Le ore osservate sono necessarie all'onestà dello storico. Un giorno di cui sono state osservate tre ore e un giorno osservato per intero hanno la stessa forma: senza questo numero, il primo sembrerebbe un giorno tranquillo. Un'ora mai osservata resta non osservata anche dopo il consolidamento, e non diventa un'ora a zero.
+
+---
+
+## Day And Month Boundaries
+
+Giorni e mesi seguono il **fuso orario locale del computer su cui PIE è in esecuzione**, perché è il giorno della persona che legge. Un giorno che comincia alle due di notte non è il giorno di nessuno.
+
+Gli istanti di inizio e di fine restano conservati in UTC, come ogni altro istante. Nei giorni del cambio d'ora un giorno dura ventitré o venticinque ore: il periodo lo dice, perché conserva inizio e fine, non una durata.
+
+Un cambio di fuso orario del computer non riscrive i periodi già consolidati.
+
+---
+
+## When A Level Is Consolidated
+
+Si consolida sempre un **giorno intero** o un **mese intero**, mai una parte.
+
+| Operazione                    | Quando                                                         |
+| ----------------------------- | --------------------------------------------------------------- |
+| Ore → giorno                  | Il giorno è terminato da più della ritenzione oraria            |
+| Giorni → mese                 | Il mese è terminato da più della ritenzione giornaliera         |
+| Eliminazione dei mesi         | Il mese è terminato da più della ritenzione mensile             |
+
+Ogni consolidamento di un giorno o di un mese avviene in **una sola transazione**: si scrive l'aggregato, si elimina il dettaglio. Un'interruzione lascia il dettaglio intatto, e il consolidamento successivo lo riprende. Riconsolidare non produce duplicati, perché il dettaglio già consolidato non esiste più.
+
+Il consolidamento è un'**operazione pianificata**: viene eseguito all'avvio e poi una volta all'ora, mai durante una richiesta.
+
+---
+
+## What A Consolidated Period Contains
+
+Il principio è quello già applicato alla finestra delle ventiquattro ore: ciò che si somma viene sommato, ciò che non si somma viene dichiarato per quello che è.
+
+| Dato                    | Giorno                                                       | Mese                                  |
+| ----------------------- | ------------------------------------------------------------ | ------------------------------------- |
+| Conteggi delle interrogazioni | Somma esatta                                           | Somma esatta                          |
+| Domini distinti, dispositivi attivi | Il maggiore fra il valore più alto di un periodo e i nomi o identificativi distinti conservati; sempre un **limite inferiore** | Come il giorno |
+| Stato DNSSEC            | Quello del periodo più recente                                | Come il giorno                        |
+| Dispositivi             | Uno per identificativo; identità dal periodo più recente; prima e ultima osservazione estreme | Come il giorno |
+| Domini                  | Uno per nome; occorrenze sommate; classificazione dal periodo più recente, con l'età della lista | Come il giorno |
+| Attività dispositivo → dominio | Conteggi sommati per dispositivo, dominio, esito e protocollo | **Non conservata** |
+| Configurazione della sorgente | Quella del periodo più recente                          | Come il giorno                        |
+| Punteggio               | L'ultimo prodotto nel giorno, con i suoi componenti          | L'ultimo prodotto nel mese            |
+
+La qualità di ogni dato consolidato è la **meno precisa** fra quelle dei periodi che lo compongono.
+
+---
+
+## Device Activity Beyond Thirty Days
+
+L'attività per dispositivo e per dominio è la parte dei dati più vicina a una cronologia di navigazione, anche aggregata per ora.
+
+Negli aggregati giornalieri è conservata per dodici mesi, perché consente di rispondere a domande sul singolo dispositivo in un intervallo ancora recente.
+
+Negli aggregati mensili **non è conservata**. Dopo dodici mesi resta noto quali domini la rete ha contattato e quali dispositivi erano presenti, non più quale dispositivo ha contattato quale dominio. Conservarla per cinque anni ne farebbe un archivio della navigazione di ogni persona della casa, a fronte di un uso che nessuna funzionalità prevista richiede.
+
+Questa è una scelta editoriale, approvata come tale.
+
+---
+
+## Score In Consolidated Periods
+
+Un punteggio non si somma e non si media: la media di due punteggi con coperture diverse non misura nulla.
+
+Un periodo consolidato conserva quindi **l'ultimo punteggio prodotto al suo interno**, invariato: valore, stato, trend, copertura, versione dell'algoritmo, istante di produzione, componenti.
+
+Il punteggio valuta le ventiquattro ore che precedono la sua produzione, come stabilisce la Specification 07. L'ultimo punteggio di un giorno valuta quindi quel giorno. L'ultimo punteggio di un mese valuta l'ultimo giorno del mese, **non il mese**, e va presentato come tale quando lo storico sarà mostrato.
+
+Un periodo in cui non è stato prodotto alcun punteggio non ne ha uno. Non se ne calcola uno a posteriori.
+
+---
+
+## Recalculation
+
+Il consolidamento riduce ciò che può essere ricalcolato. Oltre la ritenzione oraria un algoritmo nuovo può essere applicato ai giorni, non alle ore; oltre la ritenzione giornaliera, ai mesi, senza l'attività per dispositivo.
+
+È la conseguenza dichiarata della conservazione del minimo necessario.
+
+---
+
+## Effective Deletion
+
+Il dettaglio eliminato dal consolidamento non deve restare leggibile nel file.
+
+SQLite, per impostazione predefinita, lascia il contenuto delle righe eliminate nelle pagine libere finché non vengono riutilizzate. Lo Storage abilita la **cancellazione sicura** (`secure_delete`), che sovrascrive quel contenuto. Il costo è una scrittura in più al momento dell'eliminazione, trascurabile ai volumi di PIE.
+
+Il file non si riduce: lo spazio liberato viene riutilizzato dalle acquisizioni successive. La crescita si appiattisce; non diventa una diminuzione.
+
+---
+
+## Retention Configuration
+
+| Parametro                         | Predefinito | Minimo |
+| --------------------------------- | ----------- | ------ |
+| `Storage:Retention:HourlyDays`    | 30          | 2      |
+| `Storage:Retention:DailyMonths`   | 12          | 1      |
+| `Storage:Retention:MonthlyYears`  | 5           | 1      |
+
+Il minimo della ritenzione oraria protegge la finestra delle ventiquattro ore, che si legge dal dettaglio orario: consolidare un giorno ancora in finestra toglierebbe al punteggio e alle pagine i dati su cui si basano.
+
+Una ritenzione più fine **prevale** su una più grossolana: un mese non viene consolidato, né eliminato, finché contiene dati che un livello più fine deve ancora conservare. Una ritenzione oraria di quattrocento giorni conserva quindi le ore per quattrocento giorni anche con una ritenzione giornaliera di dodici mesi.
+
+Un valore sotto il minimo **impedisce l'avvio**, con un messaggio che dice quale parametro e quale minimo. Un valore corretto in silenzio cambierebbe ciò che viene eliminato senza che la persona lo sappia.
+
+Ridurre una ritenzione ha effetto al consolidamento successivo e non può essere annullato. La documentazione per la persona lo dice prima di spiegare come farlo.
 
 ---
 

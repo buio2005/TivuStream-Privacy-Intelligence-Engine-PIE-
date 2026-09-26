@@ -47,7 +47,7 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 437 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 464 tests, all must pass
 cd frontend && npm run test:unit -- --run        # 121 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # :5000 on this machine, https :5443 on the
@@ -117,8 +117,8 @@ they set `X-Test-Remote-Address`.
 * No installation procedure: the `installer/` directory is empty. Notes for
   it are collected under Known Impact in the changelog (firewall prompt,
   fingerprint, system proxy and VPN, browser profile, `npm run build`).
-* Tiered retention is designed in Specification 16 and not implemented; the
-  database grows without limit.
+* Consolidated days and months are written but nothing reads them yet: there
+  is no history view. Copies taken before a migration are never deleted.
 * Device, Alert and Recommendation Engines do not exist. Device Health is
   therefore not measurable, and fifteen points of the score stay out.
 * Documentation is in Italian and is to be translated before publication.
