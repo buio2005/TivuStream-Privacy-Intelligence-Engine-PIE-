@@ -4,11 +4,11 @@
 
 **Document:** Technitium Integration Specification
 
-**Version:** 1.6.0
+**Version:** 1.7.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-19
+**Last Updated:** 2026-09-27
 
 ---
 
@@ -292,6 +292,12 @@ Il token deve appartenere a un **utente dedicato con permessi minimi**.
 Sono richiesti i permessi di **sola lettura** sulle sezioni **Dashboard** e **Settings**.
 
 Il permesso sulle impostazioni è necessario per acquisire la configurazione del server, dalla quale dipendono le aree DNS Security e Configuration del punteggio. Senza di esso quelle aree risulterebbero in larga parte non misurabili.
+
+Il token deve appartenere a un utente **che non fa parte di alcun gruppo**. In Technitium un utente nuovo entra di norma nel gruppo Everyone, che concede la lettura di altre sezioni: l'utente riceverebbe più di quanto dichiarato qui.
+
+**Domain Activity non richiede permessi ulteriori.** Con Technitium 15.4, un utente con i soli permessi di lettura su Dashboard e Settings, fuori da ogni gruppo, legge l'elenco delle applicazioni installate e i log dell'applicazione Query Logs. Verificato sul campo il 2026-09-27: 280 interrogazioni aggregate in 12 attività, nessun errore. Serve soltanto che l'applicazione sia installata.
+
+È un comportamento osservato su quella versione, non una garanzia di Technitium. Per questo, se l'elenco delle applicazioni non è leggibile, l'Adapter non dichiara Domain Activity e continua a servire il livello base, invece di rifiutare l'intera Data Source.
 
 Nessun permesso di modifica è richiesto in alcun caso: PIE non altera mai la configurazione della Data Source.
 

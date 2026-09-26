@@ -8,6 +8,16 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Documentation Release 1.16.1 — Permessi di Technitium verificati — 2026-09-27
+
+### Changed
+
+**Specification 04 alla 1.7.0:** Least Privilege dice che l'utente del token non deve appartenere ad alcun gruppo, e che Domain Activity non richiede permessi oltre a Dashboard e Settings, come osservato su Technitium 15.4 il 2026-09-27; l'Adapter non rifiuta la Data Source se l'elenco delle applicazioni non è leggibile. Approvata il 2026-09-27.
+
+**Roadmap, README e PROJECT_CONTEXT** alla Documentation Release 1.16.1.
+
+---
+
 ## Prima prova sul campo su Windows: il servizio non partiva — 2026-09-27
 
 La persona che lavora al progetto ha installato il pacchetto su Windows. Connessione, account e firewall sono riusciti; il servizio si è chiuso all'avvio.
@@ -49,7 +59,9 @@ Due verifiche aggiunte a prove esistenti, 495 in tutto, frontend 121: l'eseguibi
 
 **Riprendere un'installazione interrotta dopo la creazione dell'account** reimposta la password di quell'account e chiede di cambiarla al primo accesso. Per la prova sul campo conviene disinstallare con `-RemoveData` e installare di nuovo.
 
-**I permessi per l'attività dei dispositivi non sono ancora verificati.** In entrambe le prove `configure` ha trovato l'attività disponibile, con token i cui permessi la persona non conosceva con certezza: probabilmente ereditati dal gruppo Everyone. La prova con un utente fuori da quel gruppo, con i soli Dashboard e Settings, e poi con Apps e Logs, dirà che cosa serve.
+**Permessi verificati: Apps e Logs non servono.** Utente `pie-min` fuori da ogni gruppo (verificato sulla sua scheda), con la sola lettura di Dashboard e Settings: `configure` ha trovato disponibili impostazioni e attività, e il servizio, riavviato con quel token, ha registrato 280 interrogazioni in 12 attività dispositivo → dominio senza alcun errore. La guida e `configure` non chiedono più Apps e Logs; la guida dice di togliere l'utente dal gruppo Everyone. La Specification 04 alla 1.7.0 lo registra, come comportamento osservato su Technitium 15.4 e non garantito.
+
+**Questa sessione di sviluppo gira come amministratore**, e legge quindi la cartella dei dati del servizio: i permessi della cartella sono quelli attesi (SYSTEM, Administrators, `NT SERVICE\TivuStreamPIE`), verificati con `icacls`.
 
 ---
 

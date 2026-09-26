@@ -200,8 +200,7 @@ internal sealed class ConfigureCommand
         else
         {
             output.WriteLine("Missing: which device contacted which domain.");
-            output.WriteLine("  To add it, install the 'Query Logs (Sqlite)' app in Technitium, and give the account of this token");
-            output.WriteLine("  permission to view Apps and Logs.");
+            output.WriteLine("  To add it, install the 'Query Logs (Sqlite)' app in Technitium.");
             output.WriteLine("  Be aware that the app makes Technitium keep every single query, for as long as its own settings say;");
             output.WriteLine("  PIE would keep only hourly totals of them.");
         }

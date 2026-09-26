@@ -22,10 +22,11 @@ Il token appartiene a un utente di Technitium creato apposta per PIE, che può s
 
 1. Apri l'interfaccia di Technitium (di solito `http://indirizzo-del-server:5380`) ed entra come amministratore.
 2. Vai in **Administration → Users** e crea un utente, per esempio `pie`. Nella scheda dell'utente, togli la spunta dal gruppo **Everyone**: altrimenti l'utente riceve anche i permessi di quel gruppo, più di quelli che servono.
-3. Vai in **Administration → Permissions**. Per ciascuna delle sezioni qui sotto, aggiungi l'utente `pie` con la sola casella **View** e salva:
+3. Vai in **Administration → Permissions**. Per ciascuna delle due sezioni qui sotto, aggiungi l'utente `pie` con la sola casella **View** e salva:
    * **Dashboard**, obbligatorio: senza, PIE non vede nulla;
-   * **Settings**, consigliato: permette a PIE di capire se le protezioni del DNS sono attive;
-   * **Apps** e **Logs**, solo se vuoi sapere quale dispositivo ha contattato quale dominio (vedi sotto).
+   * **Settings**, consigliato: permette a PIE di capire se le protezioni del DNS sono attive.
+
+   Non serve altro, nemmeno per sapere quale dispositivo ha contattato quale dominio (vedi sotto).
 4. Vai in **Administration → Sessions**, scegli **Create Token**, seleziona l'utente `pie` e dai un nome al token, per esempio `pie`. Copia il token: ti servirà tra poco, e Technitium non te lo mostrerà di nuovo.
 
 Non serve uscire da Technitium né entrare come `pie`: il token funziona da solo.
