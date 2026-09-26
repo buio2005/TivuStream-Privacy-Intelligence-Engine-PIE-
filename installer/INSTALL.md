@@ -16,6 +16,10 @@ Ti servono tre cose.
 2. **Technitium DNS Server già funzionante** sulla tua rete. PIE non lo installa e non ne cambia le impostazioni: lo legge soltanto.
 3. **Un token di Technitium**, cioè una chiave che permette a PIE di leggere i dati. Qui sotto trovi come crearlo.
 
+**Se Technitium gira in Docker**, controlla due cose prima di cominciare:
+* che riparta da solo dopo un riavvio del computer (`--restart unless-stopped`); altrimenti PIE, che parte da solo, non trova nulla da leggere;
+* che i suoi dati stiano in un volume (`-v technitium-data:/etc/dns`). Senza, aggiornare Technitium, cioè ricreare il container, cancella utenti, token e app, e PIE smette di collegarsi. Prima di un aggiornamento, in ogni caso, fai un backup da **Settings → Backup**.
+
 ### Creare il token in Technitium
 
 Il token appartiene a un utente di Technitium creato apposta per PIE, che può solo **guardare**, mai modificare.

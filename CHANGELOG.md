@@ -61,6 +61,8 @@ Due verifiche aggiunte a prove esistenti, 495 in tutto, frontend 121: l'eseguibi
 
 **Permessi verificati: Apps e Logs non servono.** Utente `pie-min` fuori da ogni gruppo (verificato sulla sua scheda), con la sola lettura di Dashboard e Settings: `configure` ha trovato disponibili impostazioni e attività, e il servizio, riavviato con quel token, ha registrato 280 interrogazioni in 12 attività dispositivo → dominio senza alcun errore. La guida e `configure` non chiedono più Apps e Logs; la guida dice di togliere l'utente dal gruppo Everyone. La Specification 04 alla 1.7.0 lo registra, come comportamento osservato su Technitium 15.4 e non garantito.
 
+**Il Technitium di sviluppo non ha volumi** e non ripartiva da solo: aggiornarlo, cioè ricreare il container, avrebbe cancellato utenti, token e app. Impostato `--restart unless-stopped` il 2026-09-27; l'aggiornamento resta da fare con backup, volume e ripristino, ed è anche l'occasione per provare PIE su una seconda versione della sorgente (criterio di Stable). La guida avverte chi usa Technitium in Docker. Dopo un riavvio del PC Docker Desktop parte solo all'accesso, il servizio PIE prima: le acquisizioni di quei minuti falliscono e riprendono da sole.
+
 **Questa sessione di sviluppo gira come amministratore**, e legge quindi la cartella dei dati del servizio: i permessi della cartella sono quelli attesi (SYSTEM, Administrators, `NT SERVICE\TivuStreamPIE`), verificati con `icacls`.
 
 ---
