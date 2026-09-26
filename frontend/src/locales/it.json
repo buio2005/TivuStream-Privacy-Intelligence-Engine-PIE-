@@ -97,7 +97,7 @@
     },
     "observedPeriod": "Dal {from} al {to}",
     "emptyInPeriod": "Nessun dominio osservato fra il {from} e il {to}.",
-    "emptyEver": "Nessuna osservazione registrata finora.",
+    "emptyInWindow": "Nessuna osservazione registrata nelle ultime ventiquattro ore.",
     "hourly": "L'elenco copre le ultime ventiquattro ore, o quelle osservate finora se l'installazione è più recente.",
     "hoursObserved": "{observed} ora osservata su {requested} richieste | {observed} ore osservate su {requested} richieste",
     "inProgress": "L'ultima ora è ancora in corso.",

@@ -8,6 +8,30 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## D2.1 — La sorgente si raggiunge direttamente — 2026-09-26
+
+Difetti trovati dalla prima prova nel browser della pagina di dettaglio, fatta dalla persona che lavora al progetto: l'elenco dei domini era vuoto con il container di Technitium acceso.
+
+### Fixed
+
+**Il motore raggiungeva Technitium attraverso il proxy di sistema.** Nessuna acquisizione era riuscita dal 31 agosto. Technitium rispondeva e il token era valido. Windows aveva però un proxy configurato su `127.0.0.1:2080`, residuo di un client VPN usato in passato, senza eccezioni per gli indirizzi locali e senza alcun programma in ascolto. .NET lo usa anche per `localhost`: ogni richiesta finiva sul proxy spento, e il motore riportava «The Technitium instance could not be reached». I browser non passano mai dal proxy per `localhost`, per questo l'interfaccia funzionava.
+
+Oltre al guasto, c'era un problema di privacy. Con un proxy acceso le risposte di Technitium, cioè il registro delle interrogazioni e quindi i domini contattati, passavano da un programma di terzi, che può inoltrarle fuori dal dispositivo. Ora il client di Technitium **non usa mai il proxy di sistema**. Le liste di classificazione continuano a usarlo: vengono comunque da internet e non portano nulla della rete. Approvato il 2026-09-26.
+
+**L'elenco vuoto diceva «Nessuna osservazione registrata finora»** quando nella finestra non c'era alcuna ora osservata. Non era vero: nel database c'erano osservazioni di agosto, e la finestra di ventiquattro ore non può dire nulla del periodo precedente. Ora la frase è «Nessuna osservazione registrata nelle ultime ventiquattro ore.», e la chiave `domains.emptyEver` diventa `domains.emptyInWindow`. Approvata il 2026-09-26. La pagina di dettaglio non aveva il difetto: `DomainNotObserved` parlava già delle ultime ventiquattro ore.
+
+### Verified
+
+Due prove sul backend, da 375 a 377: il client della sorgente non usa il proxy, quello delle liste sì. Rimettere il proxy nel client della sorgente fa fallire la prima. Sul frontend, da 111 a 113: la frase nuova nella prova dell'elenco, e la qualificazione «nelle ultime ventiquattro ore» nel catalogo, in entrambe le lingue.
+
+### Known Impact
+
+**La procedura d'installazione**, quando esisterà, dirà che PIE raggiunge Technitium direttamente, ignorando proxy di sistema e VPN.
+
+**Anche `dotnet restore` passa dal proxy di sistema.** Con quel proxy configurato e spento, il controllo online delle vulnerabilità dei pacchetti fallisce, e trattando gli avvisi come errori fallisce la compilazione di una cartella non ancora ripristinata. Non riguarda il prodotto: riguarda la macchina di sviluppo.
+
+---
+
 ## Milestone D2 — La pagina di dettaglio del dominio — 2026-09-26
 
 Seconda e ultima milestone della pagina di dettaglio. Esce dall'elenco dei debiti la pagina che mancava, e con essa si verifica F4 della Specification 18.

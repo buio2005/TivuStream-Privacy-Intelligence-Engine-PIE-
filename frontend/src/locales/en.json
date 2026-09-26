@@ -97,7 +97,7 @@
     },
     "observedPeriod": "From {from} to {to}",
     "emptyInPeriod": "No domain observed between {from} and {to}.",
-    "emptyEver": "No observation recorded yet.",
+    "emptyInWindow": "No observation recorded in the last twenty-four hours.",
     "hourly": "The list covers the last twenty four hours, or those observed so far if the installation is more recent.",
     "hoursObserved": "{observed} hour observed out of the {requested} requested | {observed} hours observed out of the {requested} requested",
     "inProgress": "The last hour is still in progress.",

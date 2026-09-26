@@ -62,6 +62,9 @@ describe('Qualifications survive translation', () => {
     },
     'domains.unclassifiedNote': { en: 'does not mean it is safe', it: 'non significa che sia sicuro' },
 
+    // A window without observations says nothing about the time before it.
+    'domains.emptyInWindow': { en: 'in the last twenty-four hours', it: 'nelle ultime ventiquattro ore' },
+
     // An engine that did not answer checked nothing and may or may not have
     // changed anything. Neither sentence may turn into a verdict.
     'auth.engineUnreachable': { en: 'were not checked', it: 'non sono state verificate' },

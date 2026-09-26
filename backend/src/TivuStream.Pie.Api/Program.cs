@@ -45,7 +45,14 @@ builder.Services.Configure<ClassificationOptions>(builder.Configuration.GetSecti
 builder.Services.AddSingleton(
     serviceProvider => serviceProvider.GetRequiredService<IOptions<TechnitiumOptions>>().Value);
 
-builder.Services.AddHttpClient<TechnitiumAdapter>();
+// The Data Source is reached directly, never through the proxy configured in
+// the system. Its answers carry the domains the network contacted, and a
+// proxy, often left behind by a VPN client, may forward them off the device.
+// A proxy that is configured but not running would also make a reachable
+// source look unreachable.
+builder.Services
+    .AddHttpClient<TechnitiumAdapter>()
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { UseProxy = false });
 
 builder.Services.AddSingleton(
     serviceProvider => serviceProvider.GetRequiredService<IOptions<StorageOptions>>().Value);

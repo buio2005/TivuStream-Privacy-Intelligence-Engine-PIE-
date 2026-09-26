@@ -57,16 +57,16 @@ describe('Domains: what was asked for and what exists are told apart', () => {
     // "Nothing observed" is a statement about the moment of looking unless
     // the interval travels with it.
     expect(view.text()).toContain('No domain observed between')
-    expect(view.text()).not.toContain('No observation recorded yet')
+    expect(view.text()).not.toContain('No observation recorded in the last twenty-four hours')
   })
 
-  it('tells an installation that has never observed anything from one with an empty period', async () => {
+  it('tells a window without any observed hour from one with an empty period, without claiming nothing was ever observed', async () => {
     const view = await mountView(
       DomainsView,
       answer(observed({ period: null, periodsObserved: 0, domains: [] })),
     )
 
-    expect(view.text()).toContain('No observation recorded yet')
+    expect(view.text()).toContain('No observation recorded in the last twenty-four hours')
     expect(view.text()).not.toContain('No domain observed between')
   })
 
@@ -80,7 +80,7 @@ describe('Domains: what was asked for and what exists are told apart', () => {
     expect(view.text()).not.toContain('score')
     expect(view.find('.domains').exists()).toBe(false)
     expect(view.text()).not.toContain('No domain observed')
-    expect(view.text()).not.toContain('No observation recorded yet')
+    expect(view.text()).not.toContain('No observation recorded in the last twenty-four hours')
   })
 })
 

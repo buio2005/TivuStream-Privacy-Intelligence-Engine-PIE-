@@ -47,7 +47,11 @@ function moment(value: string): string {
       <em>{{ $t('domains.hourly') }}</em>
     </p>
 
-    <p v-else-if="domains.length === 0">{{ $t('domains.emptyEver') }}</p>
+    <!--
+      No period in the window. Older observations may exist: "never" would be
+      a statement about the whole history that the window cannot make.
+    -->
+    <p v-else-if="domains.length === 0">{{ $t('domains.emptyInWindow') }}</p>
 
     <nav v-else class="terms">
       <TermNote term="unclassified" />
