@@ -8,6 +8,37 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Prima prova sul campo su Windows: il servizio non partiva — 2026-09-27
+
+La persona che lavora al progetto ha installato il pacchetto su Windows. Connessione, account e firewall sono riusciti; il servizio si è chiuso all'avvio.
+
+### Fixed
+
+**Un comando creava il certificato che il servizio non poteva leggere.** Costruendo l'applicazione, ASP.NET Core crea il server, e con lui prepara il canale HTTPS: `configure` e `reset-password`, eseguiti dall'amministratore durante l'installazione, generavano `pie.pfx` leggibile solo dall'amministratore. Il servizio, con il suo account, non poteva né leggerlo né sostituirlo, e si chiudeva con `UnauthorizedAccessException` (Visualizzatore eventi, .NET Runtime 1026). Il commento del codice diceva che il certificato si prepara all'avvio del server, non alla costruzione dell'host: non era più vero.
+* Un comando non prepara più il canale HTTPS.
+* Un certificato che PIE non può leggere né sostituire ferma l'avvio con una frase che dice quale cartella cancellare.
+* Lo script d'installazione, su Windows e su Linux, toglie un certificato lasciato da un tentativo precedente prima di avviare il servizio.
+
+### Changed
+
+**I comandi mostrano solo avvisi ed errori** del registro: durante l'installazione le righe informative dell'avvio si mescolavano alle domande.
+
+**`configure` dice quanti caratteri del token ha ricevuto**, senza mostrarli. Nella prova il primo token è stato rifiutato, e da un campo che non mostra nulla non si capisce se l'incolla è arrivato.
+
+### Verified
+
+Due verifiche aggiunte a prove esistenti, 495 in tutto, frontend 121: l'eseguibile installato, lanciato con un comando, non crea la cartella del certificato; `configure` dice quanti caratteri ha ricevuto. Togliere la protezione fa fallire la prova del processo.
+
+### Known Impact
+
+**Nel Visualizzatore eventi i messaggi di PIE compaiono sotto «le informazioni seguenti erano incluse nell'evento»**: l'origine registrata con `New-EventLog` usa il file dei messaggi di .NET Framework, che non conosce gli identificativi degli eventi. Il testo c'è, la presentazione no.
+
+**Riprendere un'installazione interrotta dopo la creazione dell'account** reimposta la password di quell'account e chiede di cambiarla al primo accesso. Per la prova sul campo conviene disinstallare con `-RemoveData` e installare di nuovo.
+
+**Nella prova, `configure` ha dichiarato mancanti le impostazioni del server e disponibile l'attività dei dispositivi**: resta da sapere con quali permessi era stato creato il token.
+
+---
+
 ## La prima procedura d'installazione — 2026-09-26
 
 PIE si installa come servizio su Windows e su Linux, da un pacchetto che contiene già tutto, seguendo una guida scritta per chi non conosce il progetto. È la parte realizzabile del criterio di Beta «Installazione»; la prova con una persona estranea resta da fare.

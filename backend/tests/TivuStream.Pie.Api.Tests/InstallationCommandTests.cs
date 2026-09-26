@@ -56,6 +56,9 @@ public sealed class InstallationCommandTests : IDisposable
         Assert.Equal(Token, written["Technitium"]!["ApiToken"]!.GetValue<string>());
         Assert.True(Guid.TryParse(written["Technitium"]!["DataSourceId"]!.GetValue<string>(), out Guid id) && id != Guid.Empty);
         Assert.DoesNotContain(Token, _output.ToString(), StringComparison.Ordinal);
+
+        // Not the token, only how much of it arrived.
+        Assert.Contains($"Received {Token.Length} characters.", _output.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]

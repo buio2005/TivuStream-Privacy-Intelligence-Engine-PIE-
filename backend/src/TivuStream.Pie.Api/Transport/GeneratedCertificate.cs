@@ -53,6 +53,27 @@ internal static class GeneratedCertificate
         MachineNames names,
         DateTimeOffset now)
     {
+        try
+        {
+            return LoadOrCreateAsIs(directory, names, now);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            // Left by another account: PIE may neither read nor replace it.
+            // Said plainly, since the remedy is simple and the bare failure
+            // does not suggest it.
+            throw new InvalidOperationException(
+                $"The certificate in {Path.GetFullPath(directory)} belongs to another account and cannot be read or replaced. "
+                + "Delete that folder and start PIE again: a new certificate will be created.",
+                exception);
+        }
+    }
+
+    private static (X509Certificate2 Certificate, bool Generated) LoadOrCreateAsIs(
+        string directory,
+        MachineNames names,
+        DateTimeOffset now)
+    {
         string path = Path.Combine(Path.GetFullPath(directory), FileName);
 
         if (File.Exists(path))

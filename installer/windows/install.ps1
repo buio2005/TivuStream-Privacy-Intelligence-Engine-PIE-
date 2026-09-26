@@ -228,6 +228,11 @@ Write-Host "Port $HttpsPort opened for PIE, on private networks only."
 # ------------------------------------------------------------------
 Step 'Starting PIE'
 
+# The certificate belongs to the account of the service, which creates it as
+# it starts. One left by an earlier attempt, made by another account, could
+# be neither read nor replaced by it.
+Remove-Item (Join-Path $DataDir 'data\tls') -Recurse -Force -ErrorAction SilentlyContinue
+
 Start-Service -Name $ServiceName
 
 if (-not (Wait-Answer)) {

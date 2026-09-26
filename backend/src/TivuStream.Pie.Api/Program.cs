@@ -32,6 +32,9 @@ using TivuStream.Pie.Storage.Schema;
 
 HostingMode hosting = HostingMode.Detect();
 
+// A command typed at the terminal, such as reset-password, runs and stops.
+string[] command = CommandLine.Positional(args);
+
 // A service is started from a folder of the system's choosing. The program's
 // own files, the interface among them, are found beside the program.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
@@ -51,6 +54,13 @@ if (OperatingSystem.IsWindows())
 
 builder.Services.AddSystemd();
 builder.Services.AddSingleton(hosting);
+
+// What a command asks and answers is not buried under the messages of the
+// start: only warnings and failures are shown alongside it.
+if (command.Length > 0)
+{
+    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["Logging:LogLevel:Default"] = "Warning" });
+}
 
 // Installed, the data and the configuration holding the credentials live in
 // a folder of their own, apart from the program.
@@ -107,7 +117,10 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     }
 });
 
-if (machine is not null)
+// A command never prepares the encrypted channel. The certificate belongs to
+// the account PIE runs as, and one made here, by whoever typed the command,
+// would be one a service cannot read, nor replace.
+if (machine is not null && command.Length == 0)
 {
     builder.WebHost.UseTransport(transport, machine, provided);
 }
@@ -241,8 +254,6 @@ RetentionLog.Configured(app.Logger, retention.HourlyDays, retention.DailyMonths,
 // Restoring access to an account is done at the terminal, by someone who has
 // the machine, and never starts the service. It runs once the schema is ready
 // and before anything slow is read.
-string[] command = CommandLine.Positional(args);
-
 if (command.Length > 0 && command[0] == "reset-password")
 {
     if (command.Length != 2)

@@ -90,6 +90,10 @@ public sealed class RecoveryProcessTests : IDisposable
 
         Assert.NotNull(accounts.FindByUsername("maria"));
 
+        // Run by whoever typed it, a command creates no certificate: the one
+        // the service would find could then be neither read nor replaced.
+        Assert.False(Directory.Exists(Path.Combine(data, "data", "tls")));
+
         SqliteConnectionFactory.ReleaseConnections(database);
     }
 

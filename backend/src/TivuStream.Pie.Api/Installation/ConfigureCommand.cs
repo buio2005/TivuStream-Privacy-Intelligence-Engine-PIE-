@@ -89,6 +89,10 @@ internal sealed class ConfigureCommand
                 return Refused;
             }
 
+            // The token is not shown, so a paste that did not arrive would
+            // otherwise look exactly like one that did.
+            output.WriteLine($"Received {token.Trim().Length} characters.");
+
             TechnitiumOptions options = new()
             {
                 DataSourceId = ExistingDataSourceId() ?? Guid.NewGuid(),

@@ -209,6 +209,11 @@ done_ "service $SERVICE registered"
 # ------------------------------------------------------------------
 step 'Starting PIE'
 
+# The certificate belongs to the account of the service, which creates it as
+# it starts. One left by an earlier attempt, made by another account, is not
+# the one it should use.
+rm -rf "$DATA_DIR/data/tls"
+
 systemctl start "$SERVICE"
 wait_answer || stop_because "The service started but does not answer. $JOURNAL_HINT"
 
