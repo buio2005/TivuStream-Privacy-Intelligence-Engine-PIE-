@@ -70,6 +70,14 @@ describe('Qualifications survive translation', () => {
     // What is withheld is not an absence.
     'domains.activityWithheld': { en: 'says nothing about whether', it: 'non dice se' },
 
+    // No rows is never presented as no traffic, and what is not assessed is
+    // not a verdict on the domain.
+    'domainDetail.activityUnavailable': { en: 'cannot be said', it: 'non si può dire' },
+    'domainDetail.activityEmpty': { en: 'not the traffic', it: 'non il traffico' },
+    'domainDetail.reputationUnassessed': { en: 'not a judgement', it: 'non è un giudizio' },
+    'domainDetail.deviceUndescribedNote': { en: 'only its identifier', it: "solo l'identificativo" },
+    'domainDetail.identityNetworkAddress': { en: 'appears as another device', it: 'compare come un altro dispositivo' },
+
     // The cost of the role is stated with it, and so is who knows a password.
     'role.note.Viewer': { en: 'does not see which device', it: 'non vede quale dispositivo' },
     'accounts.initialPasswordNote': { en: 'you know it too', it: 'la conosci anche tu' },

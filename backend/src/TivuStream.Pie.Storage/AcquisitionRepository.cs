@@ -11,6 +11,23 @@ namespace TivuStream.Pie.Storage;
 /// </summary>
 public sealed class AcquisitionRepository
 {
+    /// <summary>
+    /// The least precise observation quality among the rows aggregated, as the
+    /// numeric value of <see cref="MeasurementQuality"/>.
+    /// </summary>
+    /// <remarks>
+    /// A total is known no better than its vaguest part.
+    /// </remarks>
+    private const string LeastPreciseQuality =
+        """
+        MAX(CASE observation_quality
+                WHEN 'Exact'         THEN 0
+                WHEN 'LowerBound'    THEN 1
+                WHEN 'PeriodBounded' THEN 2
+                ELSE 3
+            END)
+        """;
+
     private readonly SqliteConnectionFactory _connectionFactory;
 
     /// <summary>
@@ -231,96 +248,6 @@ public sealed class AcquisitionRepository
     }
 
     /// <summary>
-    /// Returns the domains of the most recent observation period.
-    /// </summary>
-    public IReadOnlyList<Domain> GetLatestDomains()
-    {
-        using SqliteConnection connection = _connectionFactory.Open();
-
-        using SqliteCommand command = connection.CreateCommand();
-
-        command.CommandText =
-            """
-            SELECT  d.name, d.category, d.reputation, d.first_seen, d.last_seen,
-                    d.occurrences, d.observation_quality, d.category_confidence,
-                    d.category_source, d.category_source_updated_at
-            FROM    domain d
-            WHERE   d.observation_period_id = (SELECT id FROM observation_period ORDER BY period_start DESC LIMIT 1)
-            ORDER BY d.occurrences DESC, d.name;
-            """;
-
-        List<Domain> domains = [];
-
-        using SqliteDataReader reader = command.ExecuteReader();
-
-        while (reader.Read())
-        {
-            domains.Add(new Domain
-            {
-                Name = reader.GetString(0),
-                Category = Enum.Parse<ThreatCategory>(reader.GetString(1)),
-                Reputation = reader.IsDBNull(2) ? null : reader.GetString(2),
-                FirstSeen = ReadInstant(reader, 3),
-                LastSeen = ReadInstant(reader, 4),
-                Occurrences = reader.GetInt64(5),
-                ObservationQuality = Enum.Parse<MeasurementQuality>(reader.GetString(6)),
-                CategoryConfidence = reader.IsDBNull(7)
-                    ? null
-                    : Enum.Parse<ConfidenceLevel>(reader.GetString(7)),
-                CategorySource = reader.IsDBNull(8) ? null : reader.GetString(8),
-                CategorySourceUpdatedAt = reader.IsDBNull(9) ? null : ReadInstant(reader, 9),
-            });
-        }
-
-        return domains;
-    }
-
-    /// <summary>
-    /// Returns the interactions recorded for a domain in the most recent
-    /// observation period.
-    /// </summary>
-    /// <param name="domain">Domain to look for.</param>
-    public IReadOnlyList<DomainActivity> GetLatestActivitiesFor(string domain)
-    {
-        using SqliteConnection connection = _connectionFactory.Open();
-
-        using SqliteCommand command = connection.CreateCommand();
-
-        command.CommandText =
-            """
-            SELECT  a.device_id, a.domain, a.query_count, a.blocked,
-                    a.protocol, a.first_seen, a.last_seen, a.observation_quality
-            FROM    domain_activity a
-            WHERE   a.observation_period_id = (SELECT id FROM observation_period ORDER BY period_start DESC LIMIT 1)
-              AND   a.domain = $domain
-            ORDER BY a.query_count DESC;
-            """;
-
-        command.Parameters.AddWithValue("$domain", domain);
-
-        List<DomainActivity> activities = [];
-
-        using SqliteDataReader reader = command.ExecuteReader();
-
-        while (reader.Read())
-        {
-            activities.Add(new DomainActivity
-            {
-                DeviceId = Guid.Parse(reader.GetString(0), CultureInfo.InvariantCulture),
-                Domain = reader.GetString(1),
-                QueryCount = reader.GetInt64(2),
-                Blocked = reader.GetInt64(3) != 0,
-                Protocol = reader.GetString(4),
-                FirstSeen = ReadInstant(reader, 5),
-                LastSeen = ReadInstant(reader, 6),
-                ObservationQuality = Enum.Parse<MeasurementQuality>(reader.GetString(7)),
-            });
-        }
-
-        return activities;
-    }
-
-    /// <summary>
     /// Returns the beginning of the earliest observation period recorded.
     /// </summary>
     /// <remarks>
@@ -367,7 +294,7 @@ public sealed class AcquisitionRepository
         using SqliteCommand command = connection.CreateCommand();
 
         command.CommandText =
-            """
+            $"""
             WITH windowed AS (
                 SELECT      d.*, p.period_start
                 FROM        domain d
@@ -380,15 +307,7 @@ public sealed class AcquisitionRepository
                          MAX(last_seen)    AS last_seen,
                          SUM(occurrences)  AS occurrences,
                          MAX(period_start) AS latest_period,
-
-                         -- The least precise quality among those aggregated:
-                         -- a total is known no better than its vaguest part.
-                         MAX(CASE observation_quality
-                                 WHEN 'Exact'         THEN 0
-                                 WHEN 'LowerBound'    THEN 1
-                                 WHEN 'PeriodBounded' THEN 2
-                                 ELSE 3
-                             END) AS quality_rank
+                         {LeastPreciseQuality} AS quality_rank
                 FROM     windowed
                 GROUP BY name
             )
@@ -427,6 +346,93 @@ public sealed class AcquisitionRepository
         }
 
         return domains;
+    }
+
+    /// <summary>
+    /// Returns the activity towards a domain since the given instant,
+    /// aggregated per device, outcome and transport.
+    /// </summary>
+    /// <remarks>
+    /// The sum is lawful for the reason that makes the one of the domains
+    /// lawful, periods that do not overlap, and because the identifier of a
+    /// device is derived deterministically: the same address yields the same
+    /// identifier in every period. How solid that identity is travels with
+    /// the device.
+    /// </remarks>
+    /// <param name="domain">Domain, exactly as stored.</param>
+    /// <param name="since">Beginning of the window, inclusive.</param>
+    public List<ObservedActivity> GetActivitiesSince(string domain, DateTimeOffset since)
+    {
+        using SqliteConnection connection = _connectionFactory.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText =
+            $"""
+            WITH windowed AS (
+                SELECT      a.*
+                FROM        domain_activity a
+                INNER JOIN  observation_period p ON p.id = a.observation_period_id
+                WHERE       p.period_start >= $since
+                  AND       a.domain = $domain
+            ),
+            aggregated AS (
+                SELECT   device_id, blocked, protocol,
+                         SUM(query_count) AS query_count,
+                         MIN(first_seen)  AS first_seen,
+                         MAX(last_seen)   AS last_seen,
+                         {LeastPreciseQuality} AS quality_rank
+                FROM     windowed
+                GROUP BY device_id, blocked, protocol
+            ),
+            described AS (
+                SELECT      d.device_id, d.hostname, d.ip_address, d.identity_basis,
+                            ROW_NUMBER() OVER (PARTITION BY d.device_id ORDER BY p.period_start DESC) AS recency
+                FROM        device d
+                INNER JOIN  observation_period p ON p.id = d.observation_period_id
+                WHERE       p.period_start >= $since
+            )
+            SELECT      a.device_id, s.hostname, s.ip_address, s.identity_basis,
+                        a.query_count, a.blocked, a.protocol, a.first_seen, a.last_seen,
+                        a.quality_rank
+            FROM        aggregated a
+            LEFT JOIN   described s
+                    ON  s.device_id = a.device_id AND s.recency = 1
+            ORDER BY    a.query_count DESC, a.device_id, a.blocked, a.protocol;
+            """;
+
+        command.Parameters.AddWithValue("$domain", domain);
+        command.Parameters.AddWithValue("$since", Format(since));
+
+        List<ObservedActivity> activities = [];
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            // A device with no description in the interval has none of it:
+            // the address and the basis are absent together.
+            bool described = !reader.IsDBNull(2);
+
+            activities.Add(new ObservedActivity
+            {
+                Device = new DeviceIdentification
+                {
+                    DeviceId = Guid.Parse(reader.GetString(0), CultureInfo.InvariantCulture),
+                    Hostname = reader.IsDBNull(1) ? null : reader.GetString(1),
+                    IpAddress = described ? reader.GetString(2) : null,
+                    IdentityBasis = described ? Enum.Parse<DeviceIdentityBasis>(reader.GetString(3)) : null,
+                },
+                QueryCount = reader.GetInt64(4),
+                Blocked = reader.GetInt64(5) != 0,
+                Protocol = reader.GetString(6),
+                FirstSeen = ReadInstant(reader, 7),
+                LastSeen = ReadInstant(reader, 8),
+                ObservationQuality = (MeasurementQuality)reader.GetInt32(9),
+            });
+        }
+
+        return activities;
     }
 
     /// <summary>

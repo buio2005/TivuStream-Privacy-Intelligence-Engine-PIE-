@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using TivuStream.Pie.Model;
 using TivuStream.Pie.Model.Entities;
+using TivuStream.Pie.Model.Enums;
 using TivuStream.Pie.Storage;
 using Xunit;
 
@@ -70,8 +71,18 @@ public sealed class RoleTests : IDisposable
     {
         ObservationPeriod period = Seed.HoursAgo(0);
         DomainActivity activity = Seed.Activity("a.example", period, 5);
+        Device device = Seed.Device("10.0.0.77", DeviceIdentityBasis.NetworkAddress, period) with
+        {
+            DeviceId = activity.DeviceId,
+            Hostname = "laptop-maria",
+        };
 
-        Seed.Acquisition(_app, period, domains: [Seed.Domain("a.example", period, 5)], activities: [activity]);
+        Seed.Acquisition(
+            _app,
+            period,
+            domains: [Seed.Domain("a.example", period, 5)],
+            devices: [device],
+            activities: [activity]);
 
         using HttpClient viewer = await _app.SignedInAsync(AccountRole.Viewer, "maria");
 
@@ -85,6 +96,8 @@ public sealed class RoleTests : IDisposable
 
         // Nothing of the device travels, in any field.
         Assert.DoesNotContain(activity.DeviceId.ToString(), answer.Raw, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("10.0.0.77", answer.Raw, StringComparison.Ordinal);
+        Assert.DoesNotContain("laptop-maria", answer.Raw, StringComparison.Ordinal);
 
         // The same domain, to an administrator, has the activity.
         Answer administrator = await _app.GetAsync("/api/v1/domains/a.example");

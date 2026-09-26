@@ -4,11 +4,11 @@
 
 **Document:** Frontend Specification
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-19
+**Last Updated:** 2026-09-26
 
 ---
 
@@ -85,6 +85,81 @@ Ogni modulo rappresenta una vista indipendente.
 La Dashboard costituisce il punto di ingresso dell'applicazione.
 
 Visualizza le informazioni principali prodotte dal Core.
+
+---
+
+# Domain Detail
+
+Si raggiunge dal nome di un dominio nell'elenco dei domini, all'indirizzo `/domains/{domain}`. Legge `/api/v1/domains/{domain}`, che copre lo stesso intervallo dell'elenco (API Specification).
+
+## Contenuto
+
+* Il nome del dominio e un ritorno all'elenco.
+* L'intervallo, le ore osservate su quelle richieste, e l'ora in corso quando lo è: con le stesse frasi dell'elenco.
+* Categoria, confidenza, lista e data della lista, prima e ultima osservazione, interrogazioni nell'intervallo: con le stesse frasi dell'elenco. Un dominio non classificato resta tale, senza colore che possa leggersi come approvazione.
+* La reputazione. Oggi nessuna è valutata, perché il Threat Engine non esiste: la pagina lo dice come affermazione sul sistema, non sul dominio.
+* L'attività per dispositivo, secondo `activityAccess`.
+
+## Attività per dispositivo
+
+| `activityAccess` | Cosa si mostra |
+| --- | --- |
+| `Available`, elenco non vuoto | Una riga per elemento: dispositivo, interrogazioni, esito, trasporto, prima e ultima osservazione |
+| `Available`, elenco vuoto | `domainDetail.activityEmpty` |
+| `Unavailable` | `domainDetail.activityUnavailable` |
+| `Withheld` | `domains.activityWithheld`, già nel catalogo |
+
+Nessuno dei tre casi senza righe si presenta come un elenco vuoto senza spiegazione, e nessuno come un errore.
+
+In ogni riga:
+
+* **Dispositivo.** Il nome, quando c'è, con l'indirizzo accanto; altrimenti l'indirizzo. Un dispositivo che la sorgente non ha descritto nell'intervallo (API Specification, Device Identification) si mostra con `domainDetail.deviceUndescribed`, dove `{id}` sono i primi otto caratteri dell'identificativo, così due dispositivi non descritti restano distinti, e con `domainDetail.deviceUndescribedNote`. Quando l'identità poggia sull'indirizzo di rete, la riga lo dichiara con `domainDetail.identityNetworkAddress`: è l'affermazione più forte del sistema, e quanto sia solida si vede invece di essere sottintesa.
+* **Esito.** «Bloccato» o «Non bloccato». Non «Risolto»: non essere bloccato non dice che la risposta sia andata a buon fine.
+* **Trasporto.** Un nome dal catalogo. Un valore sconosciuto al catalogo si mostra con il proprio identificativo; un valore vuoto è `domainDetail.transportUnknown`.
+
+Le righe non si sommano in un totale per dispositivo: il totale del dominio è già dichiarato sopra, e una somma per dispositivo farebbe credere che l'identità regga fra un indirizzo e l'altro anche quando poggia sull'indirizzo.
+
+## Stati della pagina
+
+| Situazione | Cosa si mostra |
+| --- | --- |
+| In lettura | Il messaggio di caricamento esistente |
+| `404 DomainNotObserved` | `domainDetail.notObserved`, e il ritorno all'elenco |
+| Motore non raggiungibile o rifiuto inatteso | `domainDetail.unavailable` con `domains.unavailableReason`: una lettura fallita non dice nulla sulla rete |
+
+## Regole
+
+* I dati del dettaglio stanno in uno store proprio, svuotato alla fine della sessione come gli altri (Authentication Specification, F2).
+* Cambiando dominio senza lasciare la pagina, il dettaglio precedente non resta visibile mentre si legge il nuovo.
+
+## Messaggi
+
+| Codice | Italiano | Inglese |
+| --- | --- | --- |
+| `domainDetail.back` | Torna ai domini osservati | Back to observed domains |
+| `domainDetail.reputation` | Reputazione: {value} | Reputation: {value} |
+| `domainDetail.reputationUnassessed` | Reputazione non ancora valutata. Il sistema non la calcola ancora: non è un giudizio sul dominio. | Reputation not assessed yet. The system does not compute it yet: this is not a judgement on the domain. |
+| `domainDetail.activityTitle` | Attività per dispositivo | Activity by device |
+| `domainDetail.activityUnavailable` | La sorgente dati non registra quale dispositivo abbia interrogato un dominio, quindi non si può dire quali lo abbiano fatto. | The data source does not record which device queried a domain, so it cannot be said which ones did. |
+| `domainDetail.activityEmpty` | Nessuna attività per dispositivo registrata per questo dominio nell'intervallo. Il dominio è stato osservato: manca il dettaglio, non il traffico. | No activity by device recorded for this domain in the interval. The domain was observed: what is missing is the detail, not the traffic. |
+| `domainDetail.device` | Dispositivo | Device |
+| `domainDetail.queries` | Interrogazioni | Queries |
+| `domainDetail.outcome` | Esito | Outcome |
+| `domainDetail.blocked` | Bloccato | Blocked |
+| `domainDetail.notBlocked` | Non bloccato | Not blocked |
+| `domainDetail.transport` | Trasporto | Transport |
+| `domainDetail.transportUnknown` | Non dichiarato | Not stated |
+| `domainDetail.seen` | Osservazione | Observed |
+| `domainDetail.deviceUndescribed` | Dispositivo {id} | Device {id} |
+| `domainDetail.deviceUndescribedNote` | La sorgente non ha descritto questo dispositivo nell'intervallo: se ne conosce solo l'identificativo, non l'indirizzo né il nome. | The source did not describe this device in the interval: only its identifier is known, not its address or name. |
+| `domainDetail.identityNetworkAddress` | Riconosciuto dall'indirizzo di rete: se cambia indirizzo compare come un altro dispositivo, e un indirizzo riassegnato unisce due dispositivi. | Recognised by network address: if it changes address it appears as another device, and a reassigned address merges two devices. |
+| `domainDetail.notObserved` | Questo dominio non compare fra quelli osservati nelle ultime ventiquattro ore. | This domain is not among those observed in the last twenty-four hours. |
+| `domainDetail.unavailable` | Impossibile leggere il dettaglio del dominio | Unable to read the domain detail |
+| `transport.Udp` | UDP | UDP |
+| `transport.Tcp` | TCP | TCP |
+| `transport.Tls` | DNS su TLS | DNS over TLS |
+| `transport.Https` | DNS su HTTPS | DNS over HTTPS |
+| `transport.Quic` | DNS su QUIC | DNS over QUIC |
 
 ---
 

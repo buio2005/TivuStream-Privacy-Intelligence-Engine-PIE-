@@ -4,6 +4,7 @@ import { call, EngineUnreachable, onSessionRefusal } from '@/api/client'
 import { describeRefusal, type Message } from '@/api/messages'
 import type { SessionInfo } from '@/api/types'
 import { useAccountsStore } from './accounts'
+import { useDomainDetailStore } from './domainDetail'
 import { useDomainsStore } from './domains'
 import { useScoreStore } from './score'
 
@@ -152,6 +153,7 @@ export const useSessionStore = defineStore('session', () => {
 
     useScoreStore().reset()
     useDomainsStore().reset()
+    useDomainDetailStore().reset()
     useAccountsStore().reset()
 
     account.value = null

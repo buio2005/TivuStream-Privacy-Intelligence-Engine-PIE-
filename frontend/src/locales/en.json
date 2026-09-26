@@ -105,6 +105,34 @@
     "seenOnce": "Seen in the hour of {from}",
     "activityWithheld": "Activity per device is visible to administrators only. This says nothing about whether any device contacted the domain."
   },
+  "domainDetail": {
+    "back": "Back to observed domains",
+    "reputation": "Reputation: {value}",
+    "reputationUnassessed": "Reputation not assessed yet. The system does not compute it yet: this is not a judgement on the domain.",
+    "activityTitle": "Activity by device",
+    "activityUnavailable": "The data source does not record which device queried a domain, so it cannot be said which ones did.",
+    "activityEmpty": "No activity by device recorded for this domain in the interval. The domain was observed: what is missing is the detail, not the traffic.",
+    "device": "Device",
+    "queries": "Queries",
+    "outcome": "Outcome",
+    "blocked": "Blocked",
+    "notBlocked": "Not blocked",
+    "transport": "Transport",
+    "transportUnknown": "Not stated",
+    "seen": "Observed",
+    "identityNetworkAddress": "Recognised by network address: if it changes address it appears as another device, and a reassigned address merges two devices.",
+    "deviceUndescribed": "Device {id}",
+    "deviceUndescribedNote": "The source did not describe this device in the interval: only its identifier is known, not its address or name.",
+    "notObserved": "This domain is not among those observed in the last twenty-four hours.",
+    "unavailable": "Unable to read the domain detail"
+  },
+  "transport": {
+    "Udp": "UDP",
+    "Tcp": "TCP",
+    "Tls": "DNS over TLS",
+    "Https": "DNS over HTTPS",
+    "Quic": "DNS over QUIC"
+  },
   "category": {
     "Malware": "Malware",
     "Phishing": "Phishing",

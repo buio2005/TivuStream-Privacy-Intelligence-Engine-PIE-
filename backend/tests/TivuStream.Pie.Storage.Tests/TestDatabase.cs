@@ -67,7 +67,8 @@ internal sealed class TestDatabase : IDisposable
         ObservationPeriod period,
         IReadOnlyList<Domain>? domains = null,
         IReadOnlyList<DomainActivity>? activities = null,
-        Statistics? statistics = null)
+        Statistics? statistics = null,
+        IReadOnlyList<Device>? devices = null)
     {
         return new StoredAcquisition
         {
@@ -95,6 +96,7 @@ internal sealed class TestDatabase : IDisposable
                 EncryptedQueries = 16,
                 DnssecEnabled = true,
             },
+            Devices = devices ?? [],
             Domains = domains ?? [],
             DomainActivities = activities ?? [],
         };

@@ -329,6 +329,119 @@ public sealed class EndpointTests : IDisposable
         Assert.Equal(0, data.GetProperty("activities").GetArrayLength());
     }
 
+    [Fact]
+    public async Task A_domain_the_list_shows_from_an_earlier_hour_has_a_detail_that_agrees_with_the_list()
+    {
+        Seed.Acquisition(_app, Seed.HoursAgo(10), domains: [Seed.Domain("a.example", Seed.HoursAgo(10), 4)]);
+        Seed.Acquisition(_app, Seed.HoursAgo(3), domains: [Seed.Domain("a.example", Seed.HoursAgo(3), 2)]);
+        Seed.Acquisition(_app, Seed.HoursAgo(0), domains: [Seed.Domain("b.example", Seed.HoursAgo(0), 1)]);
+
+        (_, JsonElement listBody, _) = await _app.GetAsync("/api/v1/domains");
+        (HttpStatusCode status, JsonElement detailBody, _) = await _app.GetAsync("/api/v1/domains/a.example");
+
+        // The latest hour does not contain it. Denying it here would
+        // contradict the list, which shows it as observed.
+        Assert.Equal(HttpStatusCode.OK, status);
+
+        JsonElement list = listBody.GetProperty("data");
+        JsonElement detail = detailBody.GetProperty("data");
+
+        JsonElement listed = list.GetProperty("domains").EnumerateArray()
+            .Single(domain => domain.GetProperty("name").GetString() == "a.example");
+
+        Assert.Equal(6, detail.GetProperty("domain").GetProperty("occurrences").GetInt64());
+        Assert.Equal(listed.GetRawText(), detail.GetProperty("domain").GetRawText());
+
+        // The same window, declared the same way.
+        Assert.Equal(list.GetProperty("period").GetRawText(), detail.GetProperty("period").GetRawText());
+        Assert.Equal(3, detail.GetProperty("periodsObserved").GetInt32());
+        Assert.Equal(24, detail.GetProperty("periodsRequested").GetInt32());
+    }
+
+    [Fact]
+    public async Task A_domain_seen_only_before_the_window_is_not_observed()
+    {
+        Seed.Acquisition(_app, Seed.HoursAgo(30), domains: [Seed.Domain("old.example", Seed.HoursAgo(30), 100)]);
+        Seed.Acquisition(_app, Seed.HoursAgo(0), domains: [Seed.Domain("a.example", Seed.HoursAgo(0), 1)]);
+
+        (HttpStatusCode status, JsonElement body, _) = await _app.GetAsync("/api/v1/domains/old.example");
+
+        Assert.Equal(HttpStatusCode.NotFound, status);
+        Assert.Equal("DomainNotObserved", body.GetProperty("error").GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task Activity_is_summed_over_the_window_and_names_its_device()
+    {
+        ObservationPeriod earlier = Seed.HoursAgo(5);
+        ObservationPeriod latest = Seed.HoursAgo(0);
+
+        DomainActivity first = Seed.Activity("a.example", earlier, 3);
+        DomainActivity second = Seed.Activity("a.example", latest, 4) with { DeviceId = first.DeviceId };
+
+        Device device = Seed.Device("10.0.0.5", DeviceIdentityBasis.NetworkAddress, earlier) with
+        {
+            DeviceId = first.DeviceId,
+            Hostname = "laptop-maria",
+        };
+
+        // The device is described in the earlier hour only: /devices, which
+        // reads the latest hour, would leave it without a name.
+        Seed.Acquisition(
+            _app,
+            earlier,
+            domains: [Seed.Domain("a.example", earlier, 3)],
+            devices: [device],
+            activities: [first]);
+
+        Seed.Acquisition(
+            _app,
+            latest,
+            domains: [Seed.Domain("a.example", latest, 4)],
+            activities: [second]);
+
+        (_, JsonElement body, _) = await _app.GetAsync("/api/v1/domains/a.example");
+
+        JsonElement activity = Assert.Single(body.GetProperty("data").GetProperty("activities").EnumerateArray());
+
+        Assert.Equal(7, activity.GetProperty("queryCount").GetInt64());
+        Assert.False(activity.GetProperty("blocked").GetBoolean());
+        Assert.Equal("Udp", activity.GetProperty("protocol").GetString());
+        Assert.Equal(earlier.Start, activity.GetProperty("firstSeen").GetDateTimeOffset());
+        Assert.Equal(latest.End, activity.GetProperty("lastSeen").GetDateTimeOffset());
+
+        JsonElement described = activity.GetProperty("device");
+
+        Assert.Equal(first.DeviceId, described.GetProperty("deviceId").GetGuid());
+        Assert.Equal("laptop-maria", described.GetProperty("hostname").GetString());
+        Assert.Equal("10.0.0.5", described.GetProperty("ipAddress").GetString());
+        Assert.Equal("NetworkAddress", described.GetProperty("identityBasis").GetString());
+    }
+
+    [Fact]
+    public async Task A_device_the_window_does_not_describe_is_declared_undescribed_and_its_activity_kept()
+    {
+        ObservationPeriod period = Seed.HoursAgo(0);
+
+        Seed.Acquisition(
+            _app,
+            period,
+            domains: [Seed.Domain("a.example", period, 2)],
+            activities: [Seed.Activity("a.example", period, 2)]);
+
+        (_, JsonElement body, _) = await _app.GetAsync("/api/v1/domains/a.example");
+
+        JsonElement activity = Assert.Single(body.GetProperty("data").GetProperty("activities").EnumerateArray());
+        JsonElement device = activity.GetProperty("device");
+
+        // The traffic happened; who produced it is not known beyond the
+        // identifier, and nothing is guessed.
+        Assert.Equal(2, activity.GetProperty("queryCount").GetInt64());
+        Assert.Equal(JsonValueKind.Null, device.GetProperty("ipAddress").ValueKind);
+        Assert.Equal(JsonValueKind.Null, device.GetProperty("hostname").ValueKind);
+        Assert.Equal(JsonValueKind.Null, device.GetProperty("identityBasis").ValueKind);
+    }
+
     // ------------------------------------------------------------------
     // What must never leave
     // ------------------------------------------------------------------

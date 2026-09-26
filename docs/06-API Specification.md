@@ -4,7 +4,7 @@
 
 **Document:** API Specification
 
-**Version:** 1.3.2
+**Version:** 1.4.0
 
 **Status:** Approved
 
@@ -313,14 +313,75 @@ La sua fine è quindi un istante futuro, e l'interfaccia dichiara che l'ultima o
 /api/v1/domains/{domain}
 ```
 
-Restituisce il dettaglio del dominio.
+Restituisce il dettaglio del dominio **sullo stesso intervallo dell'elenco**: le ultime ventiquattro ore, insieme all'intervallo effettivamente coperto.
+
+```json
+{
+  "period": { "start": "2026-08-30T22:00:00+00:00", "end": "2026-08-31T22:00:00+00:00" },
+  "periodsObserved": 6,
+  "periodsRequested": 24,
+  "domain": { "name": "example.com", "category": "Tracking", "occurrences": 42, "...": "..." },
+  "activityAccess": "Available",
+  "activities": [
+    {
+      "device": {
+        "deviceId": "...",
+        "hostname": "laptop-maria",
+        "ipAddress": "192.168.1.20",
+        "identityBasis": "HardwareAddress"
+      },
+      "queryCount": 30,
+      "blocked": false,
+      "protocol": "Udp",
+      "firstSeen": "2026-08-31T08:00:00+00:00",
+      "lastSeen": "2026-08-31T19:00:00+00:00",
+      "observationQuality": "PeriodBounded"
+    }
+  ]
+}
+```
 
 Comprende:
 
-* categoria;
+* categoria, con confidenza, lista e data della lista;
 * reputazione;
 * frequenza;
 * attività per dispositivo, quando la sorgente la offre e il ruolo di chi chiede lo consente.
+
+### Same Interval As The List
+
+Il dettaglio copre lo stesso intervallo di `/domains` e lo dichiara con gli stessi tre campi (vedi Observed Period).
+
+Il vincolo nasce da un difetto. Leggendo il solo periodo più recente, un dominio che l'elenco mostra perché contattato dieci ore prima risponderebbe `DomainNotObserved`: l'elenco afferma che il dominio è stato osservato, il dettaglio lo nega. Due risposte dello stesso motore non si contraddicono.
+
+`domain` è aggregato con le regole della sezione Aggregation di `/domains`, e quindi coincide con la riga dell'elenco.
+
+Un dominio assente dall'intervallo risponde `404 DomainNotObserved`.
+
+### Activity Aggregation
+
+Un elemento di `activities` per ogni combinazione di **dispositivo, esito (bloccato o no) e trasporto** nell'intervallo. Un dispositivo che ha raggiunto il dominio sia direttamente sia attraverso un blocco compare due volte, perché sono due fatti diversi.
+
+| Proprietà | Regola |
+| --- | --- |
+| `queryCount` | Somma dei periodi inclusi |
+| `firstSeen` | Il più antico fra i periodi inclusi |
+| `lastSeen` | Il più recente fra i periodi inclusi |
+| `observationQuality` | La qualità meno precisa fra quelle aggregate |
+
+Ordinamento per `queryCount` decrescente.
+
+La somma è lecita per la stessa ragione di quella dei domini, periodi che non si sovrappongono, e perché l'identificativo del dispositivo è derivato in modo deterministico: lo stesso indirizzo, o lo stesso indirizzo hardware, produce lo stesso identificativo in ogni periodo. Quanto quell'identità sia solida lo dichiara `identityBasis`.
+
+### Device Identification
+
+L'identificativo del dispositivo, da solo, non dice nulla a chi legge. Ogni elemento porta con sé `hostname` (quando la sorgente lo fornisce), `ipAddress` e `identityBasis`, presi dal periodo **più recente** dell'intervallo in cui il dispositivo compare: la stessa regola della classificazione.
+
+Il dettaglio non rimanda a `/devices` perché `/devices` descrive il solo periodo più recente: un dispositivo attivo dieci ore prima resterebbe senza nome.
+
+Un dispositivo può comparire nell'attività senza comparire fra i dispositivi di alcun periodo dell'intervallo: la sorgente li riporta in due resoconti diversi, e quello dei dispositivi è limitato. Allora `hostname`, `ipAddress` e `identityBasis` sono `null` tutti e tre, e l'attività resta: il traffico c'è stato, chi l'ha prodotto non è noto oltre l'identificativo, e nulla viene supposto.
+
+Questi campi esistono solo con `Available`. Per un `Viewer` nessuna informazione sui dispositivi compare nella risposta.
 
 ### Activity Access
 
@@ -333,6 +394,10 @@ Il campo `activityAccess` dichiara che cosa significa l'elenco `activities`.
 | `Withheld` | La sorgente la offre, ma il ruolo di chi chiede non la comprende. `activities` è vuoto e non significa nulla |
 
 Un elenco vuoto per mancanza di diritto e un elenco vuoto perché nessun dispositivo ha contattato il dominio sono affermazioni diverse. Il campo esiste perché non vengano presentate allo stesso modo.
+
+Se la sorgente offra l'attività lo stabilisce l'acquisizione più recente, come oggi.
+
+`Available` con un elenco vuoto significa che la sorgente non ha registrato attività per dispositivo verso questo dominio nell'intervallo, per esempio perché i periodi in cui compare sono stati acquisiti quando non la offriva. Il dominio è stato osservato: manca il dettaglio, non il traffico.
 
 ---
 

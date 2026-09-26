@@ -62,7 +62,7 @@ public sealed class AcquisitionRepositoryTests : IDisposable
                     source: "list-one"),
             ]));
 
-        Domain domain = Assert.Single(_database.Acquisitions.GetLatestDomains());
+        Domain domain = Assert.Single(_database.Acquisitions.GetDomainsSince(period.Start));
 
         Assert.Equal(MeasurementQuality.PeriodBounded, domain.ObservationQuality);
         Assert.Equal(ThreatCategory.Tracking, domain.Category);
@@ -79,7 +79,7 @@ public sealed class AcquisitionRepositoryTests : IDisposable
             period,
             domains: [TestDatabase.DomainSeen("unknown.example", period, occurrences: 1)]));
 
-        Domain domain = Assert.Single(_database.Acquisitions.GetLatestDomains());
+        Domain domain = Assert.Single(_database.Acquisitions.GetDomainsSince(period.Start));
 
         // Not presented as safe, and not attributed to a list that never said
         // anything about it.
@@ -103,7 +103,7 @@ public sealed class AcquisitionRepositoryTests : IDisposable
                 Activity(device, "other.example", period, queries: 9, blocked: false),
             ]));
 
-        IReadOnlyList<DomainActivity> found = _database.Acquisitions.GetLatestActivitiesFor("tracker.example");
+        List<ObservedActivity> found = _database.Acquisitions.GetActivitiesSince("tracker.example", period.Start);
 
         Assert.Equal(2, found.Count);
         Assert.Equal(3, found.Single(activity => !activity.Blocked).QueryCount);
@@ -129,7 +129,7 @@ public sealed class AcquisitionRepositoryTests : IDisposable
 
         Assert.Equal(1, _database.Acquisitions.CountPeriods());
 
-        Domain only = Assert.Single(_database.Acquisitions.GetLatestDomains());
+        Domain only = Assert.Single(_database.Acquisitions.GetDomainsSince(period.Start));
 
         Assert.Equal("second.example", only.Name);
     }
@@ -255,6 +255,144 @@ public sealed class AcquisitionRepositoryTests : IDisposable
     }
 
     // ------------------------------------------------------------------
+    // Reading the activity towards a domain over a window
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void Activity_over_a_window_is_summed_per_device_outcome_and_transport()
+    {
+        ObservationPeriod first = TestDatabase.PeriodAt(0);
+        ObservationPeriod second = TestDatabase.PeriodAt(1);
+        Guid device = Guid.NewGuid();
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            first,
+            activities:
+            [
+                Activity(device, "a.example", first, queries: 10, blocked: false),
+                Activity(device, "a.example", first, queries: 2, blocked: false, protocol: "Https"),
+            ]));
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            second,
+            activities:
+            [
+                Activity(device, "a.example", second, queries: 5, blocked: false, quality: MeasurementQuality.LowerBound),
+                Activity(device, "a.example", second, queries: 1, blocked: true),
+            ]));
+
+        List<ObservedActivity> found = _database.Acquisitions.GetActivitiesSince("a.example", first.Start);
+
+        // Three facts: answered over UDP in both hours, answered over HTTPS,
+        // blocked. The hours add up because they do not overlap.
+        Assert.Equal(3, found.Count);
+
+        ObservedActivity udp = found.Single(activity => !activity.Blocked && activity.Protocol == "Udp");
+
+        Assert.Equal(15, udp.QueryCount);
+        Assert.Equal(first.Start, udp.FirstSeen);
+        Assert.Equal(second.End, udp.LastSeen);
+        Assert.Equal(MeasurementQuality.LowerBound, udp.ObservationQuality);
+
+        Assert.Equal(2, found.Single(activity => activity.Protocol == "Https").QueryCount);
+        Assert.Equal(1, found.Single(activity => activity.Blocked).QueryCount);
+
+        // The largest first.
+        Assert.Same(udp, found[0]);
+    }
+
+    [Fact]
+    public void Activity_before_the_window_is_left_out()
+    {
+        ObservationPeriod before = TestDatabase.PeriodAt(0);
+        ObservationPeriod inside = TestDatabase.PeriodAt(1);
+        Guid device = Guid.NewGuid();
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            before,
+            activities: [Activity(device, "a.example", before, queries: 100, blocked: false)]));
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            inside,
+            activities: [Activity(device, "a.example", inside, queries: 1, blocked: false)]));
+
+        ObservedActivity only = Assert.Single(_database.Acquisitions.GetActivitiesSince("a.example", inside.Start));
+
+        Assert.Equal(1, only.QueryCount);
+    }
+
+    [Fact]
+    public void A_device_is_described_as_in_the_most_recent_period_it_appears_in_whatever_the_order_of_writing()
+    {
+        ObservationPeriod older = TestDatabase.PeriodAt(0);
+        ObservationPeriod newer = TestDatabase.PeriodAt(1);
+        Guid device = Guid.NewGuid();
+
+        // The newer period is written first on purpose: recency is a property
+        // of the period, not of when the row happened to be saved.
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            newer,
+            devices: [DeviceSeen(device, newer, "192.168.1.30", "laptop-now", DeviceIdentityBasis.HardwareAddress)],
+            activities: [Activity(device, "a.example", newer, queries: 1, blocked: false)]));
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            older,
+            devices: [DeviceSeen(device, older, "192.168.1.20", "laptop-then", DeviceIdentityBasis.NetworkAddress)],
+            activities: [Activity(device, "a.example", older, queries: 1, blocked: false)]));
+
+        ObservedActivity only = Assert.Single(_database.Acquisitions.GetActivitiesSince("a.example", older.Start));
+
+        Assert.Equal(device, only.Device.DeviceId);
+        Assert.Equal("laptop-now", only.Device.Hostname);
+        Assert.Equal("192.168.1.30", only.Device.IpAddress);
+        Assert.Equal(DeviceIdentityBasis.HardwareAddress, only.Device.IdentityBasis);
+    }
+
+    [Fact]
+    public void A_device_active_in_an_earlier_hour_keeps_its_description()
+    {
+        ObservationPeriod earlier = TestDatabase.PeriodAt(0);
+        ObservationPeriod latest = TestDatabase.PeriodAt(1);
+        Guid device = Guid.NewGuid();
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            earlier,
+            devices: [DeviceSeen(device, earlier, "192.168.1.20", hostname: null, DeviceIdentityBasis.NetworkAddress)],
+            activities: [Activity(device, "a.example", earlier, queries: 4, blocked: false)]));
+
+        // The latest hour knows nothing of that device: /devices alone would
+        // leave it without a name.
+        _database.Acquisitions.Save(TestDatabase.Acquisition(latest));
+
+        ObservedActivity only = Assert.Single(_database.Acquisitions.GetActivitiesSince("a.example", earlier.Start));
+
+        Assert.Equal("192.168.1.20", only.Device.IpAddress);
+        Assert.Null(only.Device.Hostname);
+        Assert.Equal(DeviceIdentityBasis.NetworkAddress, only.Device.IdentityBasis);
+    }
+
+    [Fact]
+    public void A_device_described_in_no_period_of_the_window_is_not_described_at_all()
+    {
+        ObservationPeriod period = TestDatabase.PeriodAt(0);
+        Guid device = Guid.NewGuid();
+
+        _database.Acquisitions.Save(TestDatabase.Acquisition(
+            period,
+            activities: [Activity(device, "a.example", period, queries: 2, blocked: false)]));
+
+        ObservedActivity only = Assert.Single(_database.Acquisitions.GetActivitiesSince("a.example", period.Start));
+
+        // The activity stays: the traffic happened. What is not known about
+        // the device is absent, never guessed.
+        Assert.Equal(2, only.QueryCount);
+        Assert.Equal(device, only.Device.DeviceId);
+        Assert.Null(only.Device.IpAddress);
+        Assert.Null(only.Device.Hostname);
+        Assert.Null(only.Device.IdentityBasis);
+    }
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
 
@@ -274,7 +412,9 @@ public sealed class AcquisitionRepositoryTests : IDisposable
         string domain,
         ObservationPeriod period,
         long queries,
-        bool blocked)
+        bool blocked,
+        string protocol = "Udp",
+        MeasurementQuality quality = MeasurementQuality.Exact)
     {
         return new DomainActivity
         {
@@ -282,9 +422,30 @@ public sealed class AcquisitionRepositoryTests : IDisposable
             Domain = domain,
             QueryCount = queries,
             Blocked = blocked,
-            Protocol = "Udp",
+            Protocol = protocol,
             FirstSeen = period.Start,
             LastSeen = period.End,
+            ObservationQuality = quality,
+        };
+    }
+
+    private static Device DeviceSeen(
+        Guid device,
+        ObservationPeriod period,
+        string address,
+        string? hostname,
+        DeviceIdentityBasis basis)
+    {
+        return new Device
+        {
+            DeviceId = device,
+            Hostname = hostname,
+            IpAddress = address,
+            IdentityBasis = basis,
+            FirstSeen = period.Start,
+            LastSeen = period.End,
+            ObservationQuality = MeasurementQuality.PeriodBounded,
+            Status = DeviceStatus.Active,
         };
     }
 }

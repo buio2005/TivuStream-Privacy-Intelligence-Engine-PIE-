@@ -47,8 +47,8 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 366 tests, all must pass
-cd frontend && npm run test:unit -- --run        # 79 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 375 tests, all must pass
+cd frontend && npm run test:unit -- --run        # 111 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # serves on :5000; a fresh database
                                                   # prints a one-time setup code
@@ -110,9 +110,6 @@ they set `X-Test-Remote-Address`.
 
 ## Known debts
 
-* No domain detail page in the frontend: per-device activity and
-  `activityAccess` are not shown anywhere yet (F4 of Specification 18 waits
-  for it).
 * HTTP, not HTTPS. Until the Transport Security Specification exists and is
   implemented, a password can only be sent from this machine.
 * No installation procedure: the `installer/` directory is empty.

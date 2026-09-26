@@ -22,7 +22,6 @@ using TivuStream.Pie.Api.Classification;
 using TivuStream.Pie.Api.Contracts;
 using TivuStream.Pie.Api.Storage;
 using TivuStream.Pie.Core;
-using TivuStream.Pie.Model;
 using TivuStream.Pie.Model.Entities;
 using TivuStream.Pie.Storage;
 using TivuStream.Pie.Storage.Schema;
@@ -226,39 +225,36 @@ app.MapGet("/api/v1/devices", (AcquisitionRepository repository) =>
 
 // The window travels with the list. An empty list on its own cannot be told
 // apart from an hour that has only just begun.
-//
-// A whole day rather than the current hour: a fixed hourly bucket empties at
-// every turn of the clock, which is the opposite of what someone asking what
-// their network is doing wants to see.
 app.MapGet("/api/v1/domains", (AcquisitionRepository repository, TimeProvider time) =>
 {
-    const int RequestedHours = 24;
-
-    DateTimeOffset since = ObservationPeriod
-        .Containing(time.GetUtcNow())
-        .Start
-        .AddHours(-(RequestedHours - 1));
+    DateTimeOffset since = DomainWindow.StartFor(time.GetUtcNow());
 
     return Results.Ok(ApiResponse.Ok(new ObservedDomains
     {
         Period = repository.GetPeriodRangeSince(since),
         PeriodsObserved = repository.CountPeriodsSince(since),
-        PeriodsRequested = RequestedHours,
+        PeriodsRequested = DomainWindow.RequestedHours,
         Domains = repository.GetDomainsSince(since),
     }));
 }).RequireAuthorization(AuthorizationPolicies.Viewer);
 
-app.MapGet("/api/v1/domains/{domain}", (string domain, ClaimsPrincipal user, AcquisitionRepository repository) =>
+app.MapGet("/api/v1/domains/{domain}", (
+    string domain,
+    ClaimsPrincipal user,
+    AcquisitionRepository repository,
+    TimeProvider time) =>
 {
-    Domain? found = repository.GetLatestDomains()
-        .FirstOrDefault(candidate => string.Equals(candidate.Name, domain, StringComparison.OrdinalIgnoreCase));
+    DateTimeOffset since = DomainWindow.StartFor(time.GetUtcNow());
+
+    Domain? found = repository.GetDomainsSince(since)
+        .Find(candidate => string.Equals(candidate.Name, domain, StringComparison.OrdinalIgnoreCase));
 
     if (found is null)
     {
         return Results.Json(
             ApiResponse.Failed<DomainDetail>(
                 "DomainNotObserved",
-                "The domain was not observed during the last recorded period."),
+                "The domain was not observed during the requested interval."),
             statusCode: StatusCodes.Status404NotFound);
     }
 
@@ -276,12 +272,15 @@ app.MapGet("/api/v1/domains/{domain}", (string domain, ClaimsPrincipal user, Acq
 
     DomainDetail detail = new()
     {
+        Period = repository.GetPeriodRangeSince(since),
+        PeriodsObserved = repository.CountPeriodsSince(since),
+        PeriodsRequested = DomainWindow.RequestedHours,
         Domain = found,
 
         // Read only when it may be shown, so that what is withheld is never
         // read at all, and an empty list is never mistaken for an absence of
         // activity.
-        Activities = access == ActivityAccess.Available ? repository.GetLatestActivitiesFor(found.Name) : [],
+        Activities = access == ActivityAccess.Available ? repository.GetActivitiesSince(found.Name, since) : [],
         ActivityAccess = access,
     };
 

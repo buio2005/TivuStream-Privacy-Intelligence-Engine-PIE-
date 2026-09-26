@@ -16,6 +16,12 @@ export const router = createRouter({
       component: () => import('@/views/DomainsView.vue'),
     },
     {
+      path: '/domains/:domain',
+      name: 'domain',
+      component: () => import('@/views/DomainDetailView.vue'),
+      props: true,
+    },
+    {
       path: '/password',
       name: 'password',
       component: () => import('@/views/PasswordView.vue'),

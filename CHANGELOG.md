@@ -8,6 +8,120 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone D2 — La pagina di dettaglio del dominio — 2026-09-26
+
+Seconda e ultima milestone della pagina di dettaglio. Esce dall'elenco dei debiti la pagina che mancava, e con essa si verifica F4 della Specification 18.
+
+### Added
+
+**Pagina `/domains/{domain}`**, raggiunta dal nome del dominio nell'elenco (`DomainDetailView`). Mostra intervallo e ore osservate, categoria con confidenza e lista, interrogazioni, prima e ultima osservazione, reputazione e attività per dispositivo.
+
+* **Attività per dispositivo:** una riga per voce con dispositivo, interrogazioni, esito, trasporto e osservazione. Le quattro situazioni senza righe (`Withheld`, `Unavailable`, `Available` vuota) hanno ciascuna la propria frase, e nessuna mostra una tabella vuota o un errore.
+* **Esito:** «Bloccato» o «Non bloccato», mai «Risolto».
+* **Identità del dispositivo:** quando poggia sull'indirizzo di rete la riga lo dichiara. Un dispositivo non descritto si mostra come «Dispositivo» seguito dai primi otto caratteri dell'identificativo, così due dispositivi non descritti restano due, con la frase che dice che se ne conosce solo l'identificativo.
+* **Trasporto:** nome dal catalogo; un valore sconosciuto si mostra come lo chiama la sorgente, uno vuoto come «Non dichiarato».
+* **Nessun totale per dispositivo.**
+* **Tre stati senza dettaglio:** in lettura; `DomainNotObserved`, con il ritorno all'elenco; lettura fallita, che non dice nulla sulla rete e non afferma che il dominio sia assente.
+* **Su uno schermo stretto** ogni riga diventa un blocco con le etichette dei campi.
+
+**`stores/domainDetail.ts`**, separato da quello dell'elenco. Cambiando dominio il dettaglio precedente sparisce prima della lettura del nuovo, e una risposta arrivata in ritardo su un altro dominio viene scartata. È svuotato alla fine della sessione (F2).
+
+**Catalogo:** le frasi della Specification 10, più tre che la specifica approvata non aveva: l'intestazione della colonna dell'osservazione e le due del dispositivo non descritto. Sono ora nella Specification 10.
+
+### Changed
+
+**Elenco e dettaglio dicono le stesse cose con gli stessi componenti:** `CategoryBadge`, `DomainNotes` (confidenza, lista, osservazione) e `PeriodLine` (intervallo, ore osservate, ora in corso), estratti da `DomainsView`. Nessuna frase è resa in due modi.
+
+### Verified
+
+32 prove nuove sul frontend, da 79 a 111.
+
+| Impegno | Cosa si verifica |
+| --- | --- |
+| Contenuto | Il dominio chiesto è quello dell'indirizzo; intervallo, classificazione, lista, interrogazioni; il non classificato resta tale; la reputazione non valutata non è un giudizio; il ritorno all'elenco |
+| Attività | Nome e indirizzo; esito e trasporto; mai «risolto»; identità sull'indirizzo dichiarata solo dove vale; dispositivi non descritti distinti; trasporto sconosciuto e vuoto; nessun totale per dispositivo |
+| Senza righe | `Available` vuota, `Unavailable`, `Withheld`: tre frasi, nessuna tabella, nessun errore |
+| Senza dettaglio | `DomainNotObserved`; rifiuto inatteso; motore che non risponde |
+| Cambio di dominio | Il precedente non resta visibile durante la lettura; la risposta tardiva viene scartata |
+| Elenco | Il nome porta alla pagina del dominio |
+| **F4** | Un Lettore, nell'applicazione intera e in italiano, vede l'attività come trattenuta: non come assenza, non come errore |
+| **F2** | Lo store del dettaglio si svuota all'uscita e alla fine della sessione |
+| Catalogo | Le qualificazioni delle frasi nuove sopravvivono in entrambe le lingue |
+
+Dieci difetti introdotti di proposito, tutti intercettati: dettaglio precedente trattenuto durante la lettura; risposta tardiva accettata; `Withheld` e `Unavailable` mostrati come elenco vuoto; nota sull'identità in ogni riga; trasporto sconosciuto scartato; esito invertito; dispositivo non descritto senza identificativo; dettaglio non dimenticato all'uscita; elenco senza collegamento. Il primo all'inizio sopravviveva: la pagina nasconde già il dettaglio durante la lettura, ma il dato restava nello store. La prova ora lo verifica sullo store. Una modifica innocua non ha fatto fallire nulla.
+
+Controllo dei tipi senza errori.
+
+### Known Impact
+
+**Tre frasi attendono conferma**: `domainDetail.seen`, `domainDetail.deviceUndescribed`, `domainDetail.deviceUndescribedNote`, aggiunte alla Specification 10 durante D2.
+
+**La pagina non è stata provata nel browser.** Le prove montano la pagina con il catalogo vero e il motore simulato. La prima prova nel browser è della persona che lavora al progetto.
+
+---
+
+## Milestone D1 — Il dettaglio del dominio sullo stesso intervallo dell'elenco — 2026-09-26
+
+Prima delle due milestone della pagina di dettaglio del dominio: il motore. La pagina arriva con D2.
+
+### Fixed
+
+**Il dettaglio contraddiceva l'elenco.** `/domains` copre le ultime ventiquattro ore; `/domains/{domain}` leggeva solo il periodo più recente. Un dominio che l'elenco mostrava perché contattato dieci ore prima rispondeva `404 DomainNotObserved`. Il difetto non si vedeva perché il Frontend non leggeva ancora il dettaglio.
+
+### Changed
+
+**`/domains/{domain}` copre la stessa finestra dell'elenco** e la dichiara con `period`, `periodsObserved`, `periodsRequested`. Il dominio è aggregato con le stesse regole, e la prova confronta il testo JSON della riga dell'elenco con quello del dettaglio: coincidono. La finestra è definita in un solo punto (`DomainWindow`), usato da entrambi gli endpoint.
+
+**L'attività è sommata sulla finestra**, una voce per dispositivo, esito e trasporto (`AcquisitionRepository.GetActivitiesSince`). Somma delle interrogazioni, prima e ultima osservazione, qualità meno precisa. L'espressione della qualità meno precisa è ora condivisa con l'aggregazione dei domini invece di essere ripetuta.
+
+**Ogni voce porta il dispositivo descritto**: `deviceId`, `hostname`, `ipAddress`, `identityBasis`, dal periodo più recente della finestra in cui il dispositivo compare. Un dispositivo attivo in un'ora precedente conserva il proprio nome anche quando l'ora più recente non lo conosce.
+
+**Un dispositivo che nessun periodo della finestra descrive** ha `hostname`, `ipAddress` e `identityBasis` a `null`, e la sua attività resta. La sorgente riporta i dispositivi (i primi 1000 per volume) e l'attività (dal registro delle interrogazioni) in due resoconti diversi, quindi il caso è possibile. L'identificativo è un'impronta dell'indirizzo e non si può invertire: l'indirizzo non si può ricostruire. Specification 06 lo dichiara.
+
+**Rimossi** `GetLatestDomains` e `GetLatestActivitiesFor`, che servivano solo al vecchio dettaglio. Le prove che li usavano leggono ora la finestra.
+
+### Verified
+
+Nove prove nuove, da 366 a 375.
+
+| Livello | Cosa si verifica |
+| --- | --- |
+| Storage | Somma per dispositivo, esito e trasporto su due ore, con la qualità meno precisa e l'ordinamento |
+| Storage | L'attività precedente la finestra resta fuori |
+| Storage | La descrizione viene dal periodo più recente, qualunque sia l'ordine di scrittura |
+| Storage | Un dispositivo descritto solo in un'ora precedente conserva la descrizione |
+| Storage | Un dispositivo mai descritto non ha descrizione, e la sua attività resta |
+| API | Un dominio dell'elenco visto dieci ore prima ha il dettaglio, e il dettaglio coincide con la riga dell'elenco e dichiara la stessa finestra |
+| API | Un dominio visto solo prima della finestra risponde `DomainNotObserved` |
+| API | L'attività è sommata e nomina il proprio dispositivo, descritto in un'ora precedente |
+| API | Un dispositivo non descritto arriva con tre `null` e la sua attività |
+
+La prova di V6 sul `Viewer` ora semina anche la descrizione del dispositivo, e verifica che né l'indirizzo né il nome compaiano nella risposta.
+
+Otto difetti introdotti di proposito, tutti intercettati, poi annullati: finestra ignorata nella lettura dell'attività; descrizione presa dal periodo più vecchio; dispositivo non descritto scartato (unione interna); trasporto non distinto nell'aggregazione; qualità non aggregata; dettaglio che legge solo l'ultima ora; ore osservate non dichiarate; attività letta anche per un `Viewer`. Una modifica innocua, come controllo, non ha fatto fallire nulla.
+
+Compilazione senza avvisi. 375 prove sul backend, tutte superate con la compilazione normale.
+
+### Known Impact
+
+**La pagina di dettaglio non esiste ancora nel Frontend**: arriva con D2, e con essa la verifica di F4. Il Frontend non legge `/domains/{domain}`, quindi il cambio di contratto non rompe nulla.
+
+**Un dispositivo non descritto non aveva una frase**: arriva con D2.
+
+---
+
+## Documentation Release 1.9.0 — Il dettaglio del dominio — 2026-09-26
+
+### Changed
+
+**Specification 06 alla 1.4.0.** `/domains/{domain}` copre lo stesso intervallo dell'elenco e lo dichiara; aggregazione dell'attività per dispositivo, esito e trasporto; ogni voce porta l'identificazione del dispositivo, oppure la dichiara assente; significato di `Available` con un elenco vuoto.
+
+**Specification 10 alla 1.3.0.** Nuova sezione Domain Detail: contenuto, attività per dispositivo secondo `activityAccess`, stati della pagina, regole, messaggi in italiano e in inglese. Approvata il 2026-09-26. Con D2 si aggiungono l'intestazione della colonna dell'osservazione e le due frasi del dispositivo non descritto, dopo che la persona ha confermato i `null`.
+
+**Roadmap 1.3.6, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.9.0.
+
+---
+
 ## Milestone A7 — Registrazione senza segreti — 2026-09-26
 
 Ultima delle sette milestone della Specification 18. L'autenticazione è completa: il debito più grave del progetto esce dall'elenco. Resta, separato, il trasporto cifrato.

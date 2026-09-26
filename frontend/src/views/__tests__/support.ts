@@ -1,4 +1,4 @@
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, RouterLinkStub } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { vi } from 'vitest'
 import type { Component } from 'vue'
@@ -35,12 +35,14 @@ export function refusal(code: string): ApiResponse<never> {
  * network is replaced.
  *
  * Pass `null` as the body to leave the request unanswered, which is how a
- * load still in progress looks.
+ * load still in progress looks. Links are stood in for: where they lead is
+ * checked, not the router.
  */
 export async function mountView(
   view: Component,
   body: ApiResponse<unknown> | null,
   locale: 'en' | 'it' = 'en',
+  props: Record<string, unknown> = {},
 ) {
   i18n.global.locale.value = locale
 
@@ -53,7 +55,10 @@ export async function mountView(
     ),
   )
 
-  const wrapper = mount(view, { global: { plugins: [createPinia(), i18n] } })
+  const wrapper = mount(view, {
+    props,
+    global: { plugins: [createPinia(), i18n], stubs: { RouterLink: RouterLinkStub } },
+  })
 
   await flushPromises()
 

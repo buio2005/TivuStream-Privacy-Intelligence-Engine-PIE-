@@ -5,6 +5,7 @@ import App from '@/App.vue'
 import { i18n } from '@/i18n'
 import router from '@/router'
 import { useAccountsStore } from '@/stores/accounts'
+import { useDomainDetailStore } from '@/stores/domainDetail'
 import { useDomainsStore } from '@/stores/domains'
 import { useScoreStore } from '@/stores/score'
 import { useSessionStore } from '@/stores/session'
@@ -190,6 +191,59 @@ describe('F3: a refused sign in reads the same whatever the reason', () => {
   })
 })
 
+function trackerDetail(activityAccess: 'Available' | 'Withheld') {
+  return {
+    period: { start: '2026-09-01T11:00:00Z', end: '2026-09-01T13:00:00Z' },
+    periodsObserved: 2,
+    periodsRequested: 24,
+    domain: {
+      name: 'tracker.example',
+      category: 'Tracking',
+      categoryConfidence: 'High',
+      categorySource: 'A list',
+      categorySourceUpdatedAt: null,
+      reputation: null,
+      firstSeen: '2026-09-01T11:00:00Z',
+      lastSeen: '2026-09-01T12:00:00Z',
+      observationQuality: 'PeriodBounded',
+      occurrences: 4,
+    },
+    activities:
+      activityAccess === 'Available'
+        ? [
+            {
+              device: { deviceId: '0f1e2d3c-0000', hostname: 'laptop-root', ipAddress: '10.0.0.9', identityBasis: 'HardwareAddress' },
+              queryCount: 4,
+              blocked: false,
+              protocol: 'Udp',
+              firstSeen: '2026-09-01T11:00:00Z',
+              lastSeen: '2026-09-01T12:00:00Z',
+              observationQuality: 'PeriodBounded',
+            },
+          ]
+        : [],
+    activityAccess,
+  }
+}
+
+describe('F4: what is withheld is not an absence', () => {
+  it('shows a viewer that the activity is withheld, in the page of the domain', async () => {
+    const { app } = await start(
+      {
+        'GET auth/session': sessionOf('maria', 'Viewer'),
+        'GET domains/tracker.example': answer(trackerDetail('Withheld')),
+      },
+      'it',
+      '/domains/tracker.example',
+    )
+
+    expect(app.text()).toContain("L'attività per dispositivo è visibile solo agli amministratori.")
+    expect(app.text()).not.toContain('Nessuna attività per dispositivo registrata')
+    expect(app.text()).not.toContain('Impossibile leggere')
+    expect(app.find('.activities').exists()).toBe(false)
+  })
+})
+
 describe('F2: nothing of the network survives leaving', () => {
   async function signedInWithData() {
     const result = await start({
@@ -208,17 +262,21 @@ describe('F2: nothing of the network survives leaving', () => {
           occurrences: 4,
         },
       ] }),
+      'GET domains/tracker.example': answer(trackerDetail('Available')),
       'GET accounts': answer([{ username: 'root', role: 'Administrator', enabled: true, passwordChangeRequired: false, createdAt: '2026-09-01T12:00:00Z' }]),
       'POST auth/logout': answer(null),
     })
 
     await router.push('/domains')
     await flushPromises()
+    await router.push('/domains/tracker.example')
+    await flushPromises()
     await router.push('/accounts')
     await flushPromises()
 
     expect(useScoreStore().score).not.toBeNull()
     expect(useDomainsStore().domains).toHaveLength(1)
+    expect(useDomainDetailStore().detail).not.toBeNull()
     expect(useAccountsStore().accounts).toHaveLength(1)
 
     return result
@@ -228,6 +286,7 @@ describe('F2: nothing of the network survives leaving', () => {
     expect(useScoreStore().score).toBeNull()
     expect(useDomainsStore().domains).toEqual([])
     expect(useDomainsStore().periodsObserved).toBe(0)
+    expect(useDomainDetailStore().detail).toBeNull()
     expect(useAccountsStore().accounts).toEqual([])
     expect(useSessionStore().account).toBeNull()
   }

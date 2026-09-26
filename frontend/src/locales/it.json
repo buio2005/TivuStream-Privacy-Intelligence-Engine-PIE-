@@ -105,6 +105,34 @@
     "seenOnce": "Osservato nell'ora delle {from}",
     "activityWithheld": "L'attività per dispositivo è visibile solo agli amministratori. Questo non dice se qualche dispositivo abbia contattato il dominio."
   },
+  "domainDetail": {
+    "back": "Torna ai domini osservati",
+    "reputation": "Reputazione: {value}",
+    "reputationUnassessed": "Reputazione non ancora valutata. Il sistema non la calcola ancora: non è un giudizio sul dominio.",
+    "activityTitle": "Attività per dispositivo",
+    "activityUnavailable": "La sorgente dati non registra quale dispositivo abbia interrogato un dominio, quindi non si può dire quali lo abbiano fatto.",
+    "activityEmpty": "Nessuna attività per dispositivo registrata per questo dominio nell'intervallo. Il dominio è stato osservato: manca il dettaglio, non il traffico.",
+    "device": "Dispositivo",
+    "queries": "Interrogazioni",
+    "outcome": "Esito",
+    "blocked": "Bloccato",
+    "notBlocked": "Non bloccato",
+    "transport": "Trasporto",
+    "transportUnknown": "Non dichiarato",
+    "seen": "Osservazione",
+    "identityNetworkAddress": "Riconosciuto dall'indirizzo di rete: se cambia indirizzo compare come un altro dispositivo, e un indirizzo riassegnato unisce due dispositivi.",
+    "deviceUndescribed": "Dispositivo {id}",
+    "deviceUndescribedNote": "La sorgente non ha descritto questo dispositivo nell'intervallo: se ne conosce solo l'identificativo, non l'indirizzo né il nome.",
+    "notObserved": "Questo dominio non compare fra quelli osservati nelle ultime ventiquattro ore.",
+    "unavailable": "Impossibile leggere il dettaglio del dominio"
+  },
+  "transport": {
+    "Udp": "UDP",
+    "Tcp": "TCP",
+    "Tls": "DNS su TLS",
+    "Https": "DNS su HTTPS",
+    "Quic": "DNS su QUIC"
+  },
   "category": {
     "Malware": "Malware",
     "Phishing": "Phishing",

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { RouterLinkStub } from '@vue/test-utils'
 import DomainsView from '@/views/DomainsView.vue'
 import type { Domain, ObservedDomains } from '@/api/types'
 import { answer, mountView, refusal } from './support'
@@ -128,5 +129,16 @@ describe('Domains: an unrecognised domain is not a safe one', () => {
     )
 
     expect(view.findAll('details.term summary').filter((s) => s.text().includes('unclassified'))).toHaveLength(1)
+  })
+})
+
+describe('Domains: each domain leads to its detail', () => {
+  it('links the name of a domain to its own page', async () => {
+    const view = await mountView(DomainsView, answer(observed({ domains: [domain({ name: 'a.example' })] })))
+
+    const link = view.findComponent(RouterLinkStub)
+
+    expect(link.text()).toBe('a.example')
+    expect(link.props('to')).toEqual({ name: 'domain', params: { domain: 'a.example' } })
   })
 })

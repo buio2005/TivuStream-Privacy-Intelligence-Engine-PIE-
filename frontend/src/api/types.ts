@@ -83,6 +83,50 @@ export interface ObservedDomains {
   domains: Domain[]
 }
 
+/** What the list of activities of a domain means. */
+export type ActivityAccess = 'Available' | 'Unavailable' | 'Withheld'
+
+export type DeviceIdentityBasis = 'NetworkAddress' | 'HardwareAddress'
+
+/**
+ * Who a device is, as far as the interval tells.
+ *
+ * The address and the basis are absent together when no period of the
+ * interval describes the device: only its identifier is known.
+ */
+export interface DeviceIdentification {
+  deviceId: string
+  hostname: string | null
+  ipAddress: string | null
+  identityBasis: DeviceIdentityBasis | null
+}
+
+/** Activity of one device towards a domain, over the interval. */
+export interface ObservedActivity {
+  device: DeviceIdentification
+  queryCount: number
+  blocked: boolean
+
+  /** As the source names it. The documentation does not close the set. */
+  protocol: string
+
+  firstSeen: string
+  lastSeen: string
+  observationQuality: MeasurementQuality
+}
+
+/** A domain over the same interval as the list, with its activity. */
+export interface DomainDetail {
+  period: ObservationPeriod | null
+  periodsObserved: number
+  periodsRequested: number
+  domain: Domain
+
+  /** Meaningful only when `activityAccess` is `Available`. */
+  activities: ObservedActivity[]
+  activityAccess: ActivityAccess
+}
+
 export type AccountRole = 'Administrator' | 'Viewer'
 
 /** Who is signed in, as `auth/session` describes it. */
