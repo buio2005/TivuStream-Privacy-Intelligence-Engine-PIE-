@@ -47,7 +47,7 @@ only the Specifications your task touches.
 
 ```powershell
 dotnet build backend/TivuStream.Pie.sln
-dotnet test  backend/TivuStream.Pie.sln          # 464 tests, all must pass
+dotnet test  backend/TivuStream.Pie.sln          # 495 tests, all must pass
 cd frontend && npm run test:unit -- --run        # 121 tests, all must pass
 
 cd backend/src/TivuStream.Pie.Api && dotnet run   # :5000 on this machine, https :5443 on the
@@ -59,6 +59,8 @@ cd backend/src/TivuStream.Pie.Api && dotnet run -- reset-password <name>
 cd frontend && npm run dev                        # proxies /api to :5000
 cd frontend && npm run build                      # compiles the interface into the engine's
                                                   # wwwroot; the engine then serves it on :5000
+powershell -File installer/build-package.ps1      # installation packages for Windows and
+                                                  # Linux, written to dist/
 ```
 
 The Data Source is a Technitium DNS Server in Docker, named
@@ -114,9 +116,9 @@ they set `X-Test-Remote-Address`.
 
 ## Known debts
 
-* No installation procedure: the `installer/` directory is empty. Notes for
-  it are collected under Known Impact in the changelog (firewall prompt,
-  fingerprint, system proxy and VPN, browser profile, `npm run build`).
+* The installation procedure (`installer/`, Specification 12) has not been
+  field tested yet, and no stranger has installed with it (Beta criterion).
+  Terminal texts are English only; `installer/INSTALL.md` translates them.
 * Consolidated days and months are written but nothing reads them yet: there
   is no history view. Copies taken before a migration are never deleted.
 * Device, Alert and Recommendation Engines do not exist. Device Health is

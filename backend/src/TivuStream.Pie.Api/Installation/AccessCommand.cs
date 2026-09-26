@@ -79,7 +79,9 @@ internal sealed class AccessCommand
 
     private X509Certificate2? Generated()
     {
-        string path = Path.Combine(Path.GetFullPath(_transport.CertificateDirectory), GeneratedCertificate.FileName);
+        // The copy without the key: the key belongs to the account of the
+        // service, and the fingerprint needs none of it.
+        string path = Path.Combine(Path.GetFullPath(_transport.CertificateDirectory), GeneratedCertificate.PublicFileName);
 
         if (!File.Exists(path))
         {
@@ -88,9 +90,9 @@ internal sealed class AccessCommand
 
         try
         {
-            return X509CertificateLoader.LoadPkcs12FromFile(path, password: null);
+            return X509CertificateLoader.LoadCertificateFromFile(path);
         }
-        catch (CryptographicException)
+        catch (Exception exception) when (exception is CryptographicException or UnauthorizedAccessException)
         {
             return null;
         }

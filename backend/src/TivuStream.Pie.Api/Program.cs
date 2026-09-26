@@ -13,6 +13,7 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.HostFiltering;
+using Microsoft.Extensions.Logging.EventLog;
 using Microsoft.Extensions.Options;
 using TivuStream.Pie.Adapters.Technitium;
 using TivuStream.Pie.Api;
@@ -40,6 +41,14 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationO
 });
 
 builder.Services.AddWindowsService(options => options.ServiceName = HostingMode.ServiceName);
+
+// Under the name the installation registers, so that what the service reports
+// is found in the Event Viewer under the name of the service.
+if (OperatingSystem.IsWindows())
+{
+    builder.Services.Configure<EventLogSettings>(HostingMode.NameEventSource);
+}
+
 builder.Services.AddSystemd();
 builder.Services.AddSingleton(hosting);
 

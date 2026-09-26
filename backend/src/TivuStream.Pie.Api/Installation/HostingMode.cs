@@ -1,5 +1,7 @@
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Hosting.Systemd;
 using Microsoft.Extensions.Hosting.WindowsServices;
+using Microsoft.Extensions.Logging.EventLog;
 
 namespace TivuStream.Pie.Api.Installation;
 
@@ -15,6 +17,16 @@ namespace TivuStream.Pie.Api.Installation;
 internal sealed record HostingMode(bool AsService)
 {
     internal const string ServiceName = "TivuStreamPIE";
+
+    /// <summary>
+    /// Reports to the Event Viewer under the name of the service, the source
+    /// the installation registers.
+    /// </summary>
+    [SupportedOSPlatform("windows")]
+    internal static void NameEventSource(EventLogSettings settings)
+    {
+        settings.SourceName = ServiceName;
+    }
 
     internal static HostingMode Detect()
     {

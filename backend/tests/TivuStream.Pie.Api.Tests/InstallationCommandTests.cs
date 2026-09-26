@@ -235,6 +235,21 @@ public sealed class InstallationCommandTests : IDisposable
         }
     }
 
+    [Fact]
+    public void The_copy_access_reads_carries_the_certificate_and_not_its_key()
+    {
+        string directory = Path.Combine(_directory, "tls");
+
+        (X509Certificate2 certificate, _) = GeneratedCertificate.LoadOrCreate(directory, Names(), DateTimeOffset.UtcNow);
+
+        using (certificate)
+        using (X509Certificate2 copy = X509CertificateLoader.LoadCertificateFromFile(Path.Combine(directory, GeneratedCertificate.PublicFileName)))
+        {
+            Assert.False(copy.HasPrivateKey);
+            Assert.Equal(certificate.Thumbprint, copy.Thumbprint);
+        }
+    }
+
     // ------------------------------------------------------------------
 
     private async Task<int> Configure(Technitium server, string typed)

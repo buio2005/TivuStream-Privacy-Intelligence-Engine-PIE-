@@ -8,6 +8,90 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## La prima procedura d'installazione — 2026-09-26
+
+PIE si installa come servizio su Windows e su Linux, da un pacchetto che contiene già tutto, seguendo una guida scritta per chi non conosce il progetto. È la parte realizzabile del criterio di Beta «Installazione»; la prova con una persona estranea resta da fare.
+
+### Added
+
+**Pacchetto** (`installer/build-package.ps1`). Compila l'interfaccia, pubblica il programma per `win-x64` e `linux-x64` con il runtime incluso, aggiunge script e guida, scrive `dist/tivustream-pie-0.1.0-win-x64.zip` e `…-linux-x64.tar.gz`, circa 47 MB ciascuno. Si ferma se il pacchetto conterrebbe file di questa macchina (`appsettings.Local.json`, database, certificati, copie) o nessuna interfaccia.
+
+**Versione del prodotto `0.1.0`** in `Directory.Build.props`, scritta nel registro all'avvio. Il programma si chiama `tivustream-pie`.
+
+**Cartella dei dati** (`DataDirectory`). Installato, PIE legge `appsettings.Local.json` dalla cartella dei dati e vi risolve ogni percorso relativo: database, liste, certificato generato, certificato dell'operatore. Senza, come durante lo sviluppo, nulla cambia.
+
+**Servizio di sistema.** Servizio di Windows `TivuStreamPIE` con l'account virtuale `NT SERVICE\TivuStreamPIE`; unità systemd `tivustream-pie.service` con l'utente `tivustream-pie` e le protezioni di systemd (sistema in sola lettura, scrittura solo nella cartella dei dati, nessun privilegio acquisibile). Nuove dipendenze approvate: `Microsoft.Extensions.Hosting.WindowsServices` e `Microsoft.Extensions.Hosting.Systemd` 10.0.8, MIT. Su Windows gli avvisi vanno nel Visualizzatore eventi, origine `TivuStreamPIE`.
+
+**Sotto un servizio il codice di configurazione non esiste.** Il registro dice di creare il primo amministratore con `reset-password`; `setup` rifiuta qualunque codice.
+
+**Comandi da terminale**, che non avviano il servizio:
+* `configure` chiede indirizzo e token di Technitium, li prova, dice che cosa è disponibile e che cosa manca, e scrive la connessione solo se funziona. Il token non si vede mentre lo si digita e non compare in nessun messaggio. Per l'attività dei dispositivi dichiara che l'app Query Logs fa conservare a Technitium ogni singola interrogazione, mentre PIE ne tiene solo i totali. Conserva il resto del file delle impostazioni e l'identità della sorgente; un file illeggibile non viene riscritto.
+* `access` scrive indirizzi e impronta del certificato. Legge una copia del certificato senza chiave (`pie.cer`), che PIE scrive accanto: la chiave è leggibile solo dall'account del servizio, e l'impronta non è un segreto.
+* Un comando sbagliato stampa l'uso e non avvia il servizio.
+
+**Script** in `installer/windows` e `installer/linux`: installazione (verifica, copia, servizio, cartella dei dati con permessi ristretti, `configure`, `reset-password`, firewall di Windows solo sulle reti private, avvio, verifica, indirizzi e impronta), aggiornamento con lo stesso script, disinstallazione che conserva i dati salvo richiesta confermata. Un'installazione interrotta si riprende da capo: solo l'ultimo passo scrive il segno di installazione completata.
+
+**Guida** `installer/INSTALL.md`, in italiano semplice: il token di Technitium con i permessi da dare, che cosa costa l'app Query Logs, ogni domanda dello script con la risposta, impronta, VPN e proxy, profilo del browser, ritenzione, copie di sicurezza, aggiornamento, recupero dell'accesso, disinstallazione. Il README vi rimanda.
+
+### Changed
+
+**`reset-password` non chiede di cambiare la password al primo account** di un'installazione vuota: l'ha appena scelta chi la userà (Specification 18 alla 1.6.0). Il recupero vero continua a imporre il cambio.
+
+**Il tipo di guasto dell'Adapter** (`AdapterFailure`): indirizzo irraggiungibile, nessuna risposta in tempo, credenziali rifiutate (anche lo stato `invalid-token` di Technitium, che arriva con HTTP 200), altro. Serve a `configure` per dire che cosa correggere.
+
+**Un token che non può vedere le app di Technitium non fa più fallire la sorgente.** Descrivere la sorgente leggeva anche l'elenco delle app, che richiede un permesso oltre ai due del livello base: con il token minimo della Specification 04, l'intera connessione sarebbe fallita. Ora manca solo l'attività dei dispositivi.
+
+**Program.cs**: il commento iniziale, fermo alla milestone M3.4 e al solo HTTP, descrive l'avvio a mano, il servizio e i comandi.
+
+### Verified
+
+Trentuno prove nuove sul backend, da 464 a 495. Frontend invariato, 121.
+
+| Livello | Cosa si verifica |
+| --- | --- |
+| Adapter | Irraggiungibile come tale; token sconosciuto e 401 come credenziali rifiutate, senza il token nel messaggio; elenco delle app non leggibile senza perdere il livello base |
+| API, installazione | Percorsi relativi presi dalla cartella dei dati, assoluti invariati, nessuna cartella come durante lo sviluppo, percorso vuoto che resta vuoto; opzioni sulla riga di comando non scambiate per argomenti |
+| API, `configure` | Connessione funzionante scritta, token mai mostrato; indirizzo vuoto come Technitium locale; resto delle impostazioni e identità della sorgente conservati; token rifiutato, indirizzo muto, Dashboard non leggibile: nulla scritto; nuovo tentativo riuscito; capacità mancanti con ciò che si perde e come ottenerle; attività disponibile dichiarata con ciò che Technitium conserva; file illeggibile lasciato com'è; indirizzo non valido richiesto di nuovo |
+| API, `access` | Chiuso alla rete; nessun certificato ancora, e nessuno creato; indirizzi e impronta del certificato in uso; la copia letta non contiene la chiave |
+| API, servizio | Nessun codice mostrato e istruzione nel registro; nessun codice accettato; versione dichiarata all'avvio |
+| Processo | L'eseguibile installato tiene il database nella cartella dei dati; il primo amministratore non deve cambiare password |
+
+Difetti introdotti di proposito: `configure` che scrive anche una connessione che non funziona (quattro prove fallite).
+
+**Il programma pubblicato**, avviato a mano con una cartella dati temporanea: interfaccia servita, API che chiede l'accesso, database, liste e certificato nella cartella dei dati, `access` con la stessa impronta scritta all'avvio. **Nessuno dei 784 file dei due pacchetti contiene il token** della macchina di sviluppo.
+
+### Known Impact
+
+**Prove sul campo da fare**, come richiede la Specification 12: installazione, aggiornamento e disinstallazione su Windows, con il backend di sviluppo fermo, e su Linux in WSL; accesso da un altro dispositivo; infine una persona estranea che installa seguendo la guida, che è il criterio di Beta. Fino ad allora gli script sono verificati solo nella sintassi.
+
+**I permessi Apps e Logs** per l'attività dei dispositivi sono dedotti, non verificati: la guida li indica, la prova sul campo con un utente di Technitium dai permessi minimi dirà se bastano e se servono. La Specification 04 chiede solo Dashboard e Settings e non dice nulla dell'attività: va allineata dopo la prova.
+
+**I testi del terminale sono in inglese**, come quelli di `reset-password`. La guida in italiano traduce ogni domanda. Un terminale bilingue va deciso con la traduzione della documentazione.
+
+**Un'installazione sotto servizio senza account** mostrerebbe nel browser la configurazione iniziale, che chiede un codice che non esiste. Lo script crea l'account prima di avviare il servizio, quindi accade solo se qualcuno lo cancella a mano; il registro dice che cosa fare.
+
+**Un'installazione parte con lo storico vuoto.** Il database di sviluppo non viene portato nel servizio.
+
+**Dentro la cartella dei dati** i file stanno in una sottocartella `data`, perché i percorsi predefiniti sono `data/pie.db` e simili. Funziona; è un livello in più.
+
+**Nessuna rotazione delle copie `.bak`** né registro dell'installazione su file; nessun pacchetto Docker né ARM: elencati in Not Yet Provided.
+
+**Le tre prove di `RecoveryProcessTests`** non sono state eseguite con la compilazione normale, perché il backend della persona era acceso.
+
+---
+
+## Documentation Release 1.16.0 — La prima procedura d'installazione — 2026-09-26
+
+### Changed
+
+**Specification 12 alla 1.3.0:** nuove sezioni First Installation (Package, Where Things Live, Running As A Service, First Administrator Under A Service, Commands, Installation Script, Uninstallation Script, Installation Guide, Field Tests) e Not Yet Provided; Docker dichiarato come non ancora fornito. Approvata il 2026-09-26.
+
+**Specification 18 alla 1.6.0:** sotto un servizio il codice di configurazione non esiste e il primo amministratore si crea con il comando di recupero; il primo account di un'installazione vuota non deve cambiare la password. Approvata il 2026-09-26.
+
+**README** con la sezione «Installare».
+
+---
+
 ## La conservazione a livelli — 2026-09-26
 
 Il database smette di crescere senza limite. Il dettaglio orario resta per trenta giorni, poi diventa giorni, poi mesi, poi viene cancellato, come la Specification 16 prevedeva da sempre e il codice non faceva.

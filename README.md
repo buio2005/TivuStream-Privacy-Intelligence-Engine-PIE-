@@ -198,11 +198,25 @@ Il dettaglio delle fasi è contenuto nella Roadmap Specification.
 
 # Stato del progetto
 
-**Documentation Release:** 1.15.0
+**Documentation Release:** 1.16.0
 
 **Project Status:** In Development
 
 **Development Status:** In Progress. Il progetto non è pronto all'uso: vedi la Roadmap Specification per ciò che manca.
+
+---
+
+# Installare
+
+PIE si installa come servizio su Windows o su Linux, con un pacchetto che contiene già tutto ciò che serve. La guida, scritta per chi non conosce il progetto, è in [`installer/INSTALL.md`](installer/INSTALL.md) ed è inclusa in ogni pacchetto.
+
+I pacchetti si preparano dal repository con:
+
+```text
+powershell -ExecutionPolicy Bypass -File installer\build-package.ps1
+```
+
+Vengono scritti in `dist/`. Il resto di questa sezione e della seguente descrive l'uso durante lo sviluppo, con `dotnet run`.
 
 ---
 

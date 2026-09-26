@@ -1,0 +1,37 @@
+# TivuStream Privacy Intelligence Engine (PIE)
+# systemd unit, installed by install.sh.
+#
+# Installation Specification, Running As A Service: an account of its own,
+# the system read-only, writing only to the data folder, no way to gain
+# privileges.
+
+[Unit]
+Description=TivuStream PIE
+Documentation=file:///opt/tivustream-pie/INSTALL.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=tivustream-pie
+Group=tivustream-pie
+WorkingDirectory=/opt/tivustream-pie
+ExecStart=/opt/tivustream-pie/tivustream-pie --DataDirectory=/var/lib/tivustream-pie
+Environment=HOME=/var/lib/tivustream-pie
+Restart=on-failure
+RestartSec=60
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/var/lib/tivustream-pie
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

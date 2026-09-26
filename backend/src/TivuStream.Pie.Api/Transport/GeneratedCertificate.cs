@@ -19,6 +19,17 @@ internal static class GeneratedCertificate
     internal const string FileName = "pie.pfx";
 
     /// <summary>
+    /// The certificate without its key, beside it.
+    /// </summary>
+    /// <remarks>
+    /// The key is readable only by the account PIE runs as, which under a
+    /// service is not the person's. The fingerprint is not a secret, and the
+    /// person needs it to recognise their own PIE: this copy is what they can
+    /// read it from.
+    /// </remarks>
+    internal const string PublicFileName = "pie.cer";
+
+    /// <summary>
     /// The longest validity every browser accepts.
     /// </summary>
     internal static readonly TimeSpan Validity = TimeSpan.FromDays(397);
@@ -52,6 +63,8 @@ internal static class GeneratedCertificate
 
                 if (!NeedsRenewal(kept, names, now))
                 {
+                    WritePublic(directory, kept);
+
                     return (kept, false);
                 }
 
@@ -72,7 +85,19 @@ internal static class GeneratedCertificate
 
         // Read back from the file, so that the key is held the way the
         // operating system's TLS stack expects of a persisted certificate.
-        return (X509CertificateLoader.LoadPkcs12FromFile(path, password: null), true);
+        X509Certificate2 stored = X509CertificateLoader.LoadPkcs12FromFile(path, password: null);
+
+        WritePublic(directory, stored);
+
+        return (stored, true);
+    }
+
+    /// <summary>
+    /// Writes the certificate without its key, readable as the folder allows.
+    /// </summary>
+    private static void WritePublic(string directory, X509Certificate2 certificate)
+    {
+        File.WriteAllBytes(Path.Combine(Path.GetFullPath(directory), PublicFileName), certificate.Export(X509ContentType.Cert));
     }
 
     /// <summary>

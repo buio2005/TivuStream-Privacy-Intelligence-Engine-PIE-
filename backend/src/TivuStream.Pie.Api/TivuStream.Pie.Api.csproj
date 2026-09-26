@@ -16,6 +16,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      The developer's local settings hold the token of their Data Source. The
+      Web SDK would copy every appsettings file into the build output and into
+      a published package; this one must reach neither. Installed, PIE reads
+      its own from the data folder.
+    -->
+    <Content Update="appsettings.Local.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" />
   </ItemGroup>

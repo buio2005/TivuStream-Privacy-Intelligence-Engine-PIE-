@@ -60,7 +60,7 @@ public sealed class TechnitiumAdapter
         SessionInfo info = session.Info
             ?? throw new AdapterException("The Technitium instance did not describe itself.");
 
-        QueryLogsApp? queryLogs = await FindQueryLogsAsync(cancellationToken).ConfigureAwait(false);
+        QueryLogsApp? queryLogs = await DetectQueryLogsAsync(cancellationToken).ConfigureAwait(false);
 
         return new DataSource
         {
@@ -395,6 +395,29 @@ public sealed class TechnitiumAdapter
         else
         {
             activities[key] = new ActivityAccumulator(entry.Timestamp);
+        }
+    }
+
+    /// <summary>
+    /// Looks for the query logs application, when the token may see the
+    /// applications at all.
+    /// </summary>
+    /// <remarks>
+    /// The list of applications needs a permission of its own, beyond the two
+    /// the base level asks for. A token without it still serves statistics,
+    /// devices and domains: the activity is then not offered, instead of the
+    /// whole Data Source being refused. A server that cannot be reached is
+    /// still a failure.
+    /// </remarks>
+    private async Task<QueryLogsApp?> DetectQueryLogsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await FindQueryLogsAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (AdapterException exception) when (exception.Failure == AdapterFailure.Other)
+        {
+            return null;
         }
     }
 

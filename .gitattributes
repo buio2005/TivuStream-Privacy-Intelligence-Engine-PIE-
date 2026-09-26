@@ -68,6 +68,7 @@ Dockerfile      text
 # ---------------------------------------------------------------------------
 
 *.sh            text eol=lf
+*.service       text eol=lf
 *.ps1           text eol=crlf
 *.bat           text eol=crlf
 *.cmd           text eol=crlf

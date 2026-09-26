@@ -304,6 +304,22 @@ public sealed class MappingTests
             $$"""{ "leases": [ { "address": "{{address}}", "hardwareAddress": "{{hardwareAddress}}", "hostName": "tv" } ] }""");
     }
 
+    [Fact]
+    public async Task A_token_that_may_not_see_the_applications_still_serves_the_base_level()
+    {
+        // Dashboard and Settings are what the base level asks for. The list
+        // of applications needs a permission beyond them.
+        FakeTechnitiumHandler server = new FakeTechnitiumHandler()
+            .On("/api/user/session/get", TestServer.Session())
+            .On("/api/apps/list", """{ "status": "error", "errorMessage": "Access was denied." }""");
+
+        DataSource source = await TestServer.AdapterFor(server).DescribeAsync(CancellationToken.None);
+
+        Assert.Contains("Statistics", source.Capabilities);
+        Assert.Contains("SourceConfiguration", source.Capabilities);
+        Assert.DoesNotContain("DomainActivity", source.Capabilities);
+    }
+
     private static async Task<DataSource> Describe(bool dashboard, bool settings, bool queryLogs)
     {
         FakeTechnitiumHandler server = new FakeTechnitiumHandler()
