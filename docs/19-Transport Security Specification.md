@@ -4,7 +4,7 @@
 
 **Document:** Transport Security Specification
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 
 **Status:** Approved
 
@@ -158,14 +158,15 @@ Un proxy che termina la connessione cifrata e inoltra a PIE in chiaro sulla stes
 
 | Chiave | Predefinito | Significato |
 | --- | --- | --- |
+| `Transport:HttpPort` | `5000` | Porta HTTP, sul solo loopback |
 | `Transport:HttpsPort` | `5443` | Porta HTTPS su tutte le interfacce. `0` la chiude |
+| `Transport:CertificateDirectory` | `data/tls` | Dove PIE conserva il certificato che genera |
 | `Transport:Names` | vuoto | Nomi aggiuntivi, nel certificato generato e fra quelli accettati |
 | `Transport:Certificate:Path` | vuoto | Certificato proprio, PFX o PEM |
 | `Transport:Certificate:KeyPath` | vuoto | Chiave del certificato PEM |
 | `Transport:Certificate:Password` | vuoto | Password del certificato PFX, solo in `appsettings.Local.json` |
 | `Transport:TrustedProxies` | vuoto | Indirizzi dei proxy fidati |
 
-La porta HTTP resta quella di oggi, `5000`, sul solo loopback.
 
 ---
 

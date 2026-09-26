@@ -205,7 +205,7 @@ public sealed class ProtectionTests : IDisposable
     }
 
     [Fact]
-    public async Task An_encrypted_connection_is_suitable_from_anywhere_and_says_so_in_its_headers()
+    public async Task An_encrypted_connection_is_suitable_from_anywhere_and_marks_the_cookie_secure()
     {
         _app.AddAccount("maria", AccountRole.Viewer);
 
@@ -214,7 +214,6 @@ public sealed class ProtectionTests : IDisposable
         Answer answer = await Send(client, HttpMethod.Post, "/api/v1/auth/login", new { username = "maria", password = PieApplication.Password }, from: Remote);
 
         Assert.Equal(HttpStatusCode.OK, answer.Status);
-        Assert.Equal("max-age=31536000", answer.Headers.GetValues("Strict-Transport-Security").Single());
         Assert.Contains("secure", answer.Headers.GetValues("Set-Cookie").Single(), StringComparison.OrdinalIgnoreCase);
     }
 
@@ -223,6 +222,18 @@ public sealed class ProtectionTests : IDisposable
     {
         Answer answer = await _app.GetAsync("/api/v1/health");
 
+        Assert.False(answer.Headers.Contains("Strict-Transport-Security"));
+    }
+
+    [Fact]
+    public async Task An_encrypted_connection_with_the_generated_certificate_carries_no_strict_transport_security()
+    {
+        using HttpClient client = _app.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+
+        Answer answer = await Send(client, HttpMethod.Get, "/api/v1/health", from: Remote);
+
+        // The browser would no longer let the person accept the warning of a
+        // certificate PIE generated, and the first renewal would lock them out.
         Assert.False(answer.Headers.Contains("Strict-Transport-Security"));
     }
 

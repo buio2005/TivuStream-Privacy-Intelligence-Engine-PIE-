@@ -4,7 +4,7 @@
 
 **Document:** Authentication Specification
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 
 **Status:** Approved
 
@@ -219,9 +219,9 @@ Il cookie di sessione porta `Secure` quando la connessione è cifrata. Sul loopb
 
 L'impostazione `AllowedHosts` deve elencare i nomi con cui l'installazione è raggiungibile. Con `*` un sito malevolo che rimappi il proprio nome sull'indirizzo locale (DNS rebinding) raggiunge l'API con il browser dell'amministratore.
 
-Il valore predefinito è `localhost;127.0.0.1;[::1]`, i soli nomi del loopback, e vale anche quando l'impostazione manca: una riga assente da un file di configurazione non deve aprire nulla. Chi raggiunge l'installazione con un altro nome lo aggiunge in `appsettings.Local.json`. Il valore `*` **impedisce l'avvio**, con un messaggio che dice perché: è esattamente l'impostazione che spegne una protezione, vietata dal secondo principio. Una richiesta con un `Host` non elencato riceve `400` dal filtro del framework, senza corpo: non è rivolta a questo servizio.
+Il valore predefinito è `localhost;127.0.0.1;[::1]`, i soli nomi del loopback, e vale anche quando l'impostazione manca: una riga assente da un file di configurazione non deve aprire nulla. Chi raggiunge l'installazione con un altro nome lo aggiunge in `appsettings.Local.json`. Con il canale HTTPS aperto si aggiungono automaticamente il nome e gli indirizzi del computer (Transport Security Specification, Names Accepted): un sito che rimappa il proprio nome sull'indirizzo locale non porta nessuno di questi nell'intestazione `Host`. Il valore `*` **impedisce l'avvio**, con un messaggio che dice perché: è esattamente l'impostazione che spegne una protezione, vietata dal secondo principio. Una richiesta con un `Host` non elencato riceve `400` dal filtro del framework, senza corpo: non è rivolta a questo servizio.
 
-Su una connessione cifrata le risposte portano `Strict-Transport-Security: max-age=31536000`.
+`Strict-Transport-Security` è inviata soltanto con un certificato fornito dall'operatore (Transport Security Specification, Strict Transport Security). Con il certificato generato da PIE, un browser che l'avesse ricevuta non lascerebbe più accettare l'avviso, e al primo rinnovo PIE diventerebbe irraggiungibile da quel dispositivo.
 
 ## Origin
 
@@ -229,7 +229,7 @@ Una richiesta che modifica dati (ogni metodo tranne `GET`, `HEAD`, `OPTIONS` e `
 
 Una richiesta **senza** `Origin` è accettata. I browser lo mandano su ogni richiesta che modifica dati; chi non lo manda è un client che non è un browser, e non porta con sé la sessione di nessuno.
 
-Come si ottiene la connessione cifrata, e come si tratta un proxy che la termina davanti a PIE, appartiene alla specifica Transport Security.
+Come si ottiene la connessione cifrata, e come si tratta un proxy che la termina davanti a PIE, lo definisce la Transport Security Specification.
 
 ---
 

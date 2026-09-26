@@ -2,6 +2,8 @@ using System.Net;
 using Microsoft.AspNetCore.Diagnostics;
 using TivuStream.Pie.Api.Contracts;
 
+using TivuStream.Pie.Api.Transport;
+
 namespace TivuStream.Pie.Api.Authentication;
 
 /// <summary>
@@ -73,7 +75,14 @@ internal static class HostPolicy
     /// The names to accept, as the configuration states them.
     /// </summary>
     /// <exception cref="InvalidOperationException">The configuration accepts any name.</exception>
-    internal static string[] AllowedHosts(IConfiguration configuration)
+    /// <param name="configuration">The configuration of the host.</param>
+    /// <param name="machine">
+    /// This computer's names and addresses, when PIE is reachable from the
+    /// network (Transport Security Specification, Names Accepted). A site
+    /// rebinding its own name onto the local address does not carry any of
+    /// them in the <c>Host</c> header.
+    /// </param>
+    internal static string[] AllowedHosts(IConfiguration configuration, MachineNames? machine = null)
     {
         string configured = configuration[SettingName] is { Length: > 0 } value ? value : Default;
 
@@ -86,7 +95,9 @@ internal static class HostPolicy
                 + "'*' would let any site reach the API through a browser on this network.");
         }
 
-        return hosts;
+        return machine is null
+            ? hosts
+            : [.. hosts.Concat(machine.HostNames()).Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 }
 
@@ -166,10 +177,11 @@ internal static class RequestProtection
         // Nothing served here may be framed by another site.
         context.Response.Headers.ContentSecurityPolicy = "frame-ancestors 'none'";
 
-        if (context.Request.IsHttps)
-        {
-            context.Response.Headers.StrictTransportSecurity = "max-age=31536000";
-        }
+        // No Strict-Transport-Security. With the certificate PIE generates, a
+        // browser that had received it would no longer let the person accept
+        // the warning, and at the first renewal PIE would be out of reach from
+        // that device (Transport Security Specification, S2). It returns with
+        // a certificate provided by the operator.
 
         // Every answer of the API carries data about the network, and none of
         // it may stay in the cache of a browser or of anything between.

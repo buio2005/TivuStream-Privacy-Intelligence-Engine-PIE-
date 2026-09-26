@@ -22,6 +22,7 @@ using TivuStream.Pie.Api.Authentication;
 using TivuStream.Pie.Api.Classification;
 using TivuStream.Pie.Api.Contracts;
 using TivuStream.Pie.Api.Storage;
+using TivuStream.Pie.Api.Transport;
 using TivuStream.Pie.Core;
 using TivuStream.Pie.Model.Entities;
 using TivuStream.Pie.Storage;
@@ -32,9 +33,24 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // Credentials never belong to a versioned file.
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
 
+TransportOptions transport = builder.Configuration.GetSection("Transport").Get<TransportOptions>() ?? new();
+
+// With the encrypted channel open, PIE is reached by this computer's own name
+// and addresses. They are what the certificate names, and what is accepted.
+MachineNames? machine = transport.HttpsPort > 0 ? MachineNames.Discover(transport.Names) : null;
+
 // Read here, so that a configuration accepting any name stops the start
 // rather than being discovered later.
-string[] allowedHosts = HostPolicy.AllowedHosts(builder.Configuration);
+string[] allowedHosts = HostPolicy.AllowedHosts(builder.Configuration, machine);
+
+if (machine is not null)
+{
+    builder.WebHost.UseTransport(transport, machine);
+}
+else
+{
+    builder.WebHost.ConfigureKestrel(kestrel => kestrel.ListenLocalhost(transport.HttpPort));
+}
 
 builder.Services.PostConfigure<HostFilteringOptions>(options => options.AllowedHosts = allowedHosts);
 

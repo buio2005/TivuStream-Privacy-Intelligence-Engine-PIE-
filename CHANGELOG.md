@@ -8,6 +8,90 @@ Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
 
 ---
 
+## Milestone S2 — HTTPS con il certificato generato — 2026-09-26
+
+Seconda delle quattro milestone della Specification 19. PIE è raggiungibile in HTTPS dagli altri dispositivi della rete, senza configurazione.
+
+### Added
+
+**Canali** (`TransportSetup`):
+* **HTTP** sul solo loopback, porta `Transport:HttpPort` (`5000`).
+* **HTTPS** su tutte le interfacce, porta `Transport:HttpsPort` (`5443`). Con `0` il canale non si apre e resta il comportamento di prima.
+* **Porte esplicite:** `--urls` non vale più. Per una porta diversa si usa `--Transport:HttpPort=...`.
+
+**Certificato generato** (`GeneratedCertificate`):
+* **Tipo:** ECDSA P-256, 397 giorni, solo autenticazione del server. Non è un'autorità: non può firmare altri certificati.
+* **Nomi:** `localhost`, il nome del computer, gli indirizzi delle interfacce attive (esclusi gli IPv6 link-local, che nessuna barra degli indirizzi accetta) e `Transport:Names`.
+* **Conservazione:** `data/tls/pie.pfx`, creato con il solo permesso dell'utente che esegue PIE, già alla creazione.
+* **Rinnovo:** all'avvio, a meno di 30 giorni dalla scadenza, o quando il computer ha un nome o un indirizzo che il certificato non porta. Nomi in più non contano. Un file illeggibile viene rigenerato: è di PIE, non dell'operatore.
+* **Solo con il server vero:** il certificato si prepara all'avvio di Kestrel, quindi l'host delle prove non ne genera mai uno.
+
+**All'avvio** PIE scrive gli indirizzi HTTPS, la scadenza e l'impronta SHA-256, nel formato che mostrano i browser.
+
+**Nomi accettati** (`MachineNames`, `HostPolicy`): con il canale HTTPS aperto, il nome e gli indirizzi del computer si aggiungono a `AllowedHosts`, gli IPv6 fra parentesi quadre come arrivano nell'intestazione `Host`. `*` impedisce ancora l'avvio.
+
+### Changed
+
+**`Strict-Transport-Security` non viene più inviata.** Con il certificato generato, un browser che l'avesse ricevuta non lascerebbe più accettare l'avviso, e al primo rinnovo PIE diventerebbe irraggiungibile da quel dispositivo. Tolta in questa milestone, non nella successiva, perché la prova dal portatile viene prima. Torna con un certificato fornito dall'operatore (S3).
+
+**Le prove dell'API girano con il canale HTTPS chiuso**, così i nomi accettati non dipendono dalla macchina su cui girano. Il canale ha prove sue.
+
+### Verified
+
+Quattordici prove nuove, da 401 a 415:
+
+| Impegno | Cosa si verifica |
+| --- | --- |
+| T3 | Il certificato porta ogni nome e indirizzo; è per un server e non può firmare; dura 397 giorni ed è già valido per un orologio un po' indietro |
+| T4 | Il file della chiave ha un'unica regola, per l'utente che esegue PIE, e nessuna ereditata |
+| T5 | Riusato con la stessa impronta; sostituito vicino alla scadenza, con un indirizzo nuovo o se illeggibile; tenuto con nomi in più |
+| T7 | Nessuna HSTS su una connessione cifrata |
+| T8 | Nomi del computer accettati, IPv6 fra parentesi; solo il loopback a canale chiuso; `*` impedisce ancora l'avvio |
+| — | L'impronta è scritta come nei browser, ed è lo SHA-256 del certificato |
+
+**Sul motore vero**, su porte a parte:
+* **Ascolto** (T2): `5543` su `0.0.0.0` e `[::]`, `5099` solo su `127.0.0.1` e `[::1]`.
+* **Da un client:** pagina via HTTPS dall'indirizzo di rete e dal nome del computer; `400` con un nome estraneo; HTTP dall'indirizzo di rete rifiutato.
+* **Certificato:** l'impronta vista dal client coincide con quella stampata; i nomi sono quelli attesi.
+* **Permessi:** `icacls` mostra il solo utente.
+
+Dodici difetti introdotti di proposito: undici intercettati, uno equivalente. Intercettati:
+* certificato che può firmare;
+* indirizzi fuori dal certificato;
+* mai rinnovato vicino alla scadenza;
+* rinnovato a ogni avvio;
+* non rinnovato con un indirizzo nuovo;
+* validità troppo lunga;
+* IPv6 senza parentesi;
+* nomi del computer non accettati;
+* HSTS inviata.
+
+L'equivalente: senza la protezione esplicita dall'ereditarietà, Windows crea comunque il file con il solo permesso dell'utente, quindi nessuna prova può distinguere le due versioni. La riga resta, perché dichiara l'intenzione e vale dove il sistema si comportasse diversamente. Una modifica innocua non ha fatto fallire nulla.
+
+### Known Impact
+
+**L'avviso del browser** compare una volta per dispositivo, e di nuovo a ogni rinnovo o cambio di indirizzo, come dichiarato nella specifica. L'impronta da confrontare è nell'output all'avvio.
+
+**Gli indirizzi di adattatori virtuali** (VPN, WSL, Hyper-V) finiscono nel certificato e nell'elenco degli indirizzi, perché sono del computer. Nell'elenco possono comparire indirizzi che dagli altri dispositivi non si raggiungono.
+
+**Il firewall di Windows** chiede il permesso alla prima apertura del canale HTTPS. Senza permesso, dagli altri dispositivi la connessione scade.
+
+**La prova sul campo dal portatile non è ancora fatta** (T11, S4).
+
+---
+
+## Documentation Release 1.12.0 — Il canale HTTPS — 2026-09-26
+
+### Changed
+
+**Specification 18 alla 1.5.0:** HSTS solo con un certificato fornito dall'operatore; con il canale HTTPS aperto i nomi accettati comprendono quelli del computer.
+
+**Specification 19 alla 1.0.1:** le chiavi `Transport:HttpPort` e `Transport:CertificateDirectory`.
+
+**Roadmap 1.3.10, README e PROJECT_CONTEXT** allineati alla Documentation Release 1.12.0.
+
+---
+
 ## Milestone S1 — L'interfaccia servita dal motore — 2026-09-26
 
 Prima delle quattro milestone della Specification 19. Il motore serve l'interfaccia compilata sul proprio indirizzo: senza questo, in un'installazione l'interfaccia non esiste e non c'è nulla da mettere in HTTPS.

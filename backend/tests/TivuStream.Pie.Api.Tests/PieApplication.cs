@@ -194,6 +194,11 @@ internal sealed class PieApplication : WebApplicationFactory<Program>
         // depend on whether anyone had built it.
         builder.UseEnvironment(Environments.Production);
 
+        // The encrypted channel closed: what the tests accept must not depend
+        // on the names of the machine they run on. The channel has tests of
+        // its own.
+        builder.UseSetting("Transport:HttpsPort", "0");
+
         builder.ConfigureAppConfiguration((_, configuration) =>
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
