@@ -87,7 +87,8 @@ This list is the point of publishing at this stage.
   exists, is documented and has been used once, by its author, on Windows.
   This is the gap that most needs closing.
 * **Devices and statistics are measured but not shown.** The engine collects
-  them and the API returns them; the interface has no screen for either.
+  them and the API returns them; the interface has no screen for either, and
+  neither `/devices` nor `/statistics` declares the period it covers.
 * **History is written and never read.** Consolidated days and months
   accumulate correctly, and no view displays them. Copies taken before a
   database upgrade are never deleted automatically.
@@ -97,8 +98,6 @@ This list is the point of publishing at this stage.
 * **No alerts, no recommendations, no reports.**
 * **No licence header in the source files**, and the interface does not yet
   display the licence notice the GPL asks for.
-* **`/devices` and `/statistics` are measured but not shown**, and neither
-  declares the period it covers.
 * **The history of the changelog is in Italian** below the language boundary.
   The reasoning it holds is in English in
   [`docs/DESIGN-RATIONALE.md`](docs/DESIGN-RATIONALE.md).
@@ -124,10 +123,10 @@ route traffic. It reads.
 
 PIE installs as a service from a package that contains everything it needs.
 The guide, written for someone who has never seen this project, is
-[`installer/INSTALL.md`](installer/INSTALL.md) and is included in every
-package.
+[`installer/INSTALL.md`](installer/INSTALL.md), with an Italian version in
+[`installer/INSTALL.it.md`](installer/INSTALL.it.md).
 
-Build the packages from the repository:
+There is no release to download yet. Build the packages from the repository:
 
 ```text
 powershell -ExecutionPolicy Bypass -File installer\build-package.ps1
@@ -135,9 +134,15 @@ powershell -ExecutionPolicy Bypass -File installer\build-package.ps1
 
 They are written to `dist/`.
 
-The first start prints a one-time setup code, which you use to create the
-first account. If you lose access, `dotnet run -- reset-password <name>`
-restores it from the machine PIE runs on.
+**Creating the first account.** A service has no window, so under a service
+PIE does not print a setup code: the installation script creates the first
+administrator and asks you for a name and a password. If you lose access,
+`tivustream-pie reset-password <name>` restores it from the machine PIE runs
+on — the guide gives the full command for each platform.
+
+Running from source instead (`dotnet run`), a fresh database does print a
+one-time setup code, which you enter in the browser together with a name and a
+password.
 
 ---
 
