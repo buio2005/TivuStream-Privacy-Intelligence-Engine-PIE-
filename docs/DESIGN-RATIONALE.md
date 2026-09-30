@@ -258,9 +258,14 @@ changelog entry that created it, and the ones that outlive their entry are
 listed in `CLAUDE.md` and in the README.
 
 This is why the README says what the project does **not** do before it says
-how to install it, and why the Roadmap contains a row stating that the
-sentence "the repository is not public" is true while it is written and false
-the moment it is published.
+how to install it, and why the Roadmap carried a publication criterion about
+one of its own sentences: "the repository is not public" was true while it was
+written and false the moment it was published. The sentence was moved on the
+day of publication, which is what the criterion existed to force.
+
+The same rule is why this repository went public with a licence criterion only
+partly met — the source files carry no licence notice — stated in the Roadmap
+rather than quietly deferred.
 
 ---
 

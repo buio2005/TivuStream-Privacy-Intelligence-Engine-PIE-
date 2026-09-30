@@ -55,6 +55,14 @@ The milestone tables of 18 and 19 now say when the work was completed, and the d
 
 **No code was changed and no test was run in this work.** It touches documentation only. The last verified state is 495 tests on the backend and 121 on the frontend.
 
+### At publication
+
+The repository was made public on 2026-09-30, immediately after this release. Four of the five Repository Publication criteria of Specification 13 are satisfied. The fifth, the licence, is satisfied in part: `LICENSE.md` is present and the licence is declared, but the 216 source files carry no notice at their head, as the GPL recommends.
+
+That gap is stated in the Roadmap, in `PROJECT_CONTEXT.md`, in `CLAUDE.md` and in the README rather than deferred without saying so, and it is the first thing to close. The Roadmap's own Current Status was moved with publication, which is what the criterion about it existed to force.
+
+The README no longer says the documentation is being translated, and lists two debts it was missing: `/devices` and `/statistics` measured but not shown, and the changelog history remaining in Italian.
+
 ---
 
 ## Documentation Release 1.16.1 — Permessi di Technitium verificati — 2026-09-27

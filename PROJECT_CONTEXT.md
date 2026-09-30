@@ -273,24 +273,23 @@ written.
 
 ---
 
-## Documentation In English — in progress
+## Documentation In English — done
 
 The documentation published on GitHub, `README.md` included, is **in English**.
 
 The reason is access for users who are not Italian, consistent with a public
 platform.
 
-The translation covers the twenty versioned Specifications and the documents
-at the root, and is being carried out as a dedicated piece of work, not
+The translation covered the twenty versioned Specifications and the documents
+at the root, and was carried out as a dedicated piece of work, not
 incrementally: documents in two different languages in the same release would
-leave it uncertain which is the authoritative source. Progress is tracked in
-`docs/TRANSLATION-PROGRESS.md`.
+have left it uncertain which is the authoritative source. It was completed on
+2026-09-30, as Documentation Release 1.17.0, before the repository was
+published — which was the right moment, and not the end of the Backend.
 
 The history of `CHANGELOG.md` below the language boundary stays in Italian and
-is not translated. Every new text is written in English.
-
-The right moment is **before the repository is published**, not before the end
-of the Backend.
+is not translated. The reasoning it holds is in `docs/DESIGN-RATIONALE.md`.
+Every new text is written in English.
 
 Communication with the owner of the project stays in Italian.
 
@@ -358,8 +357,10 @@ noticing.
 The licence has been chosen: **GPL-3.0**. Two things remain to be done.
 
 **Notices in the source files.** The GPL recommends a copyright and licence
-notice at the head of every file. It is to be added as a dedicated piece of
-work before the repository is published.
+notice at the head of every file. The intention was to add them before the
+repository was published; the repository was published on 2026-09-30 without
+them, and the gap is declared in the Roadmap and in `CLAUDE.md` rather than
+left unsaid. It is the first thing to close.
 
 **Notice in the interface.** The GPL provides that an interactive interface
 show the copyright, the absence of warranty and how to consult the licence. It
@@ -373,7 +374,7 @@ Before starting any development work, consult:
 
 - README.md
 - AI_DEVELOPMENT_GUIDE.md
-- Documentation Release 1.16.1 (/docs)
+- Documentation Release 1.17.0 (/docs)
 - CHANGELOG.md
 
 These documents are the official reference of the project.

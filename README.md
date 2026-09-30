@@ -10,8 +10,6 @@ is contacting, and tells you honestly — including what it does not know.**
 > obtained privately: someone other than its author installing it. See
 > [What it does not do yet](#what-it-does-not-do-yet) before you decide to try
 > it.
->
-> The technical documentation is currently in Italian and is being translated.
 
 ---
 
@@ -97,9 +95,13 @@ This list is the point of publishing at this stage.
   Recommendation. Device Health is therefore not measurable, and fifteen of
   the hundred points stay permanently outside the score.
 * **No alerts, no recommendations, no reports.**
-* **Documentation is in Italian.** Twenty specifications, being translated.
 * **No licence header in the source files**, and the interface does not yet
   display the licence notice the GPL asks for.
+* **`/devices` and `/statistics` are measured but not shown**, and neither
+  declares the period it covers.
+* **The history of the changelog is in Italian** below the language boundary.
+  The reasoning it holds is in English in
+  [`docs/DESIGN-RATIONALE.md`](docs/DESIGN-RATIONALE.md).
 
 Known gaps are recorded as they are found. A gap that is not written down is
 not a debt, it is a defect.
@@ -226,10 +228,12 @@ The authoritative source is `docs/`, twenty specifications. The code
 implements them; it never defines the architecture.
 
 `CHANGELOG.md` records every decision together with the reasoning behind it,
-including the ones that were later reversed and why. It is, for now, in
-Italian.
+including the ones that were later reversed and why. Its history is in
+Italian, and is not translated; the fifteen decisions that shaped the project
+are in English in [`docs/DESIGN-RATIONALE.md`](docs/DESIGN-RATIONALE.md), each
+with the alternative that was not taken.
 
-Start with `docs/00-Glossary.md`.
+Start with `docs/00-Glossary.md`, then `docs/DESIGN-RATIONALE.md`.
 
 ---
 

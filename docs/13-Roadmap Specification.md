@@ -35,16 +35,28 @@ The roadmap has the following objectives.
 
 # Current Status
 
-**Documentation Release:** 1.16.1
+**Documentation Release:** 1.17.0
 
 **Project Status:** In Development
 
-**Development Status:** In Progress. The repository is not public. Of the Beta
-criteria, those on authentication (Specification 18, milestones A1–A7), on
-encrypted transport (Specification 19, milestones S1–S4, tested from a laptop
-on a home network on 2026-09-26) and on retention (Specification 16 at 1.3.0,
-consolidation active since 2026-09-26) are satisfied; the others are not, or
-have not been verified: see Release Criteria.
+**Development Status:** In Progress. **The repository is public since
+2026-09-30**, with four of the five Repository Publication criteria satisfied:
+the documentation is in English, the debts are declared in the README, no
+secret is in the git history, and this section describes the state at
+publication. The fifth is satisfied in part — `LICENSE.md` is present and the
+licence is declared, but the source files carry no licence notice at their
+head. That gap is declared here and in `CLAUDE.md` rather than deferred
+silently, and it is the first thing to close after publication.
+
+Publishing the code is not releasing the product: the README says the project
+is **not ready for use**, and why.
+
+Of the Beta criteria, those on authentication (Specification 18, milestones
+A1–A7), on encrypted transport (Specification 19, milestones S1–S4, tested
+from a laptop on a home network on 2026-09-26) and on retention
+(Specification 16 at 1.3.0, consolidation active since 2026-09-26) are
+satisfied; the others are not, or have not been verified: see Release
+Criteria.
 
 ---
 
@@ -306,11 +318,11 @@ Making the code public is **not** the same as releasing the product.
 | No secret versioned | No token and no credential in the git history |
 | Current Status true | The Current Status section of this document describes the state at publication, not the one before it |
 
-The last row exists because this document states that the repository is not
-public. That is true while it is written and false the moment it is
-published. A status field describes the present and has to be moved with it;
-left behind, the first thing a stranger would read is a document declaring
-itself private.
+The last row existed because this document used to state that the repository
+was not public. That was true while it was written and false the moment it
+was published. A status field describes the present and has to be moved with
+it; left behind, the first thing a stranger would have read is a document
+declaring itself private. It was moved on 2026-09-30, with publication.
 
 The README states explicitly that the project is **not ready for use**, and
 for what reasons.
