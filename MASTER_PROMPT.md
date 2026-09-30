@@ -203,6 +203,28 @@ This rule has repeatedly found real problems and is kept unchanged.
 
 ---
 
+## Tense
+
+**Write the motivation of a Specification in the past tense.** A Specification
+outlives the change that caused it: "today the API answers anyone who reaches
+it" is true on the day it is written and false the day the work is done, and
+nobody goes back to reread an opening paragraph. Write instead "the API
+answered anyone who reached it. This specification closes that."
+
+The same applies to a milestone table, which records when the work was
+completed, and to a decision recorded as "to be approved", which stops being
+true at the moment it is approved.
+
+This rule exists because the opposite was found four times during the
+translation of the documentation: Specifications 06, 18 and 19 opened by
+declaring absent something that had been working for weeks.
+
+The present tense belongs to the rules themselves, which are what the document
+is for. "A password never travels in the clear outside the loopback" stays in
+the present for as long as it holds.
+
+---
+
 ## Communication
 
 Speak to the person in their language, which is Italian.

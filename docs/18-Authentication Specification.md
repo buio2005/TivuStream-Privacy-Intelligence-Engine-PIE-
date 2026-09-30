@@ -8,107 +8,155 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-26
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce **chi può interrogare il Privacy Intelligence Engine e che cosa può leggere**.
+This specification defines **who may question the Privacy Intelligence Engine
+and what they may read**.
 
-Chiude il debito dichiarato più grave del progetto: oggi l'API risponde a chiunque la raggiunga. È sicura soltanto perché ascolta sul solo indirizzo di loopback, e questa è una circostanza, non una misura.
+It closes the gravest declared debt of the project. Before it, the API
+answered anyone who reached it, and was safe only because it listened on the
+loopback address alone — a circumstance, not a measure.
 
-La API Specification si limitava a dire che «il sistema supporta autenticazione centralizzata» e che «le modalità implementative vengono definite durante lo sviluppo del backend». Le modalità non sono mai state definite. Questo documento le definisce **prima** del codice, perché è una decisione la cui correzione, una volta che esistono utenti e dati, costa cara.
+The API Specification went no further than saying that "the system supports
+centralised authentication" and that "the implementation is defined during the
+development of the backend". It never was. This document defines it **before**
+the code, because it is a decision whose correction, once users and data
+exist, costs dearly.
 
 ---
 
 # Why The Stakes Are Higher Than For A Dashboard
 
-Ciò che PIE conserva e mostra è, per costruzione, aggregato: non esiste il registro delle singole interrogazioni. Ma resta sensibile.
+What PIE keeps and shows is, by construction, aggregated: there is no register
+of individual queries. It remains sensitive all the same.
 
-* **L'attività per dispositivo** dice quali domini ciascun dispositivo della casa ha contattato e quante volte. È l'informazione più delicata che il sistema espone, e la Persistence Specification la chiama «la cronologia di navigazione di ogni dispositivo» nella sua forma grezza.
-* **Lo stato della configurazione** dice che cosa la rete non protegge: DNSSEC spento, nessun trasporto cifrato, nessuna lista di filtro. Per chi volesse attaccarla è un elenco.
-* **Il punteggio** e le sue ragioni descrivono la rete in modo utile a chiunque la osservi.
+* **Activity per device** says which domains each device in the house has
+  contacted, and how many times. It is the most delicate information the
+  system exposes, and the Persistence Specification calls it, in its raw form,
+  the browsing history of every device.
+* **The state of the configuration** says what the network does not protect:
+  DNSSEC off, no encrypted transport, no filter list. To whoever wants to
+  attack it, that is a list.
+* **The score** and its reasons describe the network in a way useful to anyone
+  watching it.
 
-Un'API aperta su una rete domestica, dove convivono dispositivi che nessuno ha esaminato, non è un rischio teorico.
+An API open on a home network, where devices nobody has examined live side by
+side, is not a theoretical risk.
 
 ---
 
 # Threat Model
 
-## Avversari considerati
+## Adversaries Considered
 
-| Avversario | Esempio | Che cosa si vuole impedire |
+| Adversary | Example | What is to be prevented |
 | --- | --- | --- |
-| Un altro dispositivo della rete | Un apparecchio compromesso, un ospite collegato al Wi-Fi | Leggere dati o configurazione senza essere l'utente |
-| Una persona di casa senza diritti di amministrazione | Un familiare | Leggere l'attività di dispositivi altrui |
-| Una pagina web aperta dal browser dell'amministratore | Un sito malevolo che tenta richieste verso l'indirizzo locale, anche tramite DNS rebinding | Usare il browser dell'utente come tramite |
-| Chi indovina le credenziali | Tentativi ripetuti sul modulo di accesso | Entrare per tentativi |
-| Chi ottiene il file del database | Una copia di riserva lasciata in giro | Recuperare le password degli account |
+| Another device on the network | A compromised appliance, a guest on the Wi-Fi | Reading data or configuration without being the user |
+| Someone in the house without administration rights | A member of the family | Reading the activity of other people's devices |
+| A web page open in the administrator's browser | A malicious site attempting requests towards the local address, including through DNS rebinding | Using the user's browser as the way in |
+| Whoever guesses the credentials | Repeated attempts at the sign-in form | Getting in by trying |
+| Whoever obtains the database file | A backup copy left lying about | Recovering the passwords of the accounts |
 
-## Non considerati, e dichiarati
+## Not Considered, And Declared
 
-* **Un host compromesso.** Chi ha i privilegi dell'utente che esegue PIE ha già il database, i file di configurazione e la memoria.
-* **La cifratura a riposo del database.** Contiene dati di rete aggregati. Cifrarla richiede una gestione delle chiavi che il progetto non ha, e la protezione che si otterrebbe senza di essa sarebbe apparente.
-* **L'autenticazione a più fattori.** Vedi Known Limits.
+* **A compromised host.** Whoever has the privileges of the user running PIE
+  already has the database, the configuration files and the memory.
+* **Encryption of the database at rest.** It contains aggregated network data.
+  Encrypting it requires a key management the project does not have, and the
+  protection obtained without one would be apparent only.
+* **Multi-factor authentication.** See Known Limits.
 
 ---
 
 # Principles
 
-Sei regole. Ogni requisito seguente ne discende.
+Six rules. Every requirement below follows from them.
 
-1. **Nulla risponde senza un'identità.** L'accesso è negato per impostazione predefinita. Un endpoint nuovo è protetto senza che nessuno debba ricordarlo.
-2. **L'assenza di protezione non è uno stato silenzioso.** Non esiste un'impostazione che spegne l'autenticazione. Una configurazione che la disattivasse sarebbe la prima che qualcuno lascia attiva per comodità.
-3. **Un segreto non viene mai conservato in chiaro né scritto in un registro.** Vale per password, identificativi di sessione e codice di configurazione iniziale.
-4. **Un rifiuto non insegna nulla a chi lo riceve.** Un account inesistente e una password sbagliata producono la stessa risposta.
-5. **Local First.** Nessun servizio di identità esterno, nessun invio di messaggi, nessuna telemetria. Il recupero di un accesso perso passa dall'accesso alla macchina.
-6. **Ciò che viene trattenuto per ruolo viene dichiarato.** Una risposta che omette un dato perché chi chiede non ne ha diritto lo dice. Un elenco vuoto per mancanza di diritto e un elenco vuoto perché nulla è accaduto sono due affermazioni diverse, e presentarle allo stesso modo è un'informazione falsa: è la regola Absent Versus Unmeasurable della Network Privacy Specification, applicata ai permessi.
+1. **Nothing answers without an identity.** Access is denied by default. A new
+   endpoint is protected without anyone having to remember it.
+2. **The absence of protection is not a silent state.** There is no setting
+   that turns authentication off. A configuration that disabled it would be
+   the first one somebody leaves on for convenience.
+3. **A secret is never kept in the clear nor written to a log.** This holds
+   for passwords, session identifiers and the setup code.
+4. **A refusal teaches nothing to whoever receives it.** An account that does
+   not exist and a wrong password produce the same answer.
+5. **Local First.** No external identity service, no messages sent, no
+   telemetry. Recovering a lost access goes through access to the machine.
+6. **What is withheld by role is declared.** An answer that omits a datum
+   because whoever asks has no right to it says so. An empty list for want of
+   a right and an empty list because nothing happened are two different
+   statements, and presenting them alike is false information: it is the
+   Absent Versus Unmeasurable rule of the Network Privacy Specification,
+   applied to permissions.
 
 ---
 
 # Scope
 
-**Comprende.**
+**It covers.**
 
-* account locali con ruolo;
-* credenziali, sessioni e recupero;
-* configurazione iniziale della prima installazione;
-* verifica dei permessi su ogni endpoint;
-* schermate di accesso, configurazione iniziale e gestione degli account;
-* contromisure di base contro tentativi ripetuti e richieste da altri siti.
+* local accounts with a role;
+* credentials, sessions and recovery;
+* the initial setup of the first installation;
+* the check of permissions on every endpoint;
+* the screens for sign in, initial setup and account management;
+* basic countermeasures against repeated attempts and requests from other
+  sites.
 
-**Non comprende.**
+**It does not cover.**
 
-* **Il certificato e la configurazione HTTPS.** Sono oggetto di una specifica separata (Transport Security), richiesta dai criteri della Beta. Questa specifica fissa soltanto ciò che dipende dal trasporto: le credenziali non viaggiano in chiaro fuori dal loopback.
-* **Token per servizi e automazioni.** La Backend Specification cita «utenti e servizi autorizzati», ma oggi non esiste alcun servizio che interroghi l'API: il solo cliente è il Frontend. Prevederli ora sarebbe progettare per un bisogno che non c'è. Vedi Decisions Taken, D5.
-* **Autenticazione verso le Data Source.** Resta come nella Technitium Integration Specification: un API Token non scadente, in `appsettings.Local.json`. L'autenticazione degli utenti è indipendente da quella delle sorgenti.
+* **The certificate and the HTTPS configuration.** They are the subject of a
+  separate specification (Transport Security), required by the Beta criteria.
+  This specification fixes only what depends on the transport: credentials do
+  not travel in the clear outside the loopback.
+* **Tokens for services and automations.** The Backend Specification mentions
+  "authorised users and services", but no service questions the API: the only
+  client is the Frontend. Providing for them now would be designing for a need
+  that does not exist. See Decisions Taken, D5.
+* **Authentication towards the Data Sources.** It stays as in the Technitium
+  Integration Specification: a non-expiring API Token, in
+  `appsettings.Local.json`. The authentication of users is independent of that
+  of the sources.
 
 ---
 
 # Accounts And Roles
 
-Un **account** è una persona che usa PIE. Appartiene al Backend e non al Unified Data Model, che descrive la rete osservata e non chi la osserva.
+An **account** is a person who uses PIE. It belongs to the Backend and not to
+the Unified Data Model, which describes the network observed and not whoever
+observes it.
 
-| Proprietà | Regola |
+| Property | Rule |
 | --- | --- |
-| `username` | Da 3 a 32 caratteri fra lettere minuscole, cifre, punto, trattino e trattino basso. Il confronto non distingue maiuscole e minuscole |
-| `role` | `Administrator` oppure `Viewer` |
-| `enabled` | Un account disattivato non può accedere e le sue sessioni cadono |
-| `passwordChangeRequired` | Vero alla creazione e dopo una reimpostazione da parte di un amministratore |
+| `username` | From 3 to 32 characters among lowercase letters, digits, full stop, hyphen and underscore. The comparison ignores case |
+| `role` | `Administrator` or `Viewer` |
+| `enabled` | A disabled account cannot sign in, and its sessions fall |
+| `passwordChangeRequired` | True at creation and after a reset by an administrator |
 
-## Ruoli
+## Roles
 
-| Ruolo | Può |
+| Role | May |
 | --- | --- |
-| `Administrator` | Tutto: leggere ogni dato, gestire gli account |
-| `Viewer` | Leggere i dati **aggregati**: punteggio, statistiche, domini, stato di sistema. Non legge i dati che identificano un singolo dispositivo né la sua attività |
+| `Administrator` | Everything: read every datum, manage the accounts |
+| `Viewer` | Read the **aggregated** data: score, statistics, domains, system state. Does not read the data identifying a single device, nor its activity |
 
-La distinzione ha una sola ragione, dichiarata nei principi: l'attività per dispositivo è il dato più sensibile, e in una casa chi guarda il quadro d'insieme non deve poter vedere che cosa ha fatto ciascuno. Il costo è dichiarato insieme al vantaggio, come richiede l'Installation Specification: un familiare `Viewer` vede che un dominio di tracciamento è stato contattato, non da quale dispositivo.
+The distinction has a single reason, declared in the principles: activity per
+device is the most sensitive datum, and in a house whoever looks at the
+overall picture must not be able to see what each person did. The cost is
+declared alongside the advantage, as the Installation Specification requires:
+a `Viewer` in the family sees that a tracking domain was contacted, not from
+which device.
 
-## Vincolo
+## Constraint
 
-Esiste sempre almeno un `Administrator` attivo. L'ultimo non può essere disattivato, rimosso o retrocesso. Il recupero previsto (vedi Recovery) esiste per i casi che sfuggono, non per rendere questo vincolo negoziabile.
+There is always at least one active `Administrator`. The last one cannot be
+disabled, removed or demoted. The recovery provided for (see Recovery) exists
+for the cases that slip through, not to make this constraint negotiable.
 
 ---
 
@@ -116,306 +164,450 @@ Esiste sempre almeno un `Administrator` attivo. L'ultimo non può essere disatti
 
 ## Password
 
-* Lunghezza da **12 a 128** caratteri.
-* **Nessuna regola di composizione.** Imporre maiuscole, cifre e simboli produce password prevedibili e più difficili da ricordare, non più sicure. Conta la lunghezza.
-* Non può coincidere con il nome utente.
-* Viene normalizzata in forma Unicode NFKC prima di ogni uso, così che la stessa password scritta su tastiere diverse dia lo stesso risultato.
+* Length from **12 to 128** characters.
+* **No composition rule.** Requiring capitals, digits and symbols produces
+  passwords that are predictable and harder to remember, not safer. Length is
+  what counts.
+* It cannot coincide with the username.
+* It is normalised into Unicode NFKC form before every use, so that the same
+  password typed on different keyboards gives the same result.
 
-## Conservazione
+## Keeping
 
-Della password viene conservato soltanto un **hash con sale**, mai la password né qualcosa da cui si possa ricavarla in modo diretto.
+Of the password only a **salted hash** is kept, never the password nor
+anything from which it could be obtained directly.
 
-| Parametro | Valore |
+| Parameter | Value |
 | --- | --- |
-| Algoritmo | PBKDF2 con HMAC-SHA-512 |
-| Iterazioni | 210.000 |
-| Sale | 16 byte casuali per password, da un generatore crittografico |
-| Uscita | 64 byte |
-| Formato registrato | Algoritmo, iterazioni, sale e hash insieme, così che i parametri possano crescere |
+| Algorithm | PBKDF2 with HMAC-SHA-512 |
+| Iterations | 210,000 |
+| Salt | 16 random bytes per password, from a cryptographic generator |
+| Output | 64 bytes |
+| Recorded format | Algorithm, iterations, salt and hash together, so that the parameters can grow |
 
-Ad ogni accesso riuscito, se i parametri registrati sono inferiori a quelli in vigore, la password viene ricalcolata con i nuovi.
+At every successful sign in, if the recorded parameters are lower than those
+in force, the password is recomputed with the new ones.
 
-Il confronto avviene a tempo costante. Per un account inesistente viene eseguito comunque un calcolo su un valore fittizio, così che il tempo di risposta non riveli se il nome esiste.
+The comparison happens in constant time. For an account that does not exist a
+computation is performed all the same, on a fictitious value, so that the
+response time does not reveal whether the name exists.
 
-L'algoritmo è quello che la libreria di base di .NET offre senza dipendenze aggiuntive. Argon2id resiste meglio a chi dispone di schede grafiche, ma richiede una libreria di terzi. Vedi D3.
+The algorithm is the one the base library of .NET offers with no additional
+dependency. Argon2id resists better whoever has graphics cards at their
+disposal, but requires a third-party library. See D3.
 
 ---
 
 # Sessions
 
-Dopo un accesso riuscito il Backend crea una **sessione** e la comunica al browser con un cookie.
+After a successful sign in the Backend creates a **session** and communicates
+it to the browser with a cookie.
 
-| Aspetto | Regola |
+| Aspect | Rule |
 | --- | --- |
-| Identificativo | 32 byte casuali da un generatore crittografico, mai derivati da dati dell'account |
-| Cookie | `HttpOnly`, `SameSite=Strict`, percorso `/api`, senza attributo `Domain`. `Secure` quando la connessione è cifrata |
-| Conservazione | Nel database si conserva soltanto l'**hash SHA-256** dell'identificativo. Chi leggesse il database non potrebbe usare una sessione |
-| Inattività | Scade dopo 8 ore senza richieste |
-| Durata massima | Scade in ogni caso dopo 14 giorni |
-| Rinnovo | L'identificativo cambia ad ogni accesso |
+| Identifier | 32 random bytes from a cryptographic generator, never derived from data of the account |
+| Cookie | `HttpOnly`, `SameSite=Strict`, path `/api`, no `Domain` attribute. `Secure` when the connection is encrypted |
+| Keeping | Only the **SHA-256 hash** of the identifier is kept in the database. Whoever read the database could not use a session |
+| Inactivity | Expires after 8 hours without requests |
+| Maximum duration | Expires in any case after 14 days |
+| Renewal | The identifier changes at every sign in |
 
-Il browser non maneggia mai la credenziale né un token in codice eseguibile dalla pagina: il cookie `HttpOnly` non è leggibile dallo script.
+The browser never handles the credential, nor a token in code the page can
+execute: the `HttpOnly` cookie is not readable by script.
 
-Una sessione cade quando: l'utente esce, l'account viene disattivato o rimosso, la password cambia (tutte le altre sessioni dell'account), scade.
+A session falls when: the user signs out, the account is disabled or removed,
+the password changes (every other session of the account), it expires.
 
-Il ruolo non è copiato nella sessione: viene letto dall'account ad ogni richiesta. Una retrocessione ha effetto immediato.
+The role is not copied into the session: it is read from the account at every
+request. A demotion takes effect immediately.
 
 ---
 
 # First Run
 
-Una nuova installazione non ha account. Chi raggiunge per primo l'indirizzo non deve poterne diventare l'amministratore semplicemente arrivando prima del proprietario.
+A new installation has no accounts. Whoever reaches the address first must not
+be able to become its administrator simply by arriving before the owner.
 
-1. All'avvio, se non esiste alcun account, PIE entra nello stato **`SetupRequired`** e genera un **codice di configurazione** casuale di 12 caratteri, mostrato in gruppi di quattro.
-2. Il codice viene **scritto sull'output standard, con una scrittura diretta**, e non passa dal sistema di registrazione. Non raggiunge quindi file di log né raccoglitori che quel sistema alimenti.
-3. Nello stato `SetupRequired` ogni richiesta, tranne la configurazione iniziale, riceve `401` con codice `SetupRequired`.
-4. `POST /api/v1/setup` riceve codice, nome utente e password, e crea il primo `Administrator`. Ha successo una volta sola: l'operazione è atomica, e una seconda richiesta contemporanea fallisce.
+1. At startup, if no account exists, PIE enters the **`SetupRequired`** state
+   and generates a random **setup code** of 12 characters, shown in groups of
+   four.
+2. The code is **written to standard output, by a direct write**, and does not
+   pass through the logging system. It therefore reaches no log file, nor any
+   collector that system feeds.
+3. In the `SetupRequired` state every request, except the initial setup,
+   receives `401` with code `SetupRequired`.
+4. `POST /api/v1/setup` receives code, username and password, and creates the
+   first `Administrator`. It succeeds once only: the operation is atomic, and
+   a second simultaneous request fails.
 
-   Il codice si controlla per primo. Un nome o una password non conformi vengono rifiutati **senza consumare il codice**: chi sbaglia a digitare non deve doverne chiedere un altro riavviando il servizio. Il codice si accetta in qualunque combinazione di maiuscole e minuscole, con o senza trattini e spazi.
-5. Il codice non viene mai conservato: esiste in memoria in forma di hash e si rigenera ad ogni avvio finché non viene usato. I tentativi sbagliati sottostanno agli stessi limiti dell'accesso.
+   The code is checked first. A username or a password that does not conform
+   is refused **without consuming the code**: whoever mistypes must not have
+   to ask for another by restarting the service. The code is accepted in any
+   combination of upper and lower case, with or without hyphens and spaces.
+5. The code is never kept: it exists in memory in the form of a hash and is
+   regenerated at every startup until it is used. Wrong attempts fall under
+   the same limits as signing in.
 
-La prova di possesso è dunque l'**accesso alla macchina**: chi legge l'output standard del processo è, per definizione, chi amministra l'host. In un container è l'output di `docker logs`, e questo è un limite dichiarato.
+The proof of possession is therefore **access to the machine**: whoever reads
+the standard output of the process is, by definition, whoever administers the
+host. In a container it is the output of `docker logs`, and this is a declared
+limit.
 
-**Sotto un servizio di sistema il codice non esiste.** L'output standard di un servizio finisce nel registro di sistema, oppure da nessuna parte: mostrarvi il codice violerebbe il punto 2, e non mostrarlo lascerebbe l'installazione senza via d'ingresso. Quando PIE funziona come servizio, non entra nello stato `SetupRequired` con un codice: il primo `Administrator` si crea con il comando di recupero, che su un'installazione senza account ne crea uno (Installation Specification, First Administrator Under A Service). Finché non esiste, ogni richiesta riceve `401` con codice `SetupRequired`, e `POST /api/v1/setup` rifiuta qualunque codice.
+**Under a system service the code does not exist.** The standard output of a
+service ends up in the system log, or nowhere: showing the code there would
+breach point 2, and not showing it would leave the installation with no way
+in. When PIE runs as a service, it does not enter the `SetupRequired` state
+with a code: the first `Administrator` is created with the recovery command,
+which on an installation without accounts creates one (Installation
+Specification, First Administrator Under A Service). Until one exists, every
+request receives `401` with code `SetupRequired`, and `POST /api/v1/setup`
+refuses any code at all.
 
 ---
 
 # Recovery
 
-Non esiste un «ho dimenticato la password» via rete e non esiste un messaggio di posta: sono servizi esterni, e un canale di recupero è un secondo modo di entrare.
+There is no "I forgot my password" over the network and there is no mail
+message: those are external services, and a recovery channel is a second way
+in.
 
-Il recupero è **un comando eseguito sulla macchina che ospita PIE**, dallo stesso eseguibile, che:
+Recovery is **a command run on the machine hosting PIE**, from the same
+executable, which:
 
-* chiede la nuova password sul terminale;
-* la imposta sull'account indicato e vi rimette `passwordChangeRequired`, tranne quando crea il primo account di un'installazione che non ne ha: quella password l'ha appena scelta chi la userà, e cambiarla subito non protegge nulla;
-* fa cadere tutte le sessioni di quell'account;
-* può, se non esiste alcun `Administrator` attivo, riattivarne o crearne uno.
+* asks for the new password at the terminal;
+* sets it on the account named and puts `passwordChangeRequired` back on it,
+  except when it creates the first account of an installation that has none:
+  that password was just chosen by whoever will use it, and changing it at
+  once protects nothing;
+* makes every session of that account fall;
+* may, if no active `Administrator` exists, re-enable or create one.
 
-Le regole sul nome indicato:
+The rules on the name given:
 
-| Situazione | Effetto |
+| Situation | Effect |
 | --- | --- |
-| Esiste un `Administrator` attivo e il nome è di un account | La password di quell'account viene reimpostata, qualunque ne sia il ruolo |
-| Esiste un `Administrator` attivo e il nome **non** è di un account | Rifiutato. Un errore di battitura non deve creare un account |
-| Nessun `Administrator` è attivo e il nome è di un `Administrator` disattivato | Viene riattivato e la sua password reimpostata |
-| Nessun `Administrator` è attivo e il nome non esiste | Viene creato un `Administrator` |
-| Nessun `Administrator` è attivo e il nome è di un `Viewer` | Rifiutato. Il comando ripristina un amministratore, non ne promuove uno |
+| An active `Administrator` exists and the name is that of an account | The password of that account is reset, whatever its role |
+| An active `Administrator` exists and the name is **not** that of an account | Refused. A typing error must not create an account |
+| No `Administrator` is active and the name is that of a disabled `Administrator` | It is re-enabled and its password reset |
+| No `Administrator` is active and the name does not exist | An `Administrator` is created |
+| No `Administrator` is active and the name is that of a `Viewer` | Refused. The command restores an administrator, it does not promote one |
 
-La password nuova è soggetta alle regole di sempre.
+The new password is subject to the usual rules.
 
-Chi può eseguirlo ha già accesso al database. Il recupero non concede nulla che l'accesso alla macchina non conceda già. La forma esatta del comando è un dettaglio d'implementazione.
+Whoever can run it already has access to the database. Recovery grants nothing
+that access to the machine does not grant already. The exact form of the
+command is an implementation detail.
 
 ---
 
 # Transport
 
-Le credenziali sono accettate **soltanto su una connessione cifrata oppure quando il client è sul loopback**. Altrimenti la risposta è `403` con codice `TransportNotSecure`.
+Credentials are accepted **only over an encrypted connection, or when the
+client is on the loopback**. Otherwise the answer is `403` with code
+`TransportNotSecure`.
 
-Una credenziale è **qualunque password**: `setup`, `login`, cambio della propria password, creazione di un account (`POST /accounts`) e reimpostazione (`PATCH /accounts/{username}` con `password`). La password iniziale scelta da un amministratore è una password come le altre (D9).
+A credential is **any password**: `setup`, `login`, changing one's own
+password, creating an account (`POST /accounts`) and resetting one (`PATCH
+/accounts/{username}` with `password`). The initial password chosen by an
+administrator is a password like the others (D9).
 
-Il controllo precede ogni altro: una richiesta respinta per il trasporto non viene valutata e non conta come tentativo. Un indirizzo remoto sconosciuto non è il loopback.
+The check comes before every other: a request refused for the transport is not
+evaluated and does not count as an attempt. An unknown remote address is not
+the loopback.
 
-Il criterio è l'indirizzo remoto della connessione, non l'intestazione `Host`, che chi scrive la richiesta controlla.
+The criterion is the remote address of the connection, not the `Host` header,
+which whoever writes the request controls.
 
-Il cookie di sessione porta `Secure` quando la connessione è cifrata. Sul loopback in chiaro non lo porta: alcuni browser lo rifiutano su un indirizzo non cifrato anche locale.
+The session cookie carries `Secure` when the connection is encrypted. On the
+loopback in the clear it does not: some browsers refuse it on an unencrypted
+address, even a local one.
 
-L'impostazione `AllowedHosts` deve elencare i nomi con cui l'installazione è raggiungibile. Con `*` un sito malevolo che rimappi il proprio nome sull'indirizzo locale (DNS rebinding) raggiunge l'API con il browser dell'amministratore.
+The `AllowedHosts` setting must list the names the installation is reachable
+by. With `*`, a malicious site that remaps its own name onto the local address
+(DNS rebinding) reaches the API with the administrator's browser.
 
-Il valore predefinito è `localhost;127.0.0.1;[::1]`, i soli nomi del loopback, e vale anche quando l'impostazione manca: una riga assente da un file di configurazione non deve aprire nulla. Chi raggiunge l'installazione con un altro nome lo aggiunge in `appsettings.Local.json`. Con il canale HTTPS aperto si aggiungono automaticamente il nome e gli indirizzi del computer (Transport Security Specification, Names Accepted): un sito che rimappa il proprio nome sull'indirizzo locale non porta nessuno di questi nell'intestazione `Host`. Il valore `*` **impedisce l'avvio**, con un messaggio che dice perché: è esattamente l'impostazione che spegne una protezione, vietata dal secondo principio. Una richiesta con un `Host` non elencato riceve `400` dal filtro del framework, senza corpo: non è rivolta a questo servizio.
+The default value is `localhost;127.0.0.1;[::1]`, the names of the loopback
+alone, and it holds when the setting is missing too: a line absent from a
+configuration file must not open anything. Whoever reaches the installation by
+another name adds it in `appsettings.Local.json`. With the HTTPS channel open,
+the name and the addresses of the computer are added automatically (Transport
+Security Specification, Names Accepted): a site remapping its own name onto
+the local address carries none of these in the `Host` header. The value `*`
+**prevents startup**, with a message saying why: it is exactly the setting
+that turns a protection off, forbidden by the second principle. A request with
+a `Host` not listed receives `400` from the filter of the framework, with no
+body: it is not addressed to this service.
 
-`Strict-Transport-Security` è inviata soltanto con un certificato fornito dall'operatore (Transport Security Specification, Strict Transport Security). Con il certificato generato da PIE, un browser che l'avesse ricevuta non lascerebbe più accettare l'avviso, e al primo rinnovo PIE diventerebbe irraggiungibile da quel dispositivo.
+`Strict-Transport-Security` is sent only with a certificate supplied by the
+operator (Transport Security Specification, Strict Transport Security). With
+the certificate generated by PIE, a browser that had received it would no
+longer let the warning be accepted, and at the first renewal PIE would become
+unreachable from that device.
 
 ## Origin
 
-Una richiesta che modifica dati (ogni metodo tranne `GET`, `HEAD`, `OPTIONS` e `TRACE`) con un `Origin` diverso da schema, nome e porta della richiesta stessa riceve `403 OriginNotAllowed`. Vale anche per `setup` e `login`. `Origin: null` è diverso da qualunque indirizzo.
+A request that modifies data (every method except `GET`, `HEAD`, `OPTIONS` and
+`TRACE`) with an `Origin` different from the scheme, name and port of the
+request itself receives `403 OriginNotAllowed`. This holds for `setup` and
+`login` too. `Origin: null` is different from any address.
 
-Una richiesta **senza** `Origin` è accettata. I browser lo mandano su ogni richiesta che modifica dati; chi non lo manda è un client che non è un browser, e non porta con sé la sessione di nessuno.
+A request **without** `Origin` is accepted. Browsers send it on every request
+that modifies data; whoever does not send it is a client that is not a
+browser, and carries nobody's session with it.
 
-Come si ottiene la connessione cifrata, e come si tratta un proxy che la termina davanti a PIE, lo definisce la Transport Security Specification.
+How the encrypted connection is obtained, and how a proxy terminating it in
+front of PIE is treated, is defined by the Transport Security Specification.
 
 ---
 
 # Attempts
 
-Contro chi prova password a ripetizione.
+Against whoever tries passwords repeatedly.
 
-| Contatore | Soglia | Effetto |
+| Counter | Threshold | Effect |
 | --- | --- | --- |
-| Per indirizzo di origine | 5 fallimenti | Rifiuto `429` con `TooManyAttempts` e `Retry-After` |
-| Per account | 10 fallimenti | Lo stesso rifiuto |
+| Per source address | 5 failures | Refusal `429` with `TooManyAttempts` and `Retry-After` |
+| Per account | 10 failures | The same refusal |
 
-Il ritardo parte da 30 secondi e **raddoppia** ad ogni ulteriore fallimento, fino a un massimo di **15 minuti**. Un accesso riuscito azzera il contatore dell'account. I contatori vivono in memoria e si azzerano al riavvio.
+The delay starts at 30 seconds and **doubles** at every further failure, up to
+a maximum of **15 minutes**. A successful sign in resets the counter of the
+account. The counters live in memory and reset at restart.
 
-Che cosa è un fallimento:
+What a failure is:
 
-| Richiesta | Contatori |
+| Request | Counters |
 | --- | --- |
-| `login` rifiutato con `AuthenticationFailed` | Indirizzo e account |
-| `setup` rifiutato con `SetupCodeRejected` | Indirizzo |
-| Cambio della propria password rifiutato con `CurrentPasswordRejected` (D10) | Indirizzo e account |
+| `login` refused with `AuthenticationFailed` | Address and account |
+| `setup` refused with `SetupCodeRejected` | Address |
+| A change of one's own password refused with `CurrentPasswordRejected` (D10) | Address and account |
 
-Un nome o una password non conformi non sono un fallimento: non mettono alla prova alcun segreto. Una richiesta respinta con `429` non viene valutata e non conta. La password attuale giusta, nel cambio password, azzera il contatore dell'account come un accesso riuscito.
+A username or a password that does not conform is not a failure: it puts no
+secret to the test. A request refused with `429` is not evaluated and does not
+count. The right current password, in a password change, resets the counter of
+the account as a successful sign in does.
 
-Regole dei contatori:
+Rules of the counters:
 
-* **Durante il ritardo le credenziali non vengono verificate**, neppure se sono giuste: altrimenti il ritardo non rallenterebbe nessuno.
-* Il contatore dell'account è indicizzato dal **nome tentato**, che l'account esista o no. Rallentare soltanto i nomi esistenti rivelerebbe quali esistono.
-* Un indirizzo IPv6 si conta per il suo **prefisso /64**, che è ciò che una rete domestica assegna a un solo dispositivo: contarlo per indirizzo lascerebbe a chiunque miliardi di contatori. Un indirizzo IPv4 scritto come IPv6 si conta come IPv4.
-* **Oblio (D11).** Un contatore senza fallimenti per 15 minuti **dopo la fine del suo ritardo** si azzera. Contare dall'ultimo fallimento farebbe coincidere l'oblio con la fine del ritardo più lungo, e chi insiste troverebbe il contatore vuoto proprio quando torna a provare. Così un errore occasionale viene dimenticato, un avversario continuo resta rallentato, e la memoria non cresce senza limite.
+* **During the delay the credentials are not checked**, not even when they are
+  right: otherwise the delay would slow nobody down.
+* The counter of the account is indexed by the **name attempted**, whether the
+  account exists or not. Slowing down only the names that exist would reveal
+  which ones do.
+* An IPv6 address counts by its **/64 prefix**, which is what a home network
+  assigns to a single device: counting it by address would leave anyone
+  billions of counters. An IPv4 address written as IPv6 counts as IPv4.
+* **Forgetting (D11).** A counter with no failures for 15 minutes **after the
+  end of its delay** resets. Counting from the last failure would make
+  forgetting coincide with the end of the longest delay, and whoever persists
+  would find the counter empty exactly when they come back to try. This way an
+  occasional mistake is forgotten, a persistent adversary stays slowed down,
+  and the memory does not grow without bound.
 
-Non esiste un blocco permanente: renderebbe possibile a chiunque chiudere fuori il proprietario. Il tetto di 15 minuti è la misura di quanto un avversario può rallentare l'amministratore legittimo, ed è dichiarato come compromesso.
+There is no permanent block: it would make it possible for anyone to lock the
+owner out. The ceiling of 15 minutes is the measure of how much an adversary
+can slow the legitimate administrator down, and it is declared as a
+compromise.
 
-Gli indirizzi di origine servono ai contatori e non vengono registrati in alcun luogo.
+The source addresses serve the counters and are recorded nowhere.
 
 ---
 
 # API Contract
 
-Tutte le risposte usano la struttura comune della API Specification.
+Every answer uses the common structure of the API Specification.
 
-| Metodo e percorso | Chi | Effetto |
+| Method and path | Who | Effect |
 | --- | --- | --- |
-| `POST /api/v1/setup` | Nessuno, solo in `SetupRequired` | Crea il primo `Administrator` e apre la sessione |
-| `POST /api/v1/auth/login` | Nessuno | Apre la sessione |
-| `POST /api/v1/auth/logout` | Sessione | Chiude la sessione |
-| `GET /api/v1/auth/session` | Sessione | Restituisce nome utente, ruolo, scadenza e `passwordChangeRequired` |
-| `POST /api/v1/auth/password` | Sessione | Cambia la propria password |
-| `GET /api/v1/accounts` | `Administrator` | Elenca gli account |
-| `POST /api/v1/accounts` | `Administrator` | Crea un account con password iniziale |
-| `PATCH /api/v1/accounts/{username}` | `Administrator` | Cambia ruolo, attivazione, o reimposta la password |
-| `DELETE /api/v1/accounts/{username}` | `Administrator` | Rimuove l'account |
+| `POST /api/v1/setup` | Nobody, only in `SetupRequired` | Creates the first `Administrator` and opens the session |
+| `POST /api/v1/auth/login` | Nobody | Opens the session |
+| `POST /api/v1/auth/logout` | Session | Closes the session |
+| `GET /api/v1/auth/session` | Session | Returns username, role, expiry and `passwordChangeRequired` |
+| `POST /api/v1/auth/password` | Session | Changes one's own password |
+| `GET /api/v1/accounts` | `Administrator` | Lists the accounts |
+| `POST /api/v1/accounts` | `Administrator` | Creates an account with an initial password |
+| `PATCH /api/v1/accounts/{username}` | `Administrator` | Changes role, enablement, or resets the password |
+| `DELETE /api/v1/accounts/{username}` | `Administrator` | Removes the account |
 
-`setup` e `login` sono gli **unici** endpoint raggiungibili senza credenziali, perché sono il modo di ottenerle. Nessuno dei due restituisce alcun dato sulla rete o sul sistema.
+`setup` and `login` are the **only** endpoints reachable without credentials,
+because they are the way to obtain them. Neither returns any datum about the
+network or the system.
 
-## Errori
+## Errors
 
-| Stato | Codice | Quando |
+| Status | Code | When |
 | --- | --- | --- |
-| 401 | `SetupRequired` | Nessun account esiste ancora |
-| 401 | `AuthenticationRequired` | Sessione assente, non riconosciuta o scaduta |
-| 401 | `AuthenticationFailed` | Accesso rifiutato. Identico per nome inesistente, password errata e account disattivato |
-| 403 | `Forbidden` | Il ruolo non basta |
-| 403 | `PasswordChangeRequired` | La password deve essere cambiata prima di ogni altra cosa |
-| 403 | `TransportNotSecure` | Credenziali su connessione in chiaro non locale |
-| 403 | `OriginNotAllowed` | Richiesta che modifica dati con `Origin` diverso dall'indirizzo del servizio |
-| 409 | `LastAdministrator` | L'operazione lascerebbe l'installazione senza amministratore |
-| 409 | `AccountExists` | Nome già usato |
-| 401 | `SetupCodeRejected` | Il codice di configurazione iniziale è assente o errato. Identico nei due casi |
-| 409 | `SetupAlreadyCompleted` | Esiste già un account: la configurazione iniziale non è più disponibile |
-| 422 | `UsernameRejected` | Nome non conforme |
-| 422 | `PasswordRejected` | Password non conforme, con il motivo: `TooShort`, `TooLong`, `EqualsUsername`, `Unchanged` |
-| 422 | `RoleRejected` | Ruolo diverso da `Administrator` e `Viewer`, o assente nella creazione di un account |
-| 403 | `CurrentPasswordRejected` | Nel cambio della propria password, la password attuale non è quella giusta |
-| 404 | `AccountNotFound` | Nessun account ha il nome indicato nel percorso |
-| 429 | `TooManyAttempts` | Vedi Attempts |
+| 401 | `SetupRequired` | No account exists yet |
+| 401 | `AuthenticationRequired` | Session absent, unrecognised or expired |
+| 401 | `AuthenticationFailed` | Sign in refused. Identical for a name that does not exist, a wrong password and a disabled account |
+| 403 | `Forbidden` | The role is not enough |
+| 403 | `PasswordChangeRequired` | The password must be changed before anything else |
+| 403 | `TransportNotSecure` | Credentials over a connection in the clear that is not local |
+| 403 | `OriginNotAllowed` | A request modifying data with an `Origin` different from the address of the service |
+| 409 | `LastAdministrator` | The operation would leave the installation without an administrator |
+| 409 | `AccountExists` | Name already used |
+| 401 | `SetupCodeRejected` | The setup code is absent or wrong. Identical in the two cases |
+| 409 | `SetupAlreadyCompleted` | An account exists already: the initial setup is no longer available |
+| 422 | `UsernameRejected` | Name does not conform |
+| 422 | `PasswordRejected` | Password does not conform, with the reason: `TooShort`, `TooLong`, `EqualsUsername`, `Unchanged` |
+| 422 | `RoleRejected` | A role other than `Administrator` and `Viewer`, or absent in the creation of an account |
+| 403 | `CurrentPasswordRejected` | In a change of one's own password, the current password is not the right one |
+| 404 | `AccountNotFound` | No account has the name given in the path |
+| 429 | `TooManyAttempts` | See Attempts |
 
-Il motivo di `PasswordRejected` viaggia nel campo `reason` della risposta di errore e non nel testo: l'interfaccia lo traduce nella lingua di chi legge.
+The reason of `PasswordRejected` travels in the `reason` field of the error
+answer and not in the text: the interface translates it into the language of
+whoever reads.
 
-Le risposte di rifiuto non riportano mai una `WWW-Authenticate` di tipo `Basic`: farebbe comparire la finestra di credenziali del browser al posto della schermata dell'applicazione.
+Refusals never carry a `WWW-Authenticate` of type `Basic`: it would make the
+credentials window of the browser appear in place of the screen of the
+application.
 
-`AuthenticationRequired` non distingue una sessione scaduta da una mai aperta: non è un'informazione che il Backend debba fornire. Il Frontend sa da sé se l'utente era entrato.
+`AuthenticationRequired` does not distinguish an expired session from one
+never opened: it is not information the Backend has to supply. The Frontend
+knows by itself whether the user had signed in.
 
-Mentre `passwordChangeRequired` è vero, ogni endpoint tranne `auth/session`, `auth/password` e `auth/logout` risponde `PasswordChangeRequired`. Vale anche dove il ruolo non basterebbe: la password da cambiare viene prima di ogni altra cosa, e dire `Forbidden` a chi non può ancora fare nulla sarebbe un'indicazione inutile.
+While `passwordChangeRequired` is true, every endpoint except `auth/session`,
+`auth/password` and `auth/logout` answers `PasswordChangeRequired`. This holds
+where the role would not be enough either: the password to change comes before
+anything else, and saying `Forbidden` to someone who can do nothing yet would
+be a pointless indication.
 
-## Richieste e risposte
+## Requests And Answers
 
-| Endpoint | Corpo | Risposta riuscita |
+| Endpoint | Body | Successful answer |
 | --- | --- | --- |
-| `POST /auth/password` | `currentPassword`, `newPassword` | `200`, la sessione come la descrive `auth/session` |
-| `GET /accounts` | — | `200`, l'elenco degli account |
-| `POST /accounts` | `username`, `role`, `password` | `201`, l'account creato |
-| `PATCH /accounts/{username}` | `role`, `enabled`, `password`, ciascuno facoltativo | `200`, l'account come è dopo la modifica |
+| `POST /auth/password` | `currentPassword`, `newPassword` | `200`, the session as `auth/session` describes it |
+| `GET /accounts` | — | `200`, the list of the accounts |
+| `POST /accounts` | `username`, `role`, `password` | `201`, the account created |
+| `PATCH /accounts/{username}` | `role`, `enabled`, `password`, each optional | `200`, the account as it is after the change |
 | `DELETE /accounts/{username}` | — | `200` |
 
-Un account, nelle risposte, è `username`, `role`, `enabled`, `passwordChangeRequired` e `createdAt`. L'hash della password non esce mai dal Backend.
+An account, in the answers, is `username`, `role`, `enabled`,
+`passwordChangeRequired` and `createdAt`. The hash of the password never
+leaves the Backend.
 
-## Cambio della propria password
+## Changing One's Own Password
 
-* Richiede la **password attuale**. Una sessione lasciata aperta su un browser non deve bastare a impadronirsi dell'account.
-* Una password attuale sbagliata risponde `403 CurrentPasswordRejected`, **non** `401`: il Frontend legge un `401` come sessione terminata, e la sessione è invece valida.
-* La nuova password segue le regole di sempre e in più **non può coincidere con quella attuale** (`Unchanged`). Senza questa regola l'obbligo di cambiarla dopo una reimpostazione si aggirerebbe rimettendo la stessa, e l'amministratore continuerebbe a conoscerla.
-* A cambio riuscito `passwordChangeRequired` diventa falso, la sessione da cui è stato fatto resta aperta, **tutte le altre** dell'account cadono.
+* It requires the **current password**. A session left open on a browser must
+  not be enough to take over the account.
+* A wrong current password answers `403 CurrentPasswordRejected`, **not**
+  `401`: the Frontend reads a `401` as a session ended, and the session is
+  instead valid.
+* The new password follows the usual rules and moreover **cannot coincide with
+  the current one** (`Unchanged`). Without this rule the obligation to change
+  it after a reset would be got round by putting the same one back, and the
+  administrator would go on knowing it.
+* On a successful change `passwordChangeRequired` becomes false, the session
+  it was done from stays open, **every other** session of the account falls.
 
-## Gestione degli account
+## Account Management
 
-* Un account creato da un amministratore nasce con `passwordChangeRequired` vero.
-* Il nome segue le regole di Accounts And Roles, e il ruolo è scritto per nome: `Administrator` o `Viewer`.
-* In `PATCH` i campi presenti si applicano **tutti o nessuno**. Un corpo senza campi non cambia nulla e restituisce l'account.
-* `password` in `PATCH` è una reimpostazione: `passwordChangeRequired` torna vero e **tutte** le sessioni dell'account cadono, anche quella di chi la esegue se l'account è il proprio.
-* `enabled: false` fa cadere tutte le sessioni dell'account.
-* Un amministratore agisce sul proprio account come su quello di un altro. Il solo limite è il vincolo dell'ultimo amministratore.
-* Il vincolo è verificato **nella stessa transazione** della modifica. Due amministratori che si disattivano a vicenda nello stesso istante non devono poter lasciare l'installazione senza nessuno dei due.
+* An account created by an administrator is born with
+  `passwordChangeRequired` true.
+* The name follows the rules of Accounts And Roles, and the role is written by
+  name: `Administrator` or `Viewer`.
+* In `PATCH` the fields present apply **all or none**. A body with no fields
+  changes nothing and returns the account.
+* `password` in `PATCH` is a reset: `passwordChangeRequired` goes back to true
+  and **every** session of the account falls, including that of whoever
+  performs it if the account is their own.
+* `enabled: false` makes every session of the account fall.
+* An administrator acts on their own account as on another's. The only limit
+  is the constraint of the last administrator.
+* The constraint is checked **in the same transaction** as the change. Two
+  administrators disabling each other at the same instant must not be able to
+  leave the installation without either of them.
 
-## Intestazioni
+## Headers
 
-* Ogni risposta autenticata porta `Cache-Control: no-store`: contiene dati di rete e non deve restare nella cache del browser né di un intermediario.
-* Le richieste che modificano dati verificano `Origin`, oltre a `SameSite=Strict`. Vedi Transport, Origin.
-* Nessuna pagina servita da PIE può essere inserita in un frame di un altro sito: ogni risposta porta `Content-Security-Policy: frame-ancestors 'none'`.
-* Un rifiuto `429` porta `Retry-After` in secondi interi, arrotondati per eccesso.
+* Every authenticated answer carries `Cache-Control: no-store`: it contains
+  network data and must not stay in the cache of the browser nor of an
+  intermediary.
+* Requests that modify data check `Origin`, besides `SameSite=Strict`. See
+  Transport, Origin.
+* No page served by PIE can be put into a frame of another site: every answer
+  carries `Content-Security-Policy: frame-ancestors 'none'`.
+* A `429` refusal carries `Retry-After` in whole seconds, rounded up.
 
 ---
 
 # Authorization
 
-Ogni endpoint **dichiara il ruolo minimo** che richiede. Un endpoint che non lo dichiara richiede `Administrator`: dimenticare una dichiarazione produce un rifiuto, mai un'apertura.
+Every endpoint **declares the minimum role** it requires. An endpoint that
+does not declare one requires `Administrator`: forgetting a declaration
+produces a refusal, never an opening.
 
-| Endpoint | Ruolo minimo |
+| Endpoint | Minimum role |
 | --- | --- |
 | `/health` | `Viewer` |
 | `/statistics` | `Viewer` |
 | `/npss` | `Viewer` |
 | `/domains` | `Viewer` |
-| `/domains/{domain}` | `Viewer`, con l'attività trattenuta (vedi sotto) |
+| `/domains/{domain}` | `Viewer`, with the activity withheld (see below) |
 | `/devices` | `Administrator` |
-| Endpoint degli account | `Administrator` |
+| Account endpoints | `Administrator` |
 
-## Ciò che viene trattenuto è dichiarato
+## What Is Withheld Is Declared
 
-`/domains/{domain}` restituisce oggi `activityAvailable`, un booleano, e l'elenco `activities`. Per un `Viewer` l'elenco sarebbe vuoto, e vuoto per mancanza di diritto sarebbe indistinguibile da vuoto perché nessun dispositivo ha contattato il dominio.
+`/domains/{domain}` returns `activityAvailable`, a boolean, and the list
+`activities`. For a `Viewer` the list would be empty, and empty for want of a
+right would be indistinguishable from empty because no device contacted the
+domain.
 
-Il campo diventa **`activityAccess`**, con tre valori:
+The field becomes **`activityAccess`**, with three values:
 
-| Valore | Significato |
+| Value | Meaning |
 | --- | --- |
-| `Available` | La sorgente offre l'attività e chi chiede può leggerla. `activities` è l'elenco |
-| `Unavailable` | La sorgente non offre l'attività. `activities` è vuoto e non significa nulla |
-| `Withheld` | La sorgente la offre, ma il ruolo di chi chiede non la comprende. `activities` è vuoto e non significa nulla |
+| `Available` | The source offers the activity and whoever asks may read it. `activities` is the list |
+| `Unavailable` | The source does not offer the activity. `activities` is empty and means nothing |
+| `Withheld` | The source offers it, but the role of whoever asks does not include it. `activities` is empty and means nothing |
 
-Il Frontend mostra il terzo caso come tale: **non** come assenza di attività e **non** come errore.
+The Frontend shows the third case as such: **not** as an absence of activity
+and **not** as an error.
 
 ---
 
 # Frontend
 
-Il Frontend nasce bilingue: ogni testo che segue esiste in italiano e in inglese nel catalogo.
+The Frontend is born bilingual: every text below exists in Italian and in
+English in the catalogue.
 
-## Stati
+## States
 
-L'applicazione è sempre in uno di questi stati, distinti fra loro:
+The application is always in one of these states, distinct from one another:
 
-| Stato | Quando |
+| State | When |
 | --- | --- |
-| `Checking` | All'apertura, mentre chiede se una sessione esiste |
-| `SetupRequired` | Il Backend risponde `SetupRequired` |
-| `Unauthenticated` | Nessuna sessione |
-| `Authenticated` | Sessione valida |
-| `PasswordChangeRequired` | Sessione valida, password da cambiare |
+| `Checking` | At opening, while it asks whether a session exists |
+| `SetupRequired` | The Backend answers `SetupRequired` |
+| `Unauthenticated` | No session |
+| `Authenticated` | Valid session |
+| `PasswordChangeRequired` | Valid session, password to be changed |
 
-Un `401` ricevuto mentre l'utente era `Authenticated` porta a `Unauthenticated` con un messaggio che dice che la sessione è terminata. È diverso dal fallimento di un accesso appena tentato.
+A `401` received while the user was `Authenticated` leads to `Unauthenticated`
+with a message saying the session has ended. It is different from the failure
+of a sign in just attempted.
 
-## Schermate
+## Screens
 
-Configurazione iniziale, accesso, cambio password, gestione degli account (solo `Administrator`).
+Initial setup, sign in, password change, account management (`Administrator`
+only).
 
-## Regole
+## Rules
 
-* **Nessun dato di rete sopravvive all'uscita.** Alla chiusura della sessione gli store svuotano ogni dato letto. Un altro utente dello stesso browser non deve trovare ciò che il precedente vedeva.
-* La password non compare mai in un indirizzo, non viene mai messa in `localStorage` né in un'altra memoria persistente. Non esiste «ricordami» oltre la durata della sessione.
-* Le tre situazioni **non si confondono**: credenziali sbagliate, motore non raggiungibile, connessione non sicura. Dire «credenziali errate» quando il motore non ha risposto è un'affermazione falsa.
+* **No network datum survives signing out.** When the session closes the
+  stores empty every datum read. Another user of the same browser must not
+  find what the previous one was seeing.
+* The password never appears in an address, is never put into `localStorage`
+  nor into any other persistent memory. There is no "remember me" beyond the
+  duration of the session.
+* The three situations **are not confused**: wrong credentials, engine
+  unreachable, connection not secure. Saying "credentials incorrect" when the
+  engine did not answer is a false statement.
 
-## Messaggi
+## Messages
 
-| Codice | Italiano | Inglese |
+| Code | Italian | English |
 | --- | --- | --- |
 | `auth.failed` | Nome utente o password non corretti. | Username or password incorrect. |
 | `auth.engineUnreachable` | Il motore non ha risposto. Le credenziali non sono state verificate. | The engine did not answer. Your credentials were not checked. |
@@ -424,156 +616,192 @@ Configurazione iniziale, accesso, cambio password, gestione degli account (solo 
 | `auth.notSecure` | Le credenziali non possono essere inviate su una connessione non cifrata. Apri l'indirizzo in HTTPS. | Credentials cannot be sent over an unencrypted connection. Open the address over HTTPS. |
 | `domains.activityWithheld` | L'attività per dispositivo è visibile solo agli amministratori. Questo non dice se qualche dispositivo abbia contattato il dominio. | Activity per device is visible to administrators only. This says nothing about whether any device contacted the domain. |
 
-`auth.failed` non dice se il nome esiste, né se l'account è disattivato. `auth.engineUnreachable` esiste perché il motore che non risponde e la password sbagliata sono due fatti diversi. L'ultimo messaggio riprende la regola dei principi: il rifiuto non deve poter passare per un'assenza.
+`auth.failed` says neither whether the name exists, nor whether the account is
+disabled. `auth.engineUnreachable` exists because an engine that does not
+answer and a wrong password are two different facts. The last message takes up
+the rule of the principles: a refusal must not be able to pass for an absence.
 
-I motivi di `PasswordRejected` e gli altri errori hanno una voce ciascuno nel catalogo, con la stessa parità fra le due lingue che il catalogo già verifica.
+The reasons of `PasswordRejected` and the other errors each have an entry in
+the catalogue, with the same parity between the two languages the catalogue
+already verifies.
 
 ---
 
 # Persistence
 
-Aggiunge alla Persistence Specification due entità logiche, interne al Backend:
+It adds two logical entities to the Persistence Specification, internal to the
+Backend:
 
-* **account**: nome utente, ruolo, attivo, hash della password con i parametri, `passwordChangeRequired`, istante di creazione;
-* **sessione**: hash dell'identificativo, account, creazione, ultimo uso, scadenza.
+* **account**: username, role, enabled, hash of the password with its
+  parameters, `passwordChangeRequired`, instant of creation;
+* **session**: hash of the identifier, account, creation, last use, expiry.
 
-Le sessioni scadute vengono eliminate. Le migrazioni seguono le regole già in vigore.
+Expired sessions are deleted. Migrations follow the rules already in force.
 
-Si aggiungono a What Is Never Persisted: **password in chiaro, identificativi di sessione in chiaro, codice di configurazione iniziale**.
+Added to What Is Never Persisted: **passwords in the clear, session
+identifiers in the clear, the setup code**.
 
 ---
 
 # Logging
 
-I registri portano conteggi e a esiti, mai dati di rete e mai segreti.
+The logs carry counts and outcomes, never network data and never secrets.
 
-| Evento | Contenuto |
+| Event | Content |
 | --- | --- |
-| Configurazione iniziale completata | L'evento e il nome dell'amministratore creato |
-| Accesso riuscito | Il nome dell'account |
-| Accesso fallito | L'evento e un **conteggio**: i rifiuti dall'avvio del servizio. Non il nome tentato: potrebbe essere una password digitata nel campo sbagliato |
-| Operazione sugli account | Chi l'ha eseguita, su quale account, quale operazione. Comprende il cambio della propria password; una modifica che ne porta più d'una le registra una per una |
-| Limite raggiunto | L'evento, il tipo di contatore (indirizzo o nome) e il ritardo. Non l'origine né il nome |
+| Initial setup completed | The event and the name of the administrator created |
+| Successful sign in | The name of the account |
+| Failed sign in | The event and a **count**: the refusals since the service started. Not the name attempted: it could be a password typed into the wrong field |
+| Operation on accounts | Who performed it, on which account, which operation. It includes a change of one's own password; a change carrying more than one records them one by one |
+| Limit reached | The event, the kind of counter (address or name) and the delay. Not the origin nor the name |
 
-Non compaiono mai: password, identificativi di sessione, codice di configurazione, indirizzi di origine.
+These never appear: passwords, session identifiers, the setup code, source
+addresses.
 
-La regola vale per **ogni** registro del processo, compresi quelli del framework a qualunque livello di dettaglio, e per ogni risposta, comprese quelle a un guasto imprevisto: la pagina diagnostica del framework, che riporta le intestazioni della richiesta e quindi il cookie di sessione, non viene mai mostrata. Vedi API Specification, Error Handling.
+The rule holds for **every** log of the process, including those of the
+framework at any level of detail, and for every answer, including those to an
+unforeseen fault: the diagnostic page of the framework, which reports the
+headers of the request and therefore the session cookie, is never shown. See
+API Specification, Error Handling.
 
 ---
 
 # Verification
 
-Ogni impegno è **verificabile**, e ciascuno corrisponde ad almeno una prova, come richiede il MASTER_PROMPT.
+Every commitment is **verifiable**, and each corresponds to at least one test,
+as the MASTER_PROMPT requires.
 
 ## Backend
 
-| # | Impegno | Prova |
+| # | Commitment | Test |
 | --- | --- | --- |
-| V1 | Nulla risponde senza identità | Si enumerano **tutti** gli endpoint dell'host. Senza sessione ciascuno risponde `401`, tranne `setup` e `login`, che rispondono soltanto secondo questa specifica |
-| V2 | Il rifiuto è la predefinita | Si registra un endpoint senza dichiarazione di ruolo: richiede `Administrator` |
-| V3 | Il rifiuto non insegna nulla | Nome inesistente, password errata e account disattivato producono la stessa risposta |
-| V4 | Segreti non conservati in chiaro | Nel database non compaiono né la password né l'identificativo di sessione |
-| V5 | Una sessione cade quando deve | Dopo uscita, disattivazione, cambio password e scadenza, l'identificativo vecchio è rifiutato |
-| V6 | Ciò che è trattenuto è dichiarato | Un `Viewer` non legge `/devices` e ottiene `Withheld`, non un elenco vuoto, su `/domains/{domain}` |
-| V7 | Esiste sempre un amministratore | L'ultimo non si può disattivare, rimuovere né retrocedere |
-| V8 | I tentativi ripetuti rallentano | Dopo la soglia si ottiene `429`; un accesso riuscito azzera; il ritardo ha il tetto dichiarato |
-| V9 | Credenziali solo su canale idoneo | Su connessione in chiaro non locale ogni richiesta che porta una password risponde `TransportNotSecure` |
-| V10 | La configurazione iniziale si fa una volta | Senza codice o con codice errato fallisce; con il codice giusto ha successo; la seconda richiesta fallisce |
-| V11 | Nessun segreto in uscita | Nessuna risposta e nessuna riga di registro contiene una password, un identificativo di sessione o il codice |
-| V12 | Nessuna cache | Le risposte autenticate portano `Cache-Control: no-store` |
-| V13 | Richieste da altri siti | Una richiesta che modifica dati con `Origin` estraneo è rifiutata |
-| V14 | Host consentiti | Una richiesta con `Host` non elencato è rifiutata |
-| V15 | Parametri aggiornati | Un accesso riuscito con parametri di hash vecchi li ricalcola |
+| V1 | Nothing answers without an identity | **Every** endpoint of the host is enumerated. Without a session each answers `401`, except `setup` and `login`, which answer only according to this specification |
+| V2 | Refusal is the default | An endpoint is registered with no role declaration: it requires `Administrator` |
+| V3 | A refusal teaches nothing | A name that does not exist, a wrong password and a disabled account produce the same answer |
+| V4 | Secrets are not kept in the clear | Neither the password nor the session identifier appears in the database |
+| V5 | A session falls when it must | After signing out, disabling, a password change and expiry, the old identifier is refused |
+| V6 | What is withheld is declared | A `Viewer` does not read `/devices` and obtains `Withheld`, not an empty list, on `/domains/{domain}` |
+| V7 | An administrator always exists | The last one cannot be disabled, removed or demoted |
+| V8 | Repeated attempts are slowed down | After the threshold `429` is obtained; a successful sign in resets; the delay has the declared ceiling |
+| V9 | Credentials only over a suitable channel | Over a connection in the clear that is not local, every request carrying a password answers `TransportNotSecure` |
+| V10 | The initial setup happens once | Without a code or with a wrong one it fails; with the right code it succeeds; the second request fails |
+| V11 | No secret leaves | No answer and no log line contains a password, a session identifier or the code |
+| V12 | No cache | Authenticated answers carry `Cache-Control: no-store` |
+| V13 | Requests from other sites | A request modifying data with a foreign `Origin` is refused |
+| V14 | Allowed hosts | A request with a `Host` not listed is refused |
+| V15 | Updated parameters | A successful sign in with old hash parameters recomputes them |
 
-La prova esistente «nessuna risposta contiene la credenziale della sorgente dati» resta e si estende ai nuovi segreti.
+The existing test "no answer contains the credential of the data source"
+remains and extends to the new secrets.
 
 ## Frontend
 
-| # | Impegno | Prova |
+| # | Commitment | Test |
 | --- | --- | --- |
-| F1 | Stati distinti | Credenziali sbagliate, motore non raggiungibile, sessione terminata e connessione non sicura producono quattro messaggi diversi |
-| F2 | Nulla sopravvive all'uscita | Dopo l'uscita gli store non contengono dati di rete |
-| F3 | Il messaggio di rifiuto non distingue | Lo stesso testo per ogni motivo di `AuthenticationFailed` |
-| F4 | Il trattenuto non è un'assenza | `Withheld` non si presenta né come elenco vuoto né come errore |
-| F5 | Parità del catalogo | Tutte le voci nuove esistono in entrambe le lingue con gli stessi segnaposto |
+| F1 | Distinct states | Wrong credentials, engine unreachable, session ended and connection not secure produce four different messages |
+| F2 | Nothing survives signing out | After signing out the stores contain no network data |
+| F3 | The refusal message does not distinguish | The same text for every reason of `AuthenticationFailed` |
+| F4 | What is withheld is not an absence | `Withheld` is presented neither as an empty list nor as an error |
+| F5 | Parity of the catalogue | Every new entry exists in both languages with the same placeholders |
 
 ---
 
 # Implementation Milestones
 
-Una funzionalità di questa portata non si realizza in un solo passo. Ogni milestone si può verificare da sola.
+A feature of this scope is not built in a single step. Each milestone can be
+verified on its own. All completed on 2026-09-26.
 
-| # | Contenuto | Prove |
+| # | Content | Tests |
 | --- | --- | --- |
-| A1 | Account, hash, persistenza, migrazione | V4, V15 |
-| A2 | Sessioni, accesso e uscita, rifiuto predefinito, ruolo per endpoint | V1, V2, V3, V5, V12 |
-| A3 | Configurazione iniziale e recupero | V10 |
-| A4 | Ruoli, gestione degli account, ciò che viene trattenuto | V6, V7 |
-| A5 | Tentativi, trasporto, `Origin`, `Host` | V8, V9, V13, V14 |
-| A6 | Frontend: stati, schermate, catalogo | F1–F3, F5. F4 si verifica con la pagina di dettaglio del dominio, che il Frontend non ha ancora |
-| A7 | Registrazione senza segreti; risposte ai guasti nella struttura comune | V11 |
+| A1 | Accounts, hash, persistence, migration | V4, V15 |
+| A2 | Sessions, sign in and out, refusal by default, role per endpoint | V1, V2, V3, V5, V12 |
+| A3 | Initial setup and recovery | V10 |
+| A4 | Roles, account management, what is withheld | V6, V7 |
+| A5 | Attempts, transport, `Origin`, `Host` | V8, V9, V13, V14 |
+| A6 | Frontend: states, screens, catalogue | F1–F3, F5. F4 is verified with the domain detail page, which the Frontend does not have yet |
+| A7 | Logging without secrets; answers to faults in the common structure | V11 |
 
-Le prove dell'API esistenti dovranno ottenere una sessione: la loro fabbrica di test dovrà crearne una.
+The existing API tests had to obtain a session: their test factory creates
+one.
 
 ---
 
 # Consequences For Other Documents
 
-Applicate nella Documentation Release 1.6.0.
+Applied in Documentation Release 1.6.0.
 
-| Documento | Modifica |
+| Document | Change |
 | --- | --- |
-| 06 - API | La sezione Authentication rimanda a questa specifica; endpoint, codici di errore; `activityAvailable` diventa `activityAccess` |
-| 11 - Backend | Le sezioni Authentication e Authorization rimandano a questa specifica |
-| 12 - Installation | La configurazione iniziale sostituisce la voce «autenticazione»; il recupero è descritto |
-| 10 - Frontend | Schermate e stati; il punto sulla sicurezza |
-| 16 - Persistence | Le due entità; What Is Never Persisted |
+| 06 - API | The Authentication section refers to this specification; endpoints, error codes; `activityAvailable` becomes `activityAccess` |
+| 11 - Backend | The Authentication and Authorization sections refer to this specification |
+| 12 - Installation | The initial setup replaces the entry "authentication"; recovery is described |
+| 10 - Frontend | Screens and states; the point about security |
+| 16 - Persistence | The two entities; What Is Never Persisted |
 | 00 - Glossary | Account, Role, Session, Setup Code |
-| 13 - Roadmap | Vedi sotto |
-| README, CLAUDE.md | Il debito sull'autenticazione esce dall'elenco quando l'ultima milestone è chiusa |
+| 13 - Roadmap | See below |
+| README, CLAUDE.md | The debt about authentication leaves the list when the last milestone is closed |
 
-## Incoerenza corretta nella Roadmap
+## Inconsistency Corrected In The Roadmap
 
-Il criterio di Beta dice «**Nessun endpoint** risponde senza credenziali valide». Preso alla lettera è incompatibile con l'esistenza di un modulo di accesso, che per definizione risponde a chi credenziali non ne ha ancora.
+The Beta criterion says "**No endpoint** answers without valid credentials".
+Taken literally it is incompatible with the existence of a sign-in form, which
+by definition answers whoever has no credentials yet.
 
-Riformulazione adottata: *nessun endpoint che restituisce dati sulla rete o sul sistema risponde senza credenziali valide; gli unici raggiungibili senza sono quelli che le stabiliscono, `setup` e `login`, e non restituiscono nulla sulla rete.*
+Reformulation adopted: *no endpoint returning data about the network or the
+system answers without valid credentials; the only ones reachable without are
+those that establish them, `setup` and `login`, and they return nothing about
+the network.*
 
 ---
 
 # Decisions Taken
 
-Scelte di prodotto, approvate il 2026-09-19 insieme ai messaggi del Frontend. Per ciascuna sono registrate l'alternativa non scelta e ciò che costava, perché chi la riapre un giorno sappia che cosa si è deciso di non fare.
+Product choices, approved on 2026-09-19 together with the messages of the
+Frontend. For each, the alternative not chosen and what it cost are recorded,
+so that whoever reopens it one day knows what it was decided not to do.
 
-| # | Decisione | Scelta | Alternativa non scelta e suo costo |
+| # | Decision | Adopted | Alternative not chosen and its cost |
 | --- | --- | --- | --- |
-| **D1** | Modello di accesso | **Account locali con password e sessione** | *Un solo segreto condiviso*, in un file di configurazione: più semplice da realizzare, ma nessuna distinzione fra persone, nessun modo di revocare l'accesso a uno soltanto, e il segreto sta in chiaro in un file |
-| **D2** | Ruoli e visibilità per dispositivo | **Due ruoli**; il `Viewer` non vede i dati per dispositivo | *Un solo ruolo*: meno stati e meno schermate, ma chiunque acceda vede l'attività di ciascun dispositivo |
-| **D3** | Algoritmo dell'hash | **PBKDF2-SHA-512, senza dipendenze** | *Argon2id*: più resistente a chi usa schede grafiche, ma introduce una libreria di terzi e richiede la tua approvazione come nuova dipendenza |
-| **D4** | Recupero | **Solo dalla macchina**, con un comando locale | *Un canale via posta o via rete*: comodo, ma richiede un servizio esterno e apre un secondo modo di entrare |
-| **D5** | Token per servizi | **Rimandati** finché non esiste un servizio che li usi | *Prevederli ora*: aggiunge una superficie da proteggere per un bisogno che non c'è |
-| **D6** | Valori: sessione 8 ore di inattività e 14 giorni al massimo, ritardo da 30 secondi a 15 minuti, password da 12 caratteri, 210.000 iterazioni | **Quelli scritti qui** | Sono soglie: si possono cambiare senza toccare la struttura. Una sessione più lunga è più comoda e lascia più tempo a un browser dimenticato aperto |
-| **D7** | Riformulazione del criterio di Beta nella Roadmap | **Sì**, come proposto | Lasciarlo com'è mantiene un criterio che nessuna implementazione può soddisfare alla lettera |
-| **D8** | Nuova password uguale all'attuale, approvata il 2026-09-25 | **Rifiutata**, con `Unchanged` | *Accettarla*: nessuna regola in più, ma l'obbligo di cambio diventa un invito e l'amministratore resta a conoscenza della password che ha assegnato |
-| **D9** | Trasporto delle password, approvata il 2026-09-26 | **Ogni** richiesta che porta una password, comprese creazione e reimpostazione di un account | *Solo `setup`, `login` e cambio password*: la password iniziale scelta dall'amministratore viaggerebbe in chiaro sulla rete locale |
-| **D10** | Password attuale sbagliata nel cambio password, approvata il 2026-09-26 | **Conta** come fallimento, per indirizzo e account | *Non contarla*: chi trova una sessione aperta proverebbe password senza limiti |
-| **D11** | Oblio dei contatori, approvata il 2026-09-26 | **15 minuti** senza fallimenti dopo la fine del ritardo | *24 ore*: più severo con chi sbaglia per errore. *Solo al riavvio*: chi sbaglia cinque volte in mesi resta rallentato per sempre, e la memoria cresce con ogni nome tentato |
+| **D1** | Access model | **Local accounts with password and session** | *A single shared secret*, in a configuration file: simpler to build, but no distinction between people, no way to revoke access for one alone, and the secret sits in the clear in a file |
+| **D2** | Roles and visibility per device | **Two roles**; the `Viewer` does not see the data per device | *A single role*: fewer states and fewer screens, but anyone who signs in sees the activity of each device |
+| **D3** | Hash algorithm | **PBKDF2-SHA-512, with no dependency** | *Argon2id*: more resistant to whoever uses graphics cards, but introduces a third-party library and requires your approval as a new dependency |
+| **D4** | Recovery | **From the machine only**, with a local command | *A channel by mail or over the network*: convenient, but requires an external service and opens a second way in |
+| **D5** | Tokens for services | **Deferred** until a service exists that uses them | *Providing for them now*: adds a surface to protect for a need that does not exist |
+| **D6** | Values: session 8 hours of inactivity and 14 days at most, delay from 30 seconds to 15 minutes, password from 12 characters, 210,000 iterations | **Those written here** | They are thresholds: they can change without touching the structure. A longer session is more convenient and leaves more time to a browser left open |
+| **D7** | Reformulation of the Beta criterion in the Roadmap | **Yes**, as proposed | Leaving it as it is keeps a criterion no implementation can satisfy literally |
+| **D8** | A new password equal to the current one, approved on 2026-09-25 | **Refused**, with `Unchanged` | *Accepting it*: no further rule, but the obligation to change becomes an invitation and the administrator goes on knowing the password they assigned |
+| **D9** | Transport of passwords, approved on 2026-09-26 | **Every** request carrying a password, including the creation and the reset of an account | *Only `setup`, `login` and password change*: the initial password chosen by the administrator would travel in the clear over the local network |
+| **D10** | A wrong current password in a password change, approved on 2026-09-26 | **Counts** as a failure, per address and per account | *Not counting it*: whoever finds a session open would try passwords without limit |
+| **D11** | Forgetting of the counters, approved on 2026-09-26 | **15 minutes** without failures after the end of the delay | *24 hours*: harsher on whoever errs by mistake. *Only at restart*: whoever errs five times over months stays slowed down for ever, and the memory grows with every name attempted |
 
 ---
 
 # Known Limits
 
-Dichiarati, non nascosti.
+Declared, not hidden.
 
-* **Nessuna autenticazione a più fattori.** Un secondo fattore richiede un canale che il progetto non ha, o uno schema di codici temporanei che è un'altra specifica. La lunghezza minima della password e il rallentamento dei tentativi sono la protezione presente.
-* **Il database non è cifrato.** Chi lo copia legge i dati di rete aggregati, non le password.
-* **Un host compromesso vanifica tutto.**
-* **I contatori dei tentativi si azzerano al riavvio.**
-* **Il codice di configurazione iniziale è leggibile da chi legge l'output del processo.** In un container, da chi esegue `docker logs`.
-* **L'amministratore conosce la password iniziale** che assegna a un account, fino a quando la persona non la cambia. `passwordChangeRequired` rende il cambio obbligatorio, non elimina la finestra.
-* **Solo due ruoli.** Non c'è un permesso per singola sezione né per singolo dispositivo.
-* **Nessun registro persistente degli accessi.** Esistono gli eventi nel registro applicativo, non uno storico interrogabile.
-* **PBKDF2 resiste meno di Argon2id** a un avversario con hardware dedicato. Vedi D3.
-* **Il trasporto cifrato non è definito qui**, ma nella Transport Security Specification, realizzata il 2026-09-26. Dagli altri dispositivi si accede in HTTPS; `login` in chiaro fuori dal loopback continua a rispondere `TransportNotSecure`.
+* **No multi-factor authentication.** A second factor requires a channel the
+  project does not have, or a scheme of temporary codes that is another
+  specification. The minimum length of the password and the slowing of
+  attempts are the protection present.
+* **The database is not encrypted.** Whoever copies it reads the aggregated
+  network data, not the passwords.
+* **A compromised host defeats everything.**
+* **The attempt counters reset at restart.**
+* **The setup code is readable by whoever reads the output of the process.**
+  In a container, by whoever runs `docker logs`.
+* **The administrator knows the initial password** they assign to an account,
+  until the person changes it. `passwordChangeRequired` makes the change
+  compulsory, it does not remove the window.
+* **Two roles only.** There is no permission per section nor per device.
+* **No persistent register of sign-ins.** The events exist in the application
+  log, not as a queryable history.
+* **PBKDF2 resists less than Argon2id** an adversary with dedicated hardware.
+  See D3.
+* **Encrypted transport is not defined here**, but in the Transport Security
+  Specification, built on 2026-09-26. From the other devices access is over
+  HTTPS; `login` in the clear outside the loopback goes on answering
+  `TransportNotSecure`.
 
 ---
 

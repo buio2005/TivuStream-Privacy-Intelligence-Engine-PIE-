@@ -8,66 +8,76 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce il funzionamento del Privacy Intelligence Engine (PIE), il Core del progetto.
+This specification defines how the Privacy Intelligence Engine (PIE), the Core
+of the project, works.
 
-Il motore rappresenta il livello di analisi dell'intero ecosistema TivuStream e costituisce il punto centrale attraverso il quale transitano tutte le informazioni elaborate dal sistema.
+The engine is the analysis layer of the whole TivuStream ecosystem and the
+central point through which all processed information passes.
 
 ---
 
 # Overview
 
-Il Privacy Intelligence Engine riceve dati normalizzati provenienti dagli Adapter, li analizza attraverso moduli specializzati e produce informazioni utilizzabili dalle applicazioni.
+The Privacy Intelligence Engine receives normalised data from the Adapters,
+analyses it through specialised modules, and produces information the
+applications can use.
 
-Il Core non raccoglie dati direttamente.
+The Core does not gather data itself.
 
-Il Core non presenta dati all'utente.
+The Core does not present data to the person.
 
-Il Core interpreta i dati.
+The Core interprets data.
 
 ---
 
 # Core Activation
 
-Il Core è un componente passivo.
+The Core is a passive component.
 
-Non avvia autonomamente alcuna elaborazione e non conosce l'origine dei dati che riceve.
+It starts no processing of its own and does not know where the data it
+receives came from.
 
-L'esecuzione della pipeline viene richiesta dall'Adapter Manager al termine dell'Acquisition Flow, fornendo al Core un insieme di dati già espresso nel Unified Data Model.
+Running the pipeline is requested by the Adapter Manager at the end of the
+Acquisition Flow, which hands the Core a set of data already expressed in the
+Unified Data Model.
 
-Il Core restituisce i risultati dell'elaborazione senza conoscere il destinatario.
+The Core returns the results of the processing without knowing their
+recipient.
 
-Questa separazione garantisce che il funzionamento del Core rimanga identico indipendentemente dalla Data Source utilizzata.
+This separation guarantees that the Core behaves identically whatever Data
+Source is in use.
 
 ---
 
 # Responsibilities
 
-Il Core è responsabile di:
+The Core is responsible for:
 
-* normalizzazione logica;
-* classificazione;
-* correlazione;
-* analisi dei dispositivi;
-* analisi delle minacce;
-* calcolo del NPSS;
-* generazione degli Alert;
-* generazione delle Recommendations.
+* logical normalisation;
+* classification;
+* correlation;
+* analysis of devices;
+* analysis of threats;
+* computing the NPSS;
+* generating Alerts;
+* generating Recommendations.
 
 ---
 
 # Core Pipeline
 
-Ogni dato elaborato segue la medesima pipeline.
+Every piece of data follows the same pipeline.
 
-La pipeline del Core inizia dal Unified Data Model.
+The pipeline of the Core begins at the Unified Data Model.
 
-I livelli precedenti appartengono all'Acquisition Flow e sono descritti nella Architecture Specification.
+The layers before it belong to the Acquisition Flow and are described in the
+Architecture Specification.
 
 ```text
 Unified Data Model
@@ -103,46 +113,46 @@ Results
 
 ## Validation
 
-Verifica la correttezza e la completezza dei dati ricevuti.
+Checks that the data received is correct and complete.
 
-Eventuali dati non validi vengono scartati o segnalati.
+Data that is not valid is discarded or reported.
 
 ---
 
 ## Classification
 
-Ogni elemento viene classificato secondo le regole definite dal sistema.
+Every element is classified according to the rules the system defines.
 
-Esempi.
+Examples.
 
-* dominio;
-* dispositivo;
-* minaccia;
-* evento.
+* domain;
+* device;
+* threat;
+* event.
 
 ---
 
 ## Correlation
 
-Il motore mette in relazione informazioni provenienti da sorgenti differenti.
+The engine relates information coming from different sources.
 
-La correlazione permette di costruire una visione completa della rete.
+Correlation makes it possible to build a complete view of the network.
 
 ---
 
 ## Analysis
 
-I moduli del Core elaborano le informazioni normalizzate.
+The modules of the Core process the normalised information.
 
-Ogni modulo opera esclusivamente sul Unified Data Model.
+Every module operates only on the Unified Data Model.
 
 ---
 
 ## Evaluation
 
-Il motore produce indicatori quantitativi.
+The engine produces quantitative indicators.
 
-Tra questi:
+Among them:
 
 * NPSS;
 * Device Score;
@@ -152,15 +162,15 @@ Tra questi:
 
 ## Result Generation
 
-Il Core produce:
+The Core produces:
 
-* oggetti;
-* eventi;
-* statistiche;
-* alert;
-* raccomandazioni.
+* objects;
+* events;
+* statistics;
+* alerts;
+* recommendations.
 
-Questi rappresentano il risultato finale dell'elaborazione.
+These are the final result of the processing.
 
 ---
 
@@ -168,65 +178,65 @@ Questi rappresentano il risultato finale dell'elaborazione.
 
 ## Threat Engine
 
-Analizza e classifica le minacce.
+Analyses and classifies threats.
 
 ---
 
 ## Device Engine
 
-Analizza il comportamento dei dispositivi.
+Analyses the behaviour of devices.
 
 ---
 
 ## NPSS Engine
 
-Calcola il Network Privacy & Security Score.
+Computes the Network Privacy & Security Score.
 
 ---
 
 ## Alert Engine
 
-Genera eventi significativi.
+Generates significant events.
 
 ---
 
 ## Recommendation Engine
 
-Produce suggerimenti basati sui risultati dell'analisi.
+Produces suggestions based on the results of the analysis.
 
 ---
 
 # Internal Communication
 
-I moduli del Core comunicano attraverso il Unified Data Model.
+The modules of the Core communicate through the Unified Data Model.
 
-Non esistono dipendenze dirette tra i moduli.
+There are no direct dependencies between modules.
 
-Ogni componente riceve dati elaborati e restituisce nuovi risultati.
+Each component receives processed data and returns new results.
 
 ---
 
 # Event Model
 
-Il Core utilizza eventi interni per sincronizzare le attività.
+The Core uses internal events to coordinate its activities.
 
-Ogni evento possiede almeno:
+Every event carries at least:
 
-* identificativo;
-* categoria;
-* origine;
-* timestamp;
-* contenuto.
+* an identifier;
+* a category;
+* an origin;
+* a timestamp;
+* its content.
 
-Gli eventi non vengono esposti direttamente alle applicazioni.
+Events are not exposed directly to the applications.
 
 ---
 
 # Internal Objects
 
-Il Core utilizza esclusivamente le entità definite nella Data Model Specification.
+The Core uses only the entities defined in the Data Model Specification.
 
-Le principali sono:
+The principal ones are:
 
 * NetworkSnapshot
 * Device
@@ -241,63 +251,64 @@ Le principali sono:
 
 # Backend Independence
 
-Il Core non contiene codice specifico relativo ai backend.
+The Core contains no code specific to any backend.
 
-Ogni integrazione viene gestita dagli Adapter.
+Every integration is handled by the Adapters.
 
-Il funzionamento del Core rimane invariato indipendentemente dalla Data Source utilizzata.
+The Core behaves identically whatever Data Source is in use.
 
 ---
 
 # Error Handling
 
-Ogni errore interno viene trasformato in un evento standardizzato.
+Every internal error is turned into a standardised event.
 
-Gli errori non interrompono la pipeline salvo nei casi in cui venga compromessa la consistenza dei dati.
+Errors do not interrupt the pipeline except where the consistency of the data
+would be compromised.
 
 ---
 
 # Performance
 
-Il Core privilegia:
+The Core favours:
 
-* elaborazione incrementale;
-* riutilizzo dei dati;
-* riduzione delle elaborazioni duplicate;
-* modularità.
+* incremental processing;
+* reuse of data;
+* fewer duplicated computations;
+* modularity.
 
 ---
 
 # Scalability
 
-Nuovi Engine possono essere aggiunti senza modificare quelli esistenti.
+New Engines can be added without changing the existing ones.
 
-Ogni nuovo componente deve utilizzare il Unified Data Model.
+Every new component must use the Unified Data Model.
 
 ---
 
 # Design Principles
 
-Il Core segue i seguenti principi.
+The Core follows these principles.
 
-* indipendenza dal backend;
-* responsabilità singola;
-* modularità;
-* estendibilità;
-* uniformità del modello dati;
-* assenza di logica di presentazione.
+* independence from the backend;
+* single responsibility;
+* modularity;
+* extensibility;
+* uniformity of the data model;
+* absence of presentation logic.
 
 ---
 
 # Constraints
 
-Il Core non:
+The Core does not:
 
-* comunica direttamente con il Frontend;
-* comunica direttamente con le Data Sources;
-* orchestra l'acquisizione dei dati;
-* contiene logica di interfaccia;
-* gestisce configurazioni specifiche dei backend.
+* communicate directly with the Frontend;
+* communicate directly with the Data Sources;
+* orchestrate the acquisition of data;
+* contain interface logic;
+* handle configuration specific to a backend.
 
 ---
 

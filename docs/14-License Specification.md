@@ -8,196 +8,216 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce la politica di licenza del progetto **TivuStream Privacy Intelligence Engine (PIE)** e stabilisce le linee guida per l'utilizzo di software, librerie e componenti di terze parti.
+This specification defines the licensing policy of the **TivuStream Privacy
+Intelligence Engine (PIE)** and sets out the guidelines for the use of
+third-party software, libraries and components.
 
-Questo documento rappresenta una specifica progettuale e non costituisce il testo legale della licenza finale del progetto.
+This document is a design specification and is not the legal text of the
+licence of the project.
 
 ---
 
 # Objectives
 
-La politica di licenza ha i seguenti obiettivi.
+The licensing policy has the following objectives.
 
-* garantire trasparenza;
-* assicurare la conformità delle dipendenze;
-* favorire la manutenzione del progetto;
-* preservare la compatibilità con componenti di terze parti.
+* to guarantee transparency;
+* to ensure that dependencies comply;
+* to keep the project maintainable;
+* to preserve compatibility with third-party components.
 
 ---
 
 # Project Licence
 
-Il progetto è distribuito sotto **GNU General Public License, versione 3**.
+The project is distributed under the **GNU General Public License, version
+3**.
 
-Il testo integrale risiede in `LICENSE.md`, nella radice del repository, riprodotto senza modifiche.
+The full text is in `LICENSE.md`, at the root of the repository, reproduced
+without modification.
 
 ---
 
 ## Why Copyleft
 
-La promessa centrale di PIE non è bloccare i tracciatori. È che **l'utente possa verificare che cosa il programma fa**.
+The central promise of PIE is not that it blocks trackers. It is that **the
+person can verify what the program does**.
 
-Ogni scelta del progetto serve quella promessa: la classificazione che avviene solo sul dispositivo, l'età dichiarata delle liste, la copertura resa esplicita, il punteggio negato quando non c'è abbastanza da misurare.
+Every choice in the project serves that promise: classification that happens
+only on the device, the declared age of the lists, coverage made explicit, the
+score withheld when there is not enough to measure.
 
-Una licenza permissiva consentirebbe di distribuire una versione modificata e chiusa, con le stesse schermate che dichiarano che i domini non lasciano il dispositivo, **senza che nessuno possa verificarlo**. La promessa sopravvivrebbe come testo e sparirebbe come fatto.
+A permissive licence would allow someone to distribute a modified and closed
+version, with the same screens claiming that domains never leave the device,
+**with no way for anyone to check**. The promise would survive as text and
+disappear as fact.
 
-Il copyleft impone a chi distribuisce una versione modificata di pubblicarne il codice. La licenza diventa così la garanzia tecnica di ciò che le Specification dichiarano a parole.
+Copyleft requires whoever distributes a modified version to publish its source.
+The licence thereby becomes the technical guarantee of what the Specifications
+state in words.
 
-Il costo è accettato: parte del codice non verrà riusata in prodotti proprietari. È esattamente ciò che la scelta intende ottenere.
+The cost is accepted: some of this code will not be reused in proprietary
+products. That is precisely what the choice intends.
 
 ---
 
 ## Why Version 3 And Not 2
 
-Due ragioni.
+Two reasons.
 
-La dipendenza `SQLitePCLRaw` è distribuita sotto Apache-2.0, compatibile con GPLv3 e **non** con GPLv2. Adottare la versione 2 renderebbe il progetto non distribuibile con le proprie dipendenze.
+The `SQLitePCLRaw` dependency is distributed under Apache-2.0, which is
+compatible with GPLv3 and **not** with GPLv2. Adopting version 2 would make the
+project undistributable together with its own dependencies.
 
-La versione 3 disciplina inoltre i brevetti e le misure tecnologiche che impediscono all'utente di eseguire una versione modificata sul proprio dispositivo, condizione rilevante per un programma destinato all'auto-installazione.
+Version 3 also addresses patents and the technological measures that prevent
+someone from running a modified version on their own device, a condition that
+matters for a program meant to be self-installed.
 
 ---
 
 ## Why Not AGPL
 
-La AGPL estende l'obbligo di pubblicazione a chi offre il programma modificato come servizio in rete, senza distribuirlo.
+The AGPL extends the obligation to publish to whoever offers the modified
+program as a network service without distributing it.
 
-PIE è progettato per essere installato, non offerto come servizio: la fattispecie che la AGPL chiude contraddice il principio Local First del progetto stesso.
+PIE is designed to be installed, not offered as a service: the case the AGPL
+closes contradicts the Local First principle of the project itself.
 
-La AGPL comporta inoltre un attrito di adozione presso organizzazioni che ne vietano l'uso per policy interna.
+The AGPL also creates adoption friction in organisations whose internal policy
+forbids it.
 
-La scelta è registrata come consapevole: se in futuro emergesse un'offerta ospitata di PIE, la lacuna esisterebbe.
+The choice is recorded as a deliberate one: were a hosted offering of PIE to
+appear in future, the gap would exist.
 
 ---
 
 # Third-Party Software
 
-Il Privacy Intelligence Engine può integrare software open source sviluppato da terze parti.
+The Privacy Intelligence Engine may integrate open source software developed
+by third parties.
 
-Ogni componente mantiene la propria licenza originale.
+Every component keeps its own original licence.
 
-L'integrazione non modifica i diritti degli autori originali.
+Integration does not alter the rights of the original authors.
 
 ---
 
 # Technitium DNS Server
 
-Technitium DNS Server rappresenta un software indipendente.
+Technitium DNS Server is independent software.
 
-PIE utilizza esclusivamente le sue API pubbliche.
+PIE uses only its public APIs.
 
-Il progetto non modifica il codice sorgente di Technitium e non ne costituisce un fork.
+The project does not modify the source code of Technitium and is not a fork of
+it.
 
-Ogni riferimento a Technitium rimane soggetto alla relativa licenza.
+Every reference to Technitium remains subject to its own licence.
 
 ---
 
 # External Libraries
 
-Ogni libreria esterna deve soddisfare almeno uno dei seguenti requisiti.
+Every external library must satisfy at least one of the following
+requirements.
 
-* essere compatibile con la licenza del progetto;
-* essere mantenuta attivamente;
-* avere una documentazione adeguata.
+* to be compatible with the licence of the project;
+* to be actively maintained;
+* to have adequate documentation.
 
 ---
 
 # Source Code
 
-Il codice sviluppato per il Privacy Intelligence Engine rimane separato da quello delle Data Sources integrate.
+The code developed for the Privacy Intelligence Engine stays separate from the
+code of the Data Sources it integrates.
 
-Le modifiche apportate al progetto non devono alterare il codice dei software esterni.
+Changes made to the project must not alter the code of external software.
 
 ---
 
 # Copyright
 
-Il copyright dei file sorgente appartiene agli autori del progetto.
+The copyright of the source files belongs to the authors of the project.
 
-La GPL raccomanda che ogni file sorgente porti in testa una nota di copyright e di licenza. La nota **non è ancora presente** nei file esistenti: la sua aggiunta costituisce un intervento su tutto il codice e va svolta come attività dedicata, prima della pubblicazione del repository.
+The GPL recommends that every source file carry a copyright and licence note
+at its head. That note is **not yet present** in the existing files: adding it
+touches the whole codebase and is to be carried out as dedicated work, before
+the repository is published.
 
-L'assenza della nota non incide sulla validità della licenza, che è dichiarata dal file `LICENSE.md` e da questa specifica.
+The absence of the note does not affect the validity of the licence, which is
+declared by `LICENSE.md` and by this specification.
 
 ---
 
 # Contributions
 
-Eventuali contributi esterni dovranno rispettare:
+Contributions from outside the project must respect:
 
-* gli standard di codifica;
-* l'architettura del progetto;
-* la documentazione ufficiale;
-* la licenza adottata.
+* the coding standards;
+* the architecture of the project;
+* the official documentation;
+* the licence adopted.
 
 ---
 
 # Dependencies
 
-Ogni dipendenza introdotta nel progetto dovrà essere documentata.
+Every dependency introduced into the project must be documented.
 
-La documentazione comprenderà almeno.
+The documentation covers at least.
 
-* nome;
-* versione;
-* licenza;
-* scopo.
+* name;
+* version;
+* licence;
+* purpose.
 
 ---
 
 # License Compatibility
 
-Prima dell'integrazione di una nuova dipendenza verrà verificata la compatibilità con la licenza del progetto.
+Before a new dependency is integrated, its compatibility with the licence of
+the project is verified.
 
 ---
 
 # Documentation
 
-La documentazione tecnica viene distribuita insieme al progetto.
+The technical documentation is distributed together with the project.
 
-Ogni aggiornamento della documentazione segue il proprio versionamento.
+Every update to the documentation follows its own versioning.
 
 ---
 
 # Distribution
 
-Le modalità di distribuzione del progetto saranno definite contestualmente alla scelta della licenza definitiva.
-
----
-
-# Future License
-
-La scelta della licenza dovrà garantire:
-
-* protezione del progetto;
-* chiarezza per gli utilizzatori;
-* compatibilità con le dipendenze;
-* possibilità di evoluzione futura.
+How the project is distributed follows from the licence adopted.
 
 ---
 
 # Design Principles
 
-La politica di licenza segue i seguenti principi.
+The licensing policy follows these principles.
 
-* trasparenza;
-* rispetto delle licenze di terze parti;
-* separazione tra codice proprietario e software integrato;
-* conformità normativa.
+* transparency;
+* respect for third-party licences;
+* separation between the project's own code and integrated software;
+* regulatory compliance.
 
 ---
 
 # Constraints
 
-Il progetto:
+The project:
 
-* non modifica la licenza dei software integrati;
-* non incorpora codice incompatibile con la licenza scelta;
-* mantiene la separazione tra PIE e le Data Sources supportate.
+* does not modify the licence of the software it integrates;
+* does not incorporate code incompatible with the licence chosen;
+* keeps PIE and the supported Data Sources separate.
 
 ---
 

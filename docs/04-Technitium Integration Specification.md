@@ -8,35 +8,38 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-27
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce le modalità di integrazione tra il Privacy Intelligence Engine (PIE) e Technitium DNS Server.
+This specification defines how the Privacy Intelligence Engine (PIE) and
+Technitium DNS Server are integrated.
 
-Technitium rappresenta il primo backend ufficialmente supportato dal progetto.
+Technitium is the first backend officially supported by the project.
 
 ---
 
 # Scope
 
-L'integrazione ha lo scopo di acquisire dati dal backend DNS e renderli disponibili al Privacy Intelligence Engine attraverso il relativo Adapter.
+The purpose of the integration is to acquire data from the DNS backend and
+make it available to the Privacy Intelligence Engine through the
+corresponding Adapter.
 
-La gestione del DNS rimane completamente delegata a Technitium.
+The management of DNS remains entirely delegated to Technitium.
 
 ---
 
 # Architectural Role
 
-Technitium costituisce una **Data Source**.
+Technitium is a **Data Source**.
 
-Non appartiene al Core del progetto.
+It does not belong to the Core of the project.
 
-Non contiene logica di analisi sviluppata da PIE.
+It contains no logic of analysis developed by PIE.
 
-La sua responsabilità termina con la produzione dei dati.
+Its responsibility ends with the production of the data.
 
 ---
 
@@ -44,7 +47,7 @@ La sua responsabilità termina con la produzione dei dati.
 
 ## Technitium
 
-Technitium gestisce:
+Technitium handles:
 
 * DNS Resolution
 * Cache
@@ -61,17 +64,17 @@ Technitium gestisce:
 
 ## Privacy Intelligence Engine
 
-PIE gestisce:
+PIE handles:
 
-* acquisizione dati;
-* normalizzazione;
-* classificazione;
-* correlazione;
-* analisi;
-* calcolo del NPSS;
-* generazione di Alert;
-* generazione di Recommendations;
-* produzione dei Report.
+* acquisition of data;
+* normalisation;
+* classification;
+* correlation;
+* analysis;
+* computation of the NPSS;
+* generation of Alerts;
+* generation of Recommendations;
+* production of Reports.
 
 ---
 
@@ -101,96 +104,104 @@ Privacy Intelligence Engine
 
 # Adapter Responsibilities
 
-L'Adapter rappresenta l'unico componente autorizzato a comunicare con Technitium.
+The Adapter is the only component authorised to communicate with Technitium.
 
-Le sue responsabilità comprendono:
+Its responsibilities comprise:
 
-* autenticazione;
-* gestione delle richieste HTTP;
-* conversione dei dati;
-* gestione degli errori;
-* normalizzazione del formato.
+* authentication;
+* handling of the HTTP requests;
+* conversion of the data;
+* handling of errors;
+* normalisation of the format.
 
-L'Adapter non esegue alcuna elaborazione.
+The Adapter performs no processing.
 
 ---
 
 # Retrieved Data
 
-L'integrazione acquisisce le seguenti informazioni.
+The integration acquires the following information.
 
 ## Server Information
 
-* versione;
-* stato operativo;
-* configurazione.
+* version;
+* operational state;
+* configuration.
 
 ---
 
 ## DNS Statistics
 
-* richieste DNS;
-* richieste bloccate;
+* DNS queries;
+* blocked queries;
 * cache;
-* errori;
-* protocolli utilizzati;
-* statistiche generali.
+* errors;
+* protocols used;
+* general statistics.
 
 ---
 
 ## Client Information
 
-* indirizzi IP;
-* hostname (quando disponibili);
-* statistiche di attività.
+* network addresses;
+* hostnames (when available);
+* activity statistics.
 
 ---
 
 ## Domains
 
-* domini osservati;
-* domini bloccati;
-* frequenza delle richieste.
+* domains observed;
+* domains blocked;
+* frequency of the queries.
 
 ---
 
 ## Blocklists
 
-* stato;
-* ultimo aggiornamento;
-* numero di domini gestiti.
+* state;
+* last update;
+* number of domains handled.
 
 ---
 
 ## Logs
 
-Technitium distingue due tipologie di log.
+Technitium distinguishes two kinds of log.
 
-**Log diagnostici del server.** Sempre disponibili. Contengono eventi di sistema e informazioni di funzionamento.
+**Diagnostic logs of the server.** Always available. They contain system
+events and information about operation.
 
-**Log delle query.** Non disponibili in un'installazione predefinita. Richiedono l'attivazione di un componente facoltativo.
+**Query logs.** Not available in a default installation. They require an
+optional component to be enabled.
 
-La presenza del componente viene rilevata interrogando l'elenco delle applicazioni installate.
+The presence of the component is detected by asking for the list of the
+applications installed.
 
-L'Adapter dichiara la capability `DomainActivity` **soltanto quando il componente risulta effettivamente installato**. L'implementazione della relativa interfaccia esprime ciò che l'Adapter sa fare; la capability esprime ciò che quella istanza offre in quel momento.
+The Adapter declares the `DomainActivity` capability **only when the component
+turns out to be actually installed**. The implementation of the corresponding
+interface expresses what the Adapter is able to do; the capability expresses
+what that instance offers at that moment.
 
-L'aggregazione avviene mentre le pagine dei log vengono lette. Il registro puntuale delle interrogazioni non viene mai trattenuto per intero e non oltrepassa l'Adapter.
+Aggregation happens while the pages of the logs are read. The register of
+individual queries is never kept whole and does not pass beyond the Adapter.
 
 ---
 
 # Data Availability Levels
 
-L'integrazione con Technitium prevede due livelli di disponibilità dei dati.
+The integration with Technitium provides for two levels of data availability.
 
-La distinzione è strutturale e va dichiarata attraverso le capability della Data Source.
+The distinction is structural and is to be declared through the capabilities
+of the Data Source.
 
 ---
 
 ## Base Level
 
-Disponibile su qualunque installazione, senza componenti aggiuntivi e senza costi.
+Available on any installation, with no additional components and at no cost.
 
-Capability dichiarate.
+Capabilities declared.
 
 ```text
 Statistics
@@ -199,23 +210,24 @@ Domain
 SourceConfiguration
 ```
 
-Dati acquisibili.
+Data that can be acquired.
 
-* statistiche aggregate della rete;
-* configurazione del servizio DNS, compresi DNSSEC e protocolli cifrati;
-* stato delle blocklist;
-* elenco dei dispositivi con il relativo volume di traffico;
-* elenco dei domini osservati con la relativa frequenza.
+* aggregated statistics of the network;
+* configuration of the DNS service, including DNSSEC and encrypted protocols;
+* state of the blocklists;
+* list of the devices with their volume of traffic;
+* list of the domains observed with their frequency.
 
-Tutti i valori di questo livello sono **esatti**, non stimati.
+Every value at this level is **exact**, not estimated.
 
 ---
 
 ## Extended Level
 
-Richiede l'installazione di un componente facoltativo di Technitium dedicato alla registrazione delle query.
+Requires the installation of an optional Technitium component dedicated to
+recording queries.
 
-Capability dichiarate.
+Capabilities declared.
 
 ```text
 Statistics
@@ -225,59 +237,68 @@ SourceConfiguration
 DomainActivity
 ```
 
-Dato aggiuntivo.
+Additional datum.
 
-* correlazione fra dispositivo e dominio.
+* the correlation between device and domain.
 
-Questa correlazione è il presupposto dell'attribuzione delle minacce ai dispositivi e della valutazione dell'area Device Health del NPSS.
+This correlation is what makes it possible to attribute threats to devices and
+to evaluate the Device Health area of the NPSS.
 
 ---
 
 ## Rationale
 
-Le API di dashboard di Technitium espongono i dispositivi e i domini come **aggregati indipendenti**.
+The dashboard APIs of Technitium expose devices and domains as **independent
+aggregates**.
 
-Indicano quante interrogazioni ha prodotto ciascun dispositivo e quante volte è stato richiesto ciascun dominio, ma non quale dispositivo abbia contattato quale dominio.
+They say how many queries each device produced and how many times each domain
+was asked for, but not which device contacted which domain.
 
-La correlazione esiste soltanto nei log delle query.
+The correlation exists only in the query logs.
 
-Questa è una caratteristica specifica di Technitium e non del dominio applicativo: altre Data Sources previste dal progetto espongono il dato nativamente.
+This is a characteristic specific to Technitium and not to the application
+domain: other Data Sources the project provides for expose the datum natively.
 
-Per questo motivo il livello esteso non costituisce un prerequisito del progetto.
+For this reason the extended level is not a prerequisite of the project.
 
 ---
 
 # Data Conversion
 
-Tutti i dati recuperati vengono convertiti nel formato definito dal Unified Data Model.
+Every datum retrieved is converted into the format defined by the Unified Data
+Model.
 
-Nessun componente del Core utilizza direttamente il formato originale restituito da Technitium.
+No component of the Core uses directly the original format returned by
+Technitium.
 
 ---
 
 # Backend Independence
 
-Il Core non contiene riferimenti specifici a Technitium.
+The Core contains no reference specific to Technitium.
 
-La sostituzione del backend richiede esclusivamente la realizzazione di un nuovo Adapter.
+Replacing the backend requires only the building of a new Adapter.
 
 ---
 
 # Error Management
 
-Gli errori restituiti da Technitium vengono convertiti in eventi standardizzati.
+The errors returned by Technitium are converted into standardised events.
 
-Il Core riceve esclusivamente informazioni normalizzate.
+The Core receives normalised information only.
 
 ---
 
 # Authentication
 
-L'Adapter si autentica utilizzando un **API Token** non scadente, previsto da Technitium per l'automazione.
+The Adapter authenticates using a non-expiring **API Token**, provided by
+Technitium for automation.
 
-Un token di sessione ordinario non è adatto: scade per inattività e richiederebbe la gestione del ciclo di vita della sessione all'interno dell'Acquisition Flow.
+An ordinary session token is not suitable: it expires through inactivity and
+would require the life cycle of the session to be managed inside the
+Acquisition Flow.
 
-Il token viene trasmesso nell'intestazione della richiesta.
+The token is carried in the header of the request.
 
 ```text
 Authorization: Bearer <token>
@@ -287,21 +308,37 @@ Authorization: Bearer <token>
 
 ## Least Privilege
 
-Il token deve appartenere a un **utente dedicato con permessi minimi**.
+The token must belong to a **dedicated user with minimum permissions**.
 
-Sono richiesti i permessi di **sola lettura** sulle sezioni **Dashboard** e **Settings**.
+**Read-only** permissions on the **Dashboard** and **Settings** sections are
+required.
 
-Il permesso sulle impostazioni è necessario per acquisire la configurazione del server, dalla quale dipendono le aree DNS Security e Configuration del punteggio. Senza di esso quelle aree risulterebbero in larga parte non misurabili.
+The permission on the settings is necessary in order to acquire the
+configuration of the server, on which the DNS Security and Configuration areas
+of the score depend. Without it those areas would be largely not measurable.
 
-Il token deve appartenere a un utente **che non fa parte di alcun gruppo**. In Technitium un utente nuovo entra di norma nel gruppo Everyone, che concede la lettura di altre sezioni: l'utente riceverebbe più di quanto dichiarato qui.
+The token must belong to a user **who is part of no group**. In Technitium a
+new user ordinarily enters the Everyone group, which grants reading of other
+sections: the user would receive more than is declared here.
 
-**Domain Activity non richiede permessi ulteriori.** Con Technitium 15.4, un utente con i soli permessi di lettura su Dashboard e Settings, fuori da ogni gruppo, legge l'elenco delle applicazioni installate e i log dell'applicazione Query Logs. Verificato sul campo il 2026-09-27: 280 interrogazioni aggregate in 12 attività, nessun errore. Serve soltanto che l'applicazione sia installata.
+**Domain Activity requires no further permission.** With Technitium 15.4, a
+user with read permissions on Dashboard and Settings alone, outside every
+group, reads the list of the installed applications and the logs of the Query
+Logs application. Verified in the field on 2026-09-27: 280 queries aggregated
+into 12 activities, no error. All that is needed is for the application to be
+installed.
 
-È un comportamento osservato su quella versione, non una garanzia di Technitium. Per questo, se l'elenco delle applicazioni non è leggibile, l'Adapter non dichiara Domain Activity e continua a servire il livello base, invece di rifiutare l'intera Data Source.
+It is a behaviour observed on that version, not a guarantee from Technitium.
+For this reason, if the list of applications is not readable, the Adapter does
+not declare Domain Activity and goes on serving the base level, instead of
+refusing the whole Data Source.
 
-Nessun permesso di modifica è richiesto in alcun caso: PIE non altera mai la configurazione della Data Source.
+No permission to modify is required in any case: PIE never alters the
+configuration of the Data Source.
 
-L'utilizzo dell'utente amministrativo è sconsigliato: un token compromesso erediterebbe privilegi non necessari all'acquisizione, compresa la facoltà di modificare il server.
+Using the administrative user is discouraged: a compromised token would
+inherit privileges unnecessary to acquisition, including the ability to modify
+the server.
 
 ---
 
@@ -311,214 +348,269 @@ L'utilizzo dell'utente amministrativo è sconsigliato: un token compromesso ered
 GET /api/user/session/get
 ```
 
-Una sola chiamata restituisce versione del server, nome configurato, stato della validazione DNSSEC e **permessi effettivi del token**.
+A single call returns the version of the server, the name configured, the
+state of DNSSEC validation and the **effective permissions of the token**.
 
-Questa chiamata è la fonte da utilizzare per la descrizione della Data Source.
+This call is the source to use for the description of the Data Source.
 
-Due conseguenze rilevanti.
+Two relevant consequences.
 
-* Lo stato di DNSSEC è disponibile senza accedere alle impostazioni del server, quindi senza richiedere permessi oltre a quelli dell'acquisizione.
-* I permessi restituiti consentono all'Adapter di dichiarare una capability soltanto quando il token è realmente in grado di leggere il dato corrispondente.
+* The state of DNSSEC is available without reaching the settings of the
+  server, and therefore without requiring permissions beyond those of
+  acquisition.
+* The permissions returned allow the Adapter to declare a capability only when
+  the token is really able to read the corresponding datum.
 
-Una versione precedente di questa specifica indicava le impostazioni come fonte dello stato DNSSEC. L'indicazione è superata: le impostazioni richiedono permessi più ampi e non sono necessarie al livello base.
+An earlier version of this specification gave the settings as the source of
+the state of DNSSEC. That indication is superseded: the settings require wider
+permissions and are not necessary at the base level.
 
 ---
 
 ## Response Shapes
 
-Le API utilizzano **due forme di risposta differenti**.
+The APIs use **two different response shapes**.
 
-**Payload annidato.** La maggior parte delle chiamate, comprese tutte quelle del dashboard, racchiude il contenuto in una proprietà dedicata accanto all'esito.
+**Nested payload.** Most calls, including every one of the dashboard, enclose
+the content in a dedicated property beside the outcome.
 
 ```json
 { "status": "ok", "response": { } }
 ```
 
-**Payload alla radice.** Le chiamate relative alla sessione restituiscono i propri campi direttamente al primo livello, accanto all'esito.
+**Payload at the root.** The calls relating to the session return their own
+fields directly at the first level, beside the outcome.
 
 ```json
 { "status": "ok", "info": { } }
 ```
 
-L'Adapter deve supportare entrambe le forme.
+The Adapter must support both shapes.
 
-La distinzione non è deducibile dal nome della chiamata e va verificata caso per caso.
+The distinction cannot be deduced from the name of the call and is to be
+verified case by case.
 
 ---
 
 ## Error Semantics
 
-Le API di Technitium **non esprimono l'esito attraverso il codice di stato HTTP**.
+The Technitium APIs **do not express the outcome through the HTTP status
+code**.
 
-Una risposta con esito negativo può presentarsi con codice HTTP 200 e riportare l'errore nel corpo.
+A response with a negative outcome may come with HTTP code 200 and report the
+error in the body.
 
-L'Adapter deve quindi valutare sempre il contenuto della risposta e non limitarsi al codice di stato.
+The Adapter must therefore always evaluate the content of the response and not
+limit itself to the status code.
 
-Le risposte di errore possono contenere dettagli diagnostici del backend. Tali dettagli non devono essere propagati oltre l'Adapter né registrati nei log.
+Error responses may contain diagnostic detail from the backend. That detail
+must not be propagated beyond the Adapter nor recorded in the logs.
 
 ---
 
 # Acquisition Constraints
 
-La ricognizione delle API ha evidenziato tre vincoli che l'Adapter deve rispettare.
+The reconnaissance of the APIs brought out three constraints the Adapter must
+respect.
 
 ---
 
 ## Time Window Selection
 
-Le statistiche di Technitium sono aggregate su finestre temporali predefinite.
+The statistics of Technitium are aggregated over predefined time windows.
 
-Finestre differenti **non contengono necessariamente gli stessi dati**: è stato osservato che la finestra predefinita relativa all'ultimo giorno restituisce il dettaglio per dominio vuoto pur riportando un numero di interrogazioni superiore.
+Different windows **do not necessarily contain the same data**: it was
+observed that the predefined window relating to the last day returns the
+detail per domain empty while reporting a higher number of queries.
 
-L'Adapter non può quindi assumere che una finestra più ampia comprenda quanto contenuto in una più stretta.
+The Adapter therefore cannot assume that a wider window includes what a
+narrower one contains.
 
-La finestra utilizzata per ciascun tipo di dato va scelta in modo esplicito e documentato.
+The window used for each kind of datum is to be chosen explicitly and
+documented.
 
-**L'intervallo personalizzato conserva il dettaglio completo.** La verifica su istanza reale ha confrontato le statistiche acquisite con quelle mostrate dalla console del server, riscontrando corrispondenza esatta di conteggi, domini distinti e client.
+**The custom interval preserves the complete detail.** Verification on a real
+instance compared the statistics acquired with those shown by the console of
+the server, and found exact correspondence of counts, distinct domains and
+clients.
 
-L'Adapter utilizza pertanto l'intervallo personalizzato, che consente l'acquisizione incrementale senza doversi ricondurre alle finestre predefinite.
+The Adapter therefore uses the custom interval, which allows incremental
+acquisition without having to fall back on the predefined windows.
 
 ---
 
 ## Log Rotation
 
-Il componente di registrazione delle query applica una ritenzione basata sul **numero di record**, oltre che sul tempo.
+The component recording queries applies a retention based on the **number of
+records**, as well as on time.
 
-Il limite predefinito corrisponde, su una rete domestica reale, a una frazione di ora di traffico.
+The default limit corresponds, on a real home network, to a fraction of an
+hour of traffic.
 
-Ne discende un vincolo operativo.
+An operational constraint follows.
 
-* La frequenza di acquisizione deve essere **inferiore al tempo di rotazione del log**.
-* Se la frequenza è insufficiente, i dati vengono perduti **senza alcuna segnalazione da parte del backend**.
+* The frequency of acquisition must be **shorter than the rotation time of the
+  log**.
+* If the frequency is insufficient, data is lost **with no signal whatever
+  from the backend**.
 
-L'Adapter deve leggere la configurazione del componente e segnalare l'incoerenza fra ritenzione configurata e frequenza di acquisizione.
+The Adapter must read the configuration of the component and signal the
+inconsistency between the retention configured and the frequency of
+acquisition.
 
-Questa verifica è obbligatoria: una perdita silenziosa di dati produce analisi plausibili e sbagliate, che è la condizione peggiore per uno strumento di questo tipo.
+This check is compulsory: a silent loss of data produces analyses that are
+plausible and wrong, which is the worst condition for a tool of this kind.
 
 ---
 
 ## Failed Queries
 
-Technitium distingue quattro esiti negativi: `totalServerFailure`, `totalRefused`, `totalDropped` e `totalNxDomain`.
+Technitium distinguishes four negative outcomes: `totalServerFailure`,
+`totalRefused`, `totalDropped` and `totalNxDomain`.
 
-Il Unified Data Model prevede un unico contatore `failedQueries`, che comprende i primi tre.
+The Unified Data Model provides for a single counter `failedQueries`, which
+comprises the first three.
 
 ```text
 failedQueries = totalServerFailure + totalRefused + totalDropped
 ```
 
-**NXDOMAIN è escluso.** Indica che il dominio richiesto non esiste: è una risposta corretta del servizio, non un suo malfunzionamento.
+**NXDOMAIN is excluded.** It indicates that the domain asked for does not
+exist: it is a correct answer from the service, not a malfunction of it.
 
-Su una rete normale gli NXDOMAIN sono frequenti. Includerli produrrebbe un tasso di errore elevato in assenza di qualsiasi problema, e abbasserebbe indebitamente l'area Network Integrity del punteggio.
+On a normal network NXDOMAINs are frequent. Including them would produce a
+high error rate in the absence of any problem at all, and would unduly lower
+the Network Integrity area of the score.
 
 ---
 
 ## Device Identity
 
-Technitium identifica i client esclusivamente tramite indirizzo di rete.
+Technitium identifies clients by network address alone.
 
-L'Adapter deriva l'identificatore del dispositivo dall'indirizzo in modo deterministico, così che lo stesso dispositivo mantenga la propria identità fra acquisizioni successive.
+The Adapter derives the identifier of the device from the address
+deterministically, so that the same device keeps its identity across
+successive acquisitions.
 
-Ne discende un limite da dichiarare all'utente.
+A limit to be declared to the user follows.
 
-* Un dispositivo che cambia indirizzo compare come dispositivo differente.
-* Un indirizzo riassegnato a un altro dispositivo fonde le due identità.
+* A device that changes address appears as a different device.
+* An address reassigned to another device merges the two identities.
 
 ---
 
 ## Hardware Address When Available
 
-Quando Technitium svolge anche il ruolo di **server DHCP**, espone le assegnazioni in corso, che associano indirizzo hardware e indirizzo di rete.
+When Technitium also plays the role of **DHCP server**, it exposes the leases
+in force, which associate a hardware address with a network address.
 
-L'Adapter le acquisisce quando disponibili e ne ricava un'identità del dispositivo **stabile fra cambi di indirizzo**.
+The Adapter acquires them when available and derives from them an identity of
+the device that is **stable across changes of address**.
 
-Il campo `identityBasis` del dispositivo dichiara quale base è stata utilizzata.
+The `identityBasis` field of the device declares which basis was used.
 
-| Condizione                          | Base dichiarata   |
-| ----------------------------------- | ----------------- |
-| Assegnazione DHCP corrispondente     | `HardwareAddress` |
-| Nessuna assegnazione corrispondente  | `NetworkAddress`  |
+| Condition                  | Basis declared    |
+| -------------------------- | ----------------- |
+| A matching DHCP lease       | `HardwareAddress` |
+| No matching lease           | `NetworkAddress`  |
 
-Le due basi possono coesistere nella stessa acquisizione: un dispositivo con indirizzo statico convive con altri gestiti dal DHCP, e ciascuno dichiara la propria.
+The two bases can coexist in the same acquisition: a device with a static
+address lives alongside others managed by DHCP, and each declares its own.
 
-**L'identità vale anche per l'attività.** L'identificativo di `DomainActivity` è derivato con la stessa regola di quello di `Device`: un'attività riferita a un indirizzo che ha un'assegnazione DHCP in corso porta l'identificativo fondato sull'indirizzo hardware, non quello fondato sull'indirizzo di rete. Se dispositivo e attività scegliessero ciascuno per conto proprio, lo stesso dispositivo comparirebbe con due identificativi e le due informazioni non si potrebbero mai mettere in relazione.
+**The identity holds for the activity too.** The identifier of
+`DomainActivity` is derived by the same rule as that of `Device`: an activity
+referring to an address that has a DHCP lease in force carries the identifier
+founded on the hardware address, not the one founded on the network address.
+If device and activity each chose for themselves, the same device would appear
+under two identifiers and the two pieces of information could never be brought
+into relation.
 
-Un indirizzo che ha avuto un'assegnazione durante il periodo ma non ne ha più una al momento dell'acquisizione conserva la base più debole: è un limite dichiarato, non un errore.
+An address that had a lease during the period but no longer has one at the
+moment of acquisition keeps the weaker basis: it is a declared limit, not an
+error.
 
-Attribuire un comportamento a un dispositivo è un'affermazione forte. Il sistema rende esplicito quanto sia solida invece di lasciarlo intendere.
+Attributing a behaviour to a device is a strong statement. The system makes
+explicit how solid it is instead of leaving it to be understood.
 
 ---
 
 ## Truncated Lists
 
-Le chiamate che restituiscono classifiche applicano un limite massimo di elementi.
+The calls returning rankings apply a maximum limit of elements.
 
-Non esiste una chiamata che restituisca l'elenco completo dei domini osservati.
+There is no call returning the complete list of the domains observed.
 
-I valori che dipendono dalla completezza dell'elenco, come il numero di domini univoci, sono pertanto **approssimati** e devono essere dichiarati tali.
+The values that depend on the completeness of the list, such as the number of
+unique domains, are therefore **approximate** and must be declared as such.
 
 ---
 
 # Aggregation Responsibility
 
-Quando il livello esteso è disponibile, l'Adapter **aggrega i log delle query prima di consegnarli al Core**.
+When the extended level is available, the Adapter **aggregates the query logs
+before delivering them to the Core**.
 
-Il Core riceve oggetti `DomainActivity` già consolidati e non accede mai alla singola interrogazione.
+The Core receives `DomainActivity` objects already consolidated and never
+reaches an individual query.
 
-Questa scelta risponde a tre esigenze.
+This choice answers three needs.
 
-* **Privacy.** Il registro puntuale delle interrogazioni costituisce la cronologia di navigazione di ogni dispositivo. PIE non lo conserva.
-* **Volume.** L'aggregato è di ordini di grandezza inferiore al dato grezzo.
-* **Separazione delle responsabilità.** Il Core opera sul Unified Data Model e non su formati specifici di un backend.
+* **Privacy.** The register of individual queries is the browsing history of
+  every device. PIE does not keep it.
+* **Volume.** The aggregate is orders of magnitude smaller than the raw datum.
+* **Separation of responsibilities.** The Core works on the Unified Data Model
+  and not on formats specific to a backend.
 
 ---
 
 # Security
 
-Le credenziali di accesso alle API rimangono confinate all'interno dell'Adapter.
+The credentials for reaching the APIs stay confined inside the Adapter.
 
-Il Frontend non comunica mai direttamente con Technitium.
+The Frontend never communicates directly with Technitium.
 
 ---
 
 # Compatibility
 
-PIE mantiene la massima compatibilità possibile con le API pubbliche di Technitium.
+PIE keeps the greatest possible compatibility with the public APIs of
+Technitium.
 
-Non vengono modificate componenti del progetto originale.
+No component of the original project is modified.
 
-Non viene realizzato alcun fork.
+No fork is made.
 
 ---
 
 # Update Strategy
 
-L'evoluzione di Technitium rimane indipendente da quella del Privacy Intelligence Engine.
+The evolution of Technitium remains independent of that of the Privacy
+Intelligence Engine.
 
-L'Adapter rappresenta il livello di compatibilità tra le due piattaforme.
+The Adapter is the compatibility layer between the two platforms.
 
 ---
 
 # Design Principles
 
-L'integrazione segue i seguenti principi.
+The integration follows these principles.
 
-* utilizzo esclusivo delle API pubbliche;
-* assenza di modifiche al codice di Technitium;
-* completa separazione tra backend e Core;
-* indipendenza architetturale;
-* modularità.
+* use of the public APIs alone;
+* no modification of the code of Technitium;
+* complete separation between backend and Core;
+* architectural independence;
+* modularity.
 
 ---
 
 # Constraints
 
-L'integrazione non introduce:
+The integration introduces no:
 
-* dipendenze dirette nel Core;
-* logica di analisi;
-* personalizzazioni del backend;
-* modifiche ai componenti originali di Technitium.
+* direct dependency in the Core;
+* logic of analysis;
+* customisation of the backend;
+* modification of the original components of Technitium.
 
 ---
 

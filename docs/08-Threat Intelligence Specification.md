@@ -8,50 +8,53 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce il sistema di **Threat Intelligence** del Privacy Intelligence Engine.
+This specification defines the **Threat Intelligence** system of the Privacy
+Intelligence Engine.
 
-Threat Intelligence identifica la materia trattata.
+Threat Intelligence names the subject matter.
 
-Il modulo che la implementa è il **Threat Engine**.
+The module that implements it is the **Threat Engine**.
 
-Il Threat Engine è responsabile dell'identificazione, classificazione e valutazione delle minacce rilevate durante l'analisi dei dati provenienti dalle Data Sources.
+The Threat Engine is responsible for identifying, classifying and assessing
+the threats detected while analysing data from the Data Sources.
 
 ---
 
 # Objectives
 
-Il Threat Engine ha i seguenti obiettivi.
+The Threat Engine has the following objectives.
 
-* identificare domini potenzialmente pericolosi;
-* classificare le minacce;
-* attribuire un livello di gravità;
-* supportare il calcolo del NPSS;
-* generare Alert;
-* generare Recommendations.
+* to identify potentially dangerous domains;
+* to classify threats;
+* to attribute a level of severity;
+* to support the computation of the NPSS;
+* to generate Alerts;
+* to generate Recommendations.
 
 ---
 
 # Scope
 
-Il Threat Engine analizza esclusivamente le informazioni presenti nel Unified Data Model.
+The Threat Engine analyses only the information present in the Unified Data
+Model.
 
-Non comunica direttamente con le Data Sources.
+It does not communicate directly with the Data Sources.
 
-Non gestisce l'interfaccia utente.
+It does not handle the user interface.
 
 ---
 
 # Threat Classification
 
-Ogni dominio osservato viene classificato in una categoria.
+Every domain observed is classified into a category.
 
-Le categorie rappresentano il livello logico utilizzato dall'intero ecosistema PIE.
+The categories are the logical level used by the whole PIE ecosystem.
 
 ---
 
@@ -59,81 +62,81 @@ Le categorie rappresentano il livello logico utilizzato dall'intero ecosistema P
 
 ## Malware
 
-Domini associati alla distribuzione di software malevolo.
+Domains associated with the distribution of malicious software.
 
 ---
 
 ## Phishing
 
-Domini progettati per sottrarre credenziali o dati personali.
+Domains designed to steal credentials or personal data.
 
 ---
 
 ## Tracking
 
-Domini utilizzati per il monitoraggio dell'attività degli utenti.
+Domains used to monitor the activity of users.
 
 ---
 
 ## Advertising
 
-Domini utilizzati per la distribuzione di contenuti pubblicitari.
+Domains used to deliver advertising content.
 
 ---
 
 ## Analytics
 
-Domini utilizzati per la raccolta di statistiche e dati di utilizzo.
+Domains used to collect statistics and usage data.
 
 ---
 
 ## Cryptomining
 
-Domini associati ad attività di mining di criptovalute.
+Domains associated with cryptocurrency mining.
 
 ---
 
 ## Suspicious
 
-Domini con comportamento anomalo o reputazione incerta.
+Domains with anomalous behaviour or uncertain reputation.
 
 ---
 
 ## Social
 
-Domini appartenenti a piattaforme social.
+Domains belonging to social platforms.
 
 ---
 
 ## Streaming
 
-Domini dedicati alla distribuzione di contenuti multimediali.
+Domains dedicated to the delivery of media content.
 
 ---
 
 ## Cloud
 
-Servizi cloud e infrastrutture distribuite.
+Cloud services and distributed infrastructure.
 
 ---
 
 ## AI Services
 
-Servizi dedicati all'intelligenza artificiale.
+Services dedicated to artificial intelligence.
 
 ---
 
 ## Unknown
 
-Categoria assegnata quando non è possibile classificare il dominio.
+The category assigned when the domain cannot be classified.
 
 ---
 
 # Threat Severity
 
-Ogni Threat possiede un livello di severità.
+Every Threat carries a level of severity.
 
-Livelli previsti.
+Levels provided.
 
 * Informational
 * Low
@@ -145,81 +148,92 @@ Livelli previsti.
 
 # Confidence Level
 
-Ogni classificazione possiede un livello di affidabilità.
+Every classification carries a level of reliability.
 
-Valori previsti.
+Values provided.
 
 * Low
 * Medium
 * High
 
-Il livello di confidenza permette di distinguere una classificazione certa da una classificazione probabilistica.
+The confidence level makes it possible to distinguish a certain
+classification from a probabilistic one.
 
 ---
 
 # Threat Sources
 
-Le classificazioni sono ottenute da:
+Classifications are obtained from:
 
-* liste locali, scaricate periodicamente;
-* regole interne;
-* algoritmi di correlazione.
+* local lists, downloaded periodically;
+* internal rules;
+* correlation algorithms.
 
-La provenienza della classificazione viene sempre registrata.
+Where a classification came from is always recorded.
 
 ---
 
 ## Local Classification Only
 
-La corrispondenza avviene **esclusivamente sul dispositivo**.
+Matching happens **on the device alone**.
 
-I domini contattati dalla rete dell'utente **non vengono mai trasmessi a terzi**, per alcuna finalità, compresa la consultazione di servizi di reputazione.
+The domains contacted by the person's network are **never transmitted to a
+third party**, for any purpose, including consulting a reputation service.
 
-La motivazione è diretta: un dominio interrogato rivela cosa un dispositivo stava facendo. Consultare un servizio esterno per stabilire se un dominio sia pericoloso significherebbe comunicare a quel servizio la cronologia della rete che si sta proteggendo.
+The reason is direct: a domain queried reveals what a device was doing.
+Consulting an external service to establish whether a domain is dangerous
+would mean telling that service the history of the very network being
+protected.
 
-Uno strumento che analizza la privacy non può ottenere i propri risultati riducendola.
+A tool that analyses privacy cannot obtain its results by reducing it.
 
-Conseguenze accettate.
+Consequences accepted.
 
-* Le minacce comparse di recente vengono riconosciute con il ritardo di aggiornamento delle liste.
-* L'accuratezza dipende dalla qualità delle liste adottate.
-* Il sistema funziona anche in assenza di connessione verso l'esterno.
+* Threats that appeared recently are recognised with the delay of the list
+  update.
+* Accuracy depends on the quality of the lists adopted.
+* The system works even with no connection to the outside.
 
-Le liste vengono scaricate periodicamente. Il download riguarda le liste, mai i domini osservati: nessuna informazione sulla rete dell'utente lascia il dispositivo in quell'occasione.
+The lists are downloaded periodically. The download concerns the lists, never
+the domains observed: no information about the person's network leaves the
+device on that occasion.
 
 ---
 
 # Classification Lists
 
-Una lista di classificazione associa domini a una categoria.
+A classification list associates domains with a category.
 
 ---
 
 ## List Properties
 
-Ogni lista dichiara.
+Every list declares.
 
-| Proprietà       | Significato                                            |
-| --------------- | ------------------------------------------------------ |
-| `name`          | Nome della lista                                        |
-| `sourceUrl`     | Indirizzo dal quale viene scaricata                     |
-| `category`      | Categoria attribuita ai domini che contiene             |
-| `licence`       | Licenza della lista                                     |
-| `updatedAt`     | Momento dell'ultimo aggiornamento riuscito              |
-| `entryCount`    | Numero di domini contenuti                              |
-| `enabled`       | Se la lista partecipa alla classificazione              |
+| Property        | Meaning                                           |
+| --------------- | --------------------------------------------------- |
+| `name`          | Name of the list                                     |
+| `sourceUrl`     | Address it is downloaded from                        |
+| `category`      | Category attributed to the domains it contains       |
+| `licence`       | Licence of the list                                  |
+| `updatedAt`     | Moment of the last successful update                 |
+| `entryCount`    | Number of domains it contains                        |
+| `enabled`       | Whether the list takes part in the classification    |
 
-La licenza è **obbligatoria**. Una lista priva di licenza dichiarata non viene distribuita con il progetto.
+The licence is **mandatory**. A list with no declared licence is not
+distributed with the project.
 
 ---
 
 ## Default Lists
 
-Il progetto adotta esclusivamente liste la cui licenza ne consenta il download da parte dell'utente.
+The project adopts only lists whose licence allows the person to download
+them.
 
-Le liste predefinite provengono dal **Block List Project**, distribuito in pubblico dominio con licenza Unlicense, nel formato a un dominio per riga.
+The default lists come from the **Block List Project**, released into the
+public domain under the Unlicense, in the one domain per line format.
 
-| Lista            | Categoria      |
+| List             | Category       |
 | ---------------- | -------------- |
 | `ads`            | `Advertising`  |
 | `tracking`       | `Tracking`     |
@@ -229,45 +243,53 @@ Le liste predefinite provengono dal **Block List Project**, distribuito in pubbl
 | `scam`           | `Suspicious`   |
 | `abuse`          | `Suspicious`   |
 
-La ricerca che ha portato a questa scelta, comprese le fonti esaminate e scartate, è documentata separatamente.
+The research that led to this choice, including the sources examined and
+rejected, is documented separately.
 
 ### Single Source
 
-Le liste predefinite provengono da **una sola fonte**.
+The default lists come from **one source only**.
 
-I suoi errori diventano i nostri, e i suoi silenzi diventano `Unknown`.
+Its mistakes become ours, and its silences become `Unknown`.
 
-La condizione non deriva da una preferenza. Fra le fonti liberamente utilizzabili, poche sono segmentate per categoria, e le poche che lo sono si alimentano a vicenda: adottarne due darebbe l'aspetto di pareri indipendenti senza esserlo, e un accordo apparente è peggio di una dipendenza dichiarata.
+The condition does not follow from a preference. Among the freely usable
+sources, few are segmented by category, and the few that are feed one another:
+adopting two would give the appearance of independent opinions without being
+so, and an apparent agreement is worse than a declared dependency.
 
-L'utente può aggiungere fonti proprie in qualunque momento.
+The person may add sources of their own at any time.
 
 ### Categories Without A Source
 
-Le categorie `Analytics`, `Social`, `Streaming`, `Cloud` e `AI Services` non hanno alcuna lista predefinita.
+The categories `Analytics`, `Social`, `Streaming`, `Cloud` and `AI Services`
+have no default list.
 
-I domini che vi apparterrebbero restano `Unknown`.
+The domains that would belong to them stay `Unknown`.
 
-Nessuna categoria viene attribuita per riempire un vuoto.
+No category is attributed to fill a gap.
 
 ---
 
 ## User Lists
 
-L'utente può aggiungere, disattivare e rimuovere liste.
+The person may add, disable and remove lists.
 
-Trattandosi di software self-hosted, la scelta delle fonti appartiene a chi lo utilizza.
+This being self-hosted software, the choice of sources belongs to whoever uses
+it.
 
 ---
 
 # Matching
 
-La corrispondenza avviene **esclusivamente sul dispositivo**, confrontando i domini osservati con le liste conservate localmente.
+Matching happens **on the device alone**, comparing the domains observed with
+the lists held locally.
 
 ---
 
 ## Matching Rule
 
-Il confronto procede dal nome completo verso l'alto, rimuovendo una etichetta alla volta.
+The comparison proceeds from the full name upwards, dropping one label at a
+time.
 
 ```text
 tracker.ads.example.com
@@ -275,146 +297,185 @@ tracker.ads.example.com
             example.com
 ```
 
-La ricerca si arresta al primo livello che produce una corrispondenza. Se a quel livello corrispondono più liste, l'esito è determinato dalla sezione Competing Classifications.
+The search stops at the first level that produces a match. If several lists
+match at that level, the outcome is determined by the Competing
+Classifications section.
 
-Un dominio elencato in una lista si intende comprensivo dei propri sottodomini: è la convenzione adottata dalle liste stesse, e ignorarla renderebbe inefficace la classificazione.
+A domain listed in a list is taken to include its own subdomains: it is the
+convention the lists themselves adopt, and ignoring it would make the
+classification ineffective.
 
 ---
 
 ## Confidence
 
-Il livello di confidenza dipende da **come** la corrispondenza è stata ottenuta.
+The level of confidence depends on **how** the match was obtained.
 
-| Corrispondenza                        | Confidenza |
-| ------------------------------------- | ---------- |
-| Nome completo presente in lista        | `High`     |
-| Corrispondenza su un dominio superiore | `Medium`   |
+| Match                                | Confidence |
+| ------------------------------------ | ---------- |
+| Full name present in a list           | `High`     |
+| Match on a parent domain              | `Medium`   |
 
-Il secondo caso è un'inferenza: la lista afferma qualcosa sul dominio padre, e il sistema estende l'affermazione al sottodominio osservato.
+The second case is an inference: the list asserts something about the parent
+domain, and the system extends the assertion to the subdomain observed.
 
-L'inferenza è ragionevole e resta un'inferenza. Dichiararla con confidenza inferiore permette all'utente di distinguerla da un'affermazione diretta.
+The inference is reasonable and remains an inference. Declaring it with a
+lower confidence lets the person tell it apart from a direct statement.
 
 ---
 
 ## Competing Classifications
 
-Un dominio può comparire in **più liste con categorie diverse**. Un dominio pubblicitario che traccia anche l'utente appartiene legittimamente a entrambe.
+A domain may appear in **several lists under different categories**. An
+advertising domain that also tracks the person legitimately belongs to both.
 
-La corrispondenza si risolve in tre passaggi, applicati in quest'ordine.
+The match is resolved in three steps, applied in this order.
 
-### 1. Vince il nome più vicino
+### 1. The nearest name wins
 
-Una corrispondenza sul nome completo prevale su una corrispondenza ottenuta risalendo, **qualunque sia la categoria**.
+A match on the full name prevails over a match obtained by walking upwards,
+**whatever the category**.
 
-La specificità è un segnale più forte della gravità: una lista che nomina `analytics.example.com` sta dicendo qualcosa su quel nome, mentre una lista che nomina `example.com` sta dicendo qualcosa sul dominio padre. Lasciare che la seconda prevalga significherebbe sostituire un'affermazione diretta con un'inferenza.
+Specificity is a stronger signal than severity: a list naming
+`analytics.example.com` is saying something about that name, while a list
+naming `example.com` is saying something about the parent domain. Letting the
+second prevail would replace a direct statement with an inference.
 
-### 2. A parità di distanza, vince la categoria più grave
+### 2. At equal distance, the graver category wins
 
-L'ordine di gravità è il seguente.
+The order of severity is as follows.
 
-| Ordine | Categoria      | Natura                      |
-| ------ | -------------- | --------------------------- |
-| 1      | `Malware`      | Sicurezza                    |
-| 2      | `Phishing`     | Sicurezza                    |
-| 3      | `Cryptomining` | Sicurezza                    |
-| 4      | `Suspicious`   | Sicurezza, non confermata    |
-| 5      | `Tracking`     | Privacy                      |
-| 6      | `Analytics`    | Privacy                      |
-| 7      | `Advertising`  | Privacy                      |
-| 8      | `Social`       | Descrittiva                  |
-| 9      | `Streaming`    | Descrittiva                  |
-| 10     | `Cloud`        | Descrittiva                  |
-| 11     | `AI Services`  | Descrittiva                  |
-| 12     | `Unknown`      | Assenza di classificazione   |
+| Order | Category       | Nature                      |
+| ----- | -------------- | --------------------------- |
+| 1     | `Malware`      | Security                     |
+| 2     | `Phishing`     | Security                     |
+| 3     | `Cryptomining` | Security                     |
+| 4     | `Suspicious`   | Security, unconfirmed        |
+| 5     | `Tracking`     | Privacy                      |
+| 6     | `Analytics`    | Privacy                      |
+| 7     | `Advertising`  | Privacy                      |
+| 8     | `Social`       | Descriptive                  |
+| 9     | `Streaming`    | Descriptive                  |
+| 10    | `Cloud`        | Descriptive                  |
+| 11    | `AI Services`  | Descriptive                  |
+| 12    | `Unknown`      | Absence of classification    |
 
-L'ordine è un **giudizio editoriale dichiarato**, come i pesi del Network Privacy & Security Score. Non deriva da una misura e non pretende di derivarne.
+The order is a **declared editorial judgement**, like the weights of the
+Network Privacy & Security Score. It does not derive from a measurement and
+does not pretend to.
 
-Le ragioni.
+The reasons.
 
-* La sicurezza precede la privacy. Un dominio che traccia e distribuisce malware va presentato come minaccia, non come fastidio.
-* `Suspicious` precede le categorie di privacy perché segnala un pericolo possibile, sul quale l'utente può agire, mentre `Tracking` segnala un comportamento certo ma di gravità inferiore.
-* Fra le categorie di privacy, `Tracking` precede `Analytics`, che precede `Advertising`: la prima riguarda la persona, l'ultima il contenuto.
-* Le categorie descrittive non esprimono un giudizio e cedono a qualunque categoria che ne esprima uno.
+* Security comes before privacy. A domain that tracks and distributes malware
+  is to be presented as a threat, not as a nuisance.
+* `Suspicious` comes before the privacy categories because it signals a
+  possible danger the person can act on, while `Tracking` signals a certain
+  behaviour of lesser gravity.
+* Among the privacy categories, `Tracking` comes before `Analytics`, which
+  comes before `Advertising`: the first concerns the person, the last the
+  content.
+* The descriptive categories express no judgement and yield to any category
+  that does.
 
-### 3. A parità di gravità, vince la lista più recente
+### 3. At equal severity, the more recent list wins
 
-Quando due liste della stessa categoria rivendicano lo stesso nome, prevale quella aggiornata più di recente.
+When two lists of the same category claim the same name, the one updated more
+recently prevails.
 
-Una lista mai aggiornata cede a qualunque lista aggiornata. Fra due liste equivalenti anche su questo, prevale quella il cui nome viene prima in ordine alfabetico, affinché lo stesso insieme di liste produca sempre lo stesso risultato.
+A list never updated yields to any list that was. Between two lists equivalent
+on this too, the one whose name comes first alphabetically prevails, so that
+the same set of lists always produces the same result.
 
 ### What Is Lost
 
-Il sistema mostra **una sola categoria**.
+The system shows **one category only**.
 
-Le altre categorie nelle quali il dominio compare non vengono presentate.
+The other categories the domain appears in are not presented.
 
-La perdita è reale e viene dichiarata. La classificazione mostrata è quella più grave fra quelle trovate, non l'unica trovata, e l'interfaccia non deve suggerire il contrario.
+The loss is real and is declared. The classification shown is the gravest
+among those found, not the only one found, and the interface must not suggest
+otherwise.
 
-Rappresentare tutte le categorie di un dominio richiede una modifica del Unified Data Model e resta una possibilità aperta, non una decisione presa.
+Representing every category of a domain requires a change to the Unified Data
+Model and remains an open possibility, not a decision taken.
 
 ---
 
 ## Unknown Domains
 
-Un dominio che non compare in alcuna lista riceve la categoria `Unknown`.
+A domain that appears in no list receives the category `Unknown`.
 
-`Unknown` significa **non classificato**, non innocuo.
+`Unknown` means **not classified**, not harmless.
 
-L'interfaccia non presenta mai un dominio non classificato come sicuro: sarebbe un'affermazione che il sistema non ha verificato.
+The interface never presents an unclassified domain as safe: that would be a
+statement the system has not verified.
 
 ---
 
 # Freshness
 
-Ogni classificazione dichiara **l'età della lista dalla quale proviene**.
+Every classification declares **the age of the list it comes from**.
 
-La classificazione locale comporta un ritardo nel riconoscimento delle minacce comparse di recente. Il ritardo non viene nascosto: viene misurato e dichiarato, come la copertura del punteggio e la qualità delle misure.
+Local classification entails a delay in recognising threats that appeared
+recently. The delay is not hidden: it is measured and declared, like the
+coverage of the score and the quality of the measurements.
 
-Una classificazione prodotta da una lista aggiornata sei giorni prima è un'informazione diversa da una prodotta il giorno stesso, e il sistema le distingue.
+A classification produced from a list updated six days earlier is a different
+piece of information from one produced the same day, and the system tells them
+apart.
 
 ---
 
 # Update Policy
 
-Le liste vengono aggiornate a intervallo configurabile, **ventiquattro ore** in via predefinita.
+The lists are updated at a configurable interval, **twenty-four hours** by
+default.
 
-Una lista viene scaricata quando non è mai stata scaricata, oppure quando quella conservata è più vecchia dell'intervallo. Scaricare a ogni avvio graverebbe sulla fonte senza dire nulla di nuovo all'utente.
+A list is downloaded when it has never been downloaded, or when the one held
+is older than the interval. Downloading at every start would burden the source
+without telling the person anything new.
 
 ---
 
 ## Failure Handling
 
-Un aggiornamento non riuscito **non invalida la lista esistente**.
+A failed update **does not invalidate the existing list**.
 
-Il sistema continua a utilizzare la versione conservata e ne dichiara l'età crescente.
+The system carries on using the version held and declares its growing age.
 
-Una lista non aggiornabile è meno utile di una recente e più utile di nessuna lista.
+A list that cannot be updated is less useful than a recent one and more useful
+than none.
 
 ---
 
 ## Offline Operation
 
-In assenza di connettività il sistema continua a classificare con le liste conservate.
+With no connectivity the system carries on classifying with the lists held.
 
-Nessuna funzione di analisi dipende dalla disponibilità della rete: l'unica conseguenza dell'assenza di connessione è l'invecchiamento delle liste, dichiarato all'utente.
+No function of the analysis depends on the availability of the network: the
+only consequence of having no connection is the ageing of the lists, declared
+to the person.
 
 ---
 
 ## Storage
 
-Le liste sono conservate localmente in forma ispezionabile.
+The lists are held locally in an inspectable form.
 
-Il contenuto di ogni lista risiede in un **file di testo**, nel formato in cui è stato scaricato. La descrizione della lista risiede nel database.
+The content of each list lives in a **text file**, in the format it was
+downloaded in. The description of the list lives in the database.
 
-L'utente può quindi aprire una lista con un editor qualsiasi, verificare quali domini il sistema considera appartenenti a una categoria, e comprendere il motivo di una classificazione anziché doverla accettare.
+The person can therefore open a list with any editor, check which domains the
+system considers to belong to a category, and understand the reason for a
+classification rather than having to accept it.
 
-La collocazione dei file è definita dalla Persistence Specification.
+Where the files live is defined by the Persistence Specification.
 
 ---
 
 # Threat Lifecycle
 
-Ogni Threat attraversa un ciclo di vita.
+Every Threat goes through a life cycle.
 
 ```text id="zq54ga"
 Detected
@@ -444,86 +505,89 @@ Archived
 
 # Correlation
 
-Il Threat Engine può correlare eventi provenienti da differenti Data Sources.
+The Threat Engine may correlate events coming from different Data Sources.
 
-La correlazione consente di migliorare la precisione della classificazione.
+Correlation makes it possible to improve the precision of the classification.
 
 ---
 
 # Domain Reputation
 
-Per ogni dominio il sistema mantiene un indice di reputazione.
+For every domain the system maintains a reputation index.
 
-La reputazione contribuisce alla classificazione della minaccia.
+The reputation contributes to the classification of the threat.
 
 ---
 
 # Threat History
 
-Ogni Threat mantiene il proprio storico.
+Every Threat keeps its own history.
 
-Informazioni registrate.
+Information recorded.
 
-* prima rilevazione;
-* ultima rilevazione;
-* numero di occorrenze;
-* stato corrente.
+* first detection;
+* latest detection;
+* number of occurrences;
+* current state.
 
 ---
 
 # Alert Generation
 
-Il Threat Engine può generare Alert quando vengono rilevate condizioni significative.
+The Threat Engine may generate Alerts when significant conditions are
+detected.
 
-La severità dell'Alert dipende dalla gravità della minaccia.
+The severity of the Alert depends on the gravity of the threat.
 
 ---
 
 # Recommendation Generation
 
-Ogni Threat può produrre una o più Recommendations.
+Every Threat may produce one or more Recommendations.
 
-Ogni suggerimento è collegato alla minaccia che lo ha generato.
+Each suggestion is linked to the threat that generated it.
 
 ---
 
 # NPSS Integration
 
-Il Threat Engine contribuisce direttamente al calcolo del Network Privacy & Security Score.
+The Threat Engine contributes directly to the computation of the Network
+Privacy & Security Score.
 
-La presenza di Threat critici riduce il punteggio complessivo.
+The presence of critical Threats lowers the overall score.
 
 ---
 
 # Extensibility
 
-Nuove categorie possono essere aggiunte mantenendo la compatibilità con il modello esistente.
+New categories can be added while keeping compatibility with the existing
+model.
 
-Le classificazioni già esistenti non vengono modificate.
+Classifications already made are not modified.
 
 ---
 
 # Design Principles
 
-Il Threat Engine segue i seguenti principi.
+The Threat Engine follows these principles.
 
-* uniformità;
-* modularità;
-* trasparenza;
-* indipendenza dal backend;
-* estendibilità;
-* riproducibilità.
+* uniformity;
+* modularity;
+* transparency;
+* independence from the backend;
+* extensibility;
+* reproducibility.
 
 ---
 
 # Constraints
 
-Il Threat Engine:
+The Threat Engine:
 
-* non modifica i dati originali;
-* non comunica direttamente con il Frontend;
-* utilizza esclusivamente il Unified Data Model;
-* non dipende da una specifica Data Source.
+* does not modify the original data;
+* does not communicate directly with the Frontend;
+* uses only the Unified Data Model;
+* does not depend on any specific Data Source.
 
 ---
 

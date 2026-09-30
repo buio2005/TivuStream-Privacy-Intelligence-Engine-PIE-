@@ -8,51 +8,53 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-26
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce i requisiti e il processo di installazione del Privacy Intelligence Engine.
+This specification defines the requirements and the process for installing the
+Privacy Intelligence Engine.
 
-L'obiettivo è garantire una procedura di installazione semplice, ripetibile e indipendente dalla piattaforma.
+The objective is a procedure that is simple, repeatable and independent of the
+platform.
 
 ---
 
 # Objectives
 
-L'installazione deve essere:
+The installation must be:
 
-* semplice;
-* guidata;
-* ripetibile;
-* sicura;
-* facilmente aggiornabile.
+* simple;
+* guided;
+* repeatable;
+* safe;
+* easy to update.
 
 ---
 
 # Supported Platforms
 
-Le piattaforme supportate sono:
+The platforms supported are:
 
 * Linux
 * Windows
-* Docker, prevista e non ancora fornita (vedi Not Yet Provided)
+* Docker, provided for and not yet supplied (see Not Yet Provided)
 
-Ulteriori piattaforme potranno essere supportate nelle versioni successive.
+Further platforms may be supported in later versions.
 
 ---
 
 # Installation Modes
 
-Sono previsti i seguenti metodi di installazione.
+The following methods of installation are provided for.
 
 ## Standard Installation
 
-Installazione completa del sistema.
+Complete installation of the system.
 
-Comprende:
+It comprises:
 
 * Backend
 * Frontend
@@ -63,17 +65,17 @@ Comprende:
 
 ## Docker Installation
 
-Installazione tramite container.
+Installation by container.
 
-Comprende tutti i componenti del progetto.
+It comprises every component of the project.
 
 ---
 
 ## Development Installation
 
-Installazione destinata allo sviluppo.
+Installation intended for development.
 
-Include strumenti aggiuntivi per debugging e test.
+It includes additional tools for debugging and testing.
 
 ---
 
@@ -81,29 +83,29 @@ Include strumenti aggiuntivi per debugging e test.
 
 ## Minimum
 
-* CPU Dual Core
+* Dual-core CPU
 * 4 GB RAM
-* 2 GB spazio disponibile
-* Connessione di rete
+* 2 GB of space available
+* A network connection
 
 ---
 
 ## Recommended
 
-* CPU Quad Core
+* Quad-core CPU
 * 8 GB RAM
 * SSD
-* Connessione Gigabit
+* Gigabit connection
 
 ---
 
 # Required Components
 
-Per il funzionamento del sistema sono necessari.
+The system needs, in order to work.
 
-* Privacy Intelligence Engine
-* almeno una Data Source supportata
-* Browser moderno
+* the Privacy Intelligence Engine
+* at least one supported Data Source
+* a modern browser
 * HTTPS
 
 ---
@@ -142,372 +144,462 @@ Ready
 
 # Environment Validation
 
-Prima dell'installazione vengono verificati.
+Before the installation these are checked.
 
-* sistema operativo;
-* spazio disponibile;
-* permessi;
-* rete;
-* dipendenze.
+* operating system;
+* space available;
+* permissions;
+* network;
+* dependencies.
 
 ---
 
 # Initial Configuration
 
-Durante la configurazione iniziale vengono definiti.
+During the initial configuration these are defined.
 
-* lingua;
+* language;
 * Data Source;
-* parametri di connessione;
-* impostazioni di rete.
+* connection parameters;
+* network settings.
 
-**Primo amministratore.** Una nuova installazione non ha alcun account, e non ne ha uno predefinito né una password di fabbrica. All'avvio il Backend mostra sull'output standard un **codice di configurazione**; inserirlo nel browser, con un nome utente e una password, crea il primo `Administrator`. La prova di possesso è l'accesso alla macchina.
+**First administrator.** A new installation has no account at all, and has
+neither a default one nor a factory password. At startup the Backend shows a
+**setup code** on standard output; entering it in the browser, with a username
+and a password, creates the first `Administrator`. The proof of possession is
+access to the machine.
 
-Chi perde l'accesso lo recupera con un comando eseguito sulla macchina che ospita l'installazione, non da remoto e non tramite posta.
+Whoever loses access recovers it with a command run on the machine hosting the
+installation, not remotely and not by mail.
 
-Il dettaglio è nell'Authentication Specification.
+The detail is in the Authentication Specification.
 
 ---
 
 # Backend Registration
 
-Ogni Data Source viene registrata attraverso il relativo Adapter.
+Every Data Source is registered through its Adapter.
 
-Il sistema verifica automaticamente la connettività.
+The system checks connectivity automatically.
 
 ---
 
 # Capability Detection
 
-Al termine della registrazione il sistema rileva **quali capacità la Data Source è in grado di offrire** nella sua configurazione corrente.
+At the end of the registration the system detects **which capabilities the
+Data Source is able to offer** in its current configuration.
 
-Il risultato viene presentato all'utente prima del completamento dell'installazione.
+The result is presented to the user before the installation completes.
 
-Per ciascuna capacità mancante il sistema indica:
+For each missing capability the system says:
 
-* quali analisi non saranno disponibili;
-* quale intervento la renderebbe disponibile;
-* quali conseguenze comporta tale intervento.
+* which analyses will not be available;
+* which intervention would make it available;
+* what consequences that intervention carries.
 
 ---
 
 # Optional Capabilities
 
-Alcune capacità richiedono componenti facoltativi della Data Source.
+Some capabilities require optional components of the Data Source.
 
-Quando tali componenti sono installabili in modo automatico, il sistema può proporne l'installazione durante la configurazione guidata.
+When those components can be installed automatically, the system may propose
+installing them during the guided configuration.
 
-La proposta rispetta tre regole.
+The proposal respects three rules.
 
-**Scelta esplicita.** Nessun componente facoltativo viene installato senza una decisione dell'utente.
+**Explicit choice.** No optional component is installed without a decision of
+the user.
 
-**Informazione simmetrica.** Vantaggi e costi sono presentati insieme. Se l'attivazione comporta un aumento del consumo di risorse, la registrazione di dati aggiuntivi o un impatto sulle prestazioni, tali aspetti vengono dichiarati prima della scelta.
+**Symmetric information.** Advantages and costs are presented together. If
+enabling it carries an increase in the consumption of resources, the recording
+of additional data or an impact on performance, those aspects are declared
+before the choice.
 
-**Reversibilità.** L'utente può rifiutare la proposta e completare comunque l'installazione, oppure attivare la capacità in un momento successivo.
+**Reversibility.** The user can refuse the proposal and complete the
+installation all the same, or enable the capability at a later moment.
 
 ---
 
 # Retention Configuration
 
-Quando una capacità dipende da un componente che registra dati con una politica di ritenzione propria, il sistema verifica la coerenza fra tale ritenzione e la frequenza di acquisizione configurata.
+When a capability depends on a component that records data with a retention
+policy of its own, the system checks the consistency between that retention
+and the frequency of acquisition configured.
 
-Una ritenzione inferiore all'intervallo di acquisizione comporta una **perdita di dati non segnalata dal backend**.
+A retention shorter than the interval of acquisition carries a **loss of data
+that the backend does not signal**.
 
-Il sistema propone valori coerenti e segnala la condizione quando si verifica.
+The system proposes consistent values and signals the condition when it
+occurs.
 
-Questa verifica viene ripetuta a ogni modifica della frequenza di acquisizione.
+This check is repeated at every change of the frequency of acquisition.
 
 ---
 
 # Privacy Disclosure
 
-Quando una capacità comporta la registrazione di dati aggiuntivi relativi all'attività degli utenti, l'installazione dichiara in modo esplicito:
+When a capability carries the recording of additional data relating to the
+activity of users, the installation declares explicitly:
 
-* quali dati vengono registrati;
-* dove risiedono;
-* per quanto tempo vengono conservati;
-* quali dati vengono conservati da PIE e quali restano nella Data Source.
+* which data is recorded;
+* where it resides;
+* how long it is kept;
+* which data PIE keeps and which stays in the Data Source.
 
-Il progetto adotta il principio di aggregare il dato al momento dell'acquisizione e di non conservare il dettaglio puntuale all'interno di PIE.
+The project adopts the principle of aggregating the datum at the moment of
+acquisition and of not keeping the individual detail inside PIE.
 
-Questa scelta va comunicata all'utente, poiché ne determina l'esposizione effettiva.
+This choice is to be communicated to the user, since it determines their
+actual exposure.
 
 ---
 
 # Security
 
-Durante l'installazione:
+During the installation:
 
-* vengono generate le configurazioni iniziali;
-* vengono verificati i certificati;
-* vengono protette le credenziali;
-* non viene creato alcun account né alcuna password predefinita.
+* the initial configurations are generated;
+* the certificates are verified;
+* the credentials are protected;
+* no account and no default password is created.
 
 ---
 
 # Verification
 
-Al termine dell'installazione il sistema esegue:
+At the end of the installation the system performs:
 
-* verifica del Core;
-* verifica delle REST API;
-* verifica degli Adapter;
-* verifica della Data Source.
+* verification of the Core;
+* verification of the REST APIs;
+* verification of the Adapters;
+* verification of the Data Source.
 
 ---
 
 # Update Process
 
-L'aggiornamento del sistema mantiene:
+Updating the system preserves:
 
-* configurazioni;
-* dati;
-* Adapter installati.
+* configurations;
+* data;
+* the Adapters installed.
 
-L'aggiornamento non modifica la struttura del Unified Data Model.
+The update does not modify the structure of the Unified Data Model.
 
 ---
 
 # Backup
 
-Prima di ogni aggiornamento il sistema può creare un backup della configurazione.
+Before every update the system can create a backup of the configuration.
 
-Il backup comprende.
+The backup comprises.
 
-* impostazioni;
-* configurazione;
-* dati applicativi.
+* settings;
+* configuration;
+* application data.
 
 ---
 
 # Uninstallation
 
-La procedura di rimozione elimina:
+The removal procedure deletes:
 
-* componenti applicativi;
-* servizi;
-* file temporanei.
+* application components;
+* services;
+* temporary files.
 
-Le configurazioni possono essere conservate su richiesta dell'utente.
+The configurations can be kept at the user's request.
 
 ---
 
 # Logging
 
-Ogni fase dell'installazione viene registrata.
+Every phase of the installation is recorded.
 
-I log facilitano la diagnosi di eventuali problemi.
+The logs make the diagnosis of any problem easier.
 
 ---
 
 # Error Handling
 
-Ogni errore viene classificato e presentato con una descrizione comprensibile.
+Every error is classified and presented with an understandable description.
 
 ---
 
 # First Installation
 
-Questa sezione definisce la **prima procedura di installazione**, quella richiesta dal criterio di Beta: una persona estranea al progetto installa PIE su una macchina pulita seguendo le istruzioni.
+This section defines the **first installation procedure**, the one required by
+the Beta criterion: a person who is a stranger to the project installs PIE on
+a clean machine by following the instructions.
 
-Realizza una parte di ciò che il resto della specifica descrive. Ciò che non realizza è elencato in Not Yet Provided, e resta un obiettivo.
+It realises part of what the rest of the specification describes. What it does
+not realise is listed in Not Yet Provided, and remains an objective.
 
 ---
 
 ## Package
 
-PIE si distribuisce come **pacchetto pronto**, uno per piattaforma.
+PIE is distributed as a **ready-made package**, one per platform.
 
-| Piattaforma | Pacchetto                                   |
-| ----------- | ------------------------------------------- |
-| Windows     | `tivustream-pie-<versione>-win-x64.zip`      |
-| Linux       | `tivustream-pie-<versione>-linux-x64.tar.gz` |
+| Platform | Package                                      |
+| -------- | -------------------------------------------- |
+| Windows  | `tivustream-pie-<version>-win-x64.zip`        |
+| Linux    | `tivustream-pie-<version>-linux-x64.tar.gz`   |
 
-Il pacchetto contiene il programma, l'interfaccia già compilata, gli script di installazione e la guida. **Non richiede di installare .NET né Node.js**: il runtime è incluso nel programma.
+The package contains the program, the interface already compiled, the
+installation scripts and the guide. **It requires neither .NET nor Node.js to
+be installed**: the runtime is included in the program.
 
-Il pacchetto si produce con uno script del repository, in `installer/`, che compila l'interfaccia, pubblica il Backend per ciascuna piattaforma e crea gli archivi.
+The package is produced by a script of the repository, in `installer/`, which
+compiles the interface, publishes the Backend for each platform and creates
+the archives.
 
-La **versione** del prodotto è unica, parte da `0.1.0` e compare nel nome del pacchetto, nel programma e nel registro all'avvio. È indipendente dalla Documentation Release.
+The **version** of the product is a single one, starts at `0.1.0` and appears
+in the name of the package, in the program and in the log at startup. It is
+independent of the Documentation Release.
 
-Il programma si chiama `tivustream-pie` (`tivustream-pie.exe` su Windows).
+The program is called `tivustream-pie` (`tivustream-pie.exe` on Windows).
 
 ---
 
 ## Where Things Live
 
-Programma e dati stanno in **due cartelle separate**. Un aggiornamento sostituisce la prima e non tocca la seconda.
+Program and data live in **two separate folders**. An update replaces the
+first and does not touch the second.
 
-| Cosa                  | Windows                          | Linux                       |
-| --------------------- | -------------------------------- | --------------------------- |
-| Programma             | `C:\Program Files\TivuStream PIE` | `/opt/tivustream-pie`       |
-| Dati e configurazione | `C:\ProgramData\TivuStream PIE`   | `/var/lib/tivustream-pie`   |
+| What                     | Windows                           | Linux                       |
+| ------------------------ | --------------------------------- | --------------------------- |
+| Program                  | `C:\Program Files\TivuStream PIE` | `/opt/tivustream-pie`       |
+| Data and configuration   | `C:\ProgramData\TivuStream PIE`   | `/var/lib/tivustream-pie`   |
 
-La **cartella dei dati** contiene il database, le liste, il certificato, le copie di sicurezza e `appsettings.Local.json`, che custodisce il token della Data Source.
+The **data folder** contains the database, the lists, the certificate, the
+backup copies and `appsettings.Local.json`, which holds the token of the Data
+Source.
 
-È leggibile **solo dal servizio e dagli amministratori** della macchina. Su Linux appartiene a un utente di sistema dedicato, `tivustream-pie`, con permessi `0700`.
+It is readable **only by the service and by the administrators** of the
+machine. On Linux it belongs to a dedicated system user, `tivustream-pie`,
+with `0700` permissions.
 
-Il programma riceve la cartella dei dati all'avvio. I percorsi relativi della configurazione (`Storage:DatabasePath`, `Storage:ListDirectoryPath`, `Transport:CertificateDirectory`) si risolvono **rispetto alla cartella dei dati**, non rispetto alla cartella da cui il programma viene lanciato: un servizio di Windows viene lanciato da `C:\Windows\System32`.
+The program receives the data folder at startup. The relative paths of the
+configuration (`Storage:DatabasePath`, `Storage:ListDirectoryPath`,
+`Transport:CertificateDirectory`) are resolved **against the data folder**,
+not against the folder the program is launched from: a Windows service is
+launched from `C:\Windows\System32`.
 
-Senza cartella dei dati indicata, come durante lo sviluppo, il comportamento resta quello attuale.
+With no data folder given, as during development, the behaviour stays as it
+is.
 
 ---
 
 ## Running As A Service
 
-PIE funziona come **servizio di sistema**: parte all'accensione, anche senza nessuno collegato, e osserva la rete senza interruzioni.
+PIE runs as a **system service**: it starts when the machine is turned on,
+even with nobody signed in, and observes the network without interruption.
 
-| Piattaforma | Meccanismo | Identità |
-| ----------- | ---------- | -------- |
-| Windows | Servizio di Windows `TivuStreamPIE`, avvio automatico | Account virtuale `NT SERVICE\TivuStreamPIE`, senza privilegi di amministratore |
-| Linux | Unità systemd `tivustream-pie.service` | Utente di sistema `tivustream-pie`, senza shell |
+| Platform | Mechanism | Identity |
+| --- | --- | --- |
+| Windows | Windows service `TivuStreamPIE`, automatic start | Virtual account `NT SERVICE\TivuStreamPIE`, without administrator privileges |
+| Linux | systemd unit `tivustream-pie.service` | System user `tivustream-pie`, without a shell |
 
-Su Linux l'unità limita ciò che il servizio può toccare: file di sistema in sola lettura, scrittura solo nella cartella dei dati, nessuna acquisizione di privilegi.
+On Linux the unit limits what the service can touch: system files read-only,
+writing only in the data folder, no acquisition of privileges.
 
-Servono due dipendenze ufficiali Microsoft, che permettono al programma di comportarsi da servizio:
+Two official Microsoft dependencies are needed, which let the program behave
+as a service:
 
-| Voce | Valore |
+| Entry | Value |
 | --- | --- |
-| Nome | `Microsoft.Extensions.Hosting.WindowsServices`, `Microsoft.Extensions.Hosting.Systemd` |
-| Scopo | Integrazione con il gestore dei servizi di Windows e con systemd |
-| Licenza | MIT |
-| Manutenzione | Microsoft, parte dell'ecosistema .NET |
+| Name | `Microsoft.Extensions.Hosting.WindowsServices`, `Microsoft.Extensions.Hosting.Systemd` |
+| Purpose | Integration with the Windows service manager and with systemd |
+| Licence | MIT |
+| Maintenance | Microsoft, part of the .NET ecosystem |
 
-Fuori da un servizio, entrambe non cambiano nulla.
+Outside a service, neither changes anything.
 
 ---
 
 ## First Administrator Under A Service
 
-Un servizio non ha una finestra: ciò che scrive sull'output standard finisce nel registro di sistema, oppure da nessuna parte. Il **codice di configurazione iniziale** della Authentication Specification non può quindi essere mostrato, e scriverlo nel registro di sistema lo metterebbe dove non deve stare.
+A service has no window: what it writes on standard output ends up in the
+system log, or nowhere. The **setup code** of the Authentication Specification
+cannot therefore be shown, and writing it to the system log would put it where
+it must not be.
 
-Per questo, **quando PIE funziona come servizio, il codice di configurazione non viene generato né mostrato.** Il primo amministratore si crea durante l'installazione con il comando `reset-password`, che su un'installazione senza account crea un amministratore. Lo script di installazione lo esegue e chiede nome e password nel terminale.
+For this reason, **when PIE runs as a service, the setup code is neither
+generated nor shown.** The first administrator is created during the
+installation with the `reset-password` command, which on an installation with
+no account creates an administrator. The installation script runs it and asks
+for a name and a password at the terminal.
 
-La prova di possesso resta la stessa: l'accesso alla macchina, qui con i permessi di amministratore.
+The proof of possession stays the same: access to the machine, here with
+administrator permissions.
 
 ---
 
 ## Commands
 
-Il programma offre tre comandi da terminale. Nessuno avvia il servizio.
+The program offers three terminal commands. None starts the service.
 
-| Comando | Cosa fa |
+| Command | What it does |
 | --- | --- |
-| `configure` | Chiede indirizzo e token della Data Source, prova la connessione, dice quali capacità sono disponibili e quali mancano, e scrive `appsettings.Local.json` nella cartella dei dati |
-| `reset-password <nome>` | Esistente. Su un'installazione senza account crea il primo amministratore |
-| `access` | Scrive gli indirizzi a cui PIE risponde e l'impronta del certificato |
+| `configure` | Asks for the address and the token of the Data Source, tries the connection, says which capabilities are available and which are missing, and writes `appsettings.Local.json` into the data folder |
+| `reset-password <name>` | Existing. On an installation with no account it creates the first administrator |
+| `access` | Writes the addresses PIE answers at and the fingerprint of the certificate |
 
-**`configure`** non accetta una configurazione che non funziona. Se la connessione non riesce dice perché, con le parole della persona (indirizzo irraggiungibile, token rifiutato, permessi insufficienti), e non scrive nulla. Il token viene letto senza essere mostrato sullo schermo mentre si digita, e non compare mai in nessun messaggio.
+**`configure`** does not accept a configuration that does not work. If the
+connection does not succeed it says why, in the words of the person (address
+unreachable, token refused, permissions insufficient), and writes nothing. The
+token is read without being shown on screen while it is typed, and never
+appears in any message.
 
-Per ogni capacità mancante, `configure` dice che cosa non sarà disponibile e che cosa la renderebbe disponibile, come prevede Capability Detection. In particolare, per `DomainActivity` dichiara la conseguenza per la privacy prevista da Privacy Disclosure: l'attivazione dei Query Logs fa conservare a **Technitium** ogni singola interrogazione, secondo la ritenzione di Technitium, mentre PIE continua a conservarne solo l'aggregato.
+For each missing capability, `configure` says what will not be available and
+what would make it available, as Capability Detection provides. In particular,
+for `DomainActivity` it declares the consequence for privacy that Privacy
+Disclosure provides for: enabling Query Logs makes **Technitium** keep every
+single query, under Technitium's retention, while PIE goes on keeping only the
+aggregate of them.
 
-**`access`** esiste perché, sotto un servizio, le righe scritte all'avvio non si vedono. Senza certificato ancora generato dice di avviare prima il servizio.
+**`access`** exists because, under a service, the lines written at startup are
+not seen. With no certificate generated yet, it says to start the service
+first.
 
 ---
 
 ## Installation Script
 
-Uno script per piattaforma, da eseguire come amministratore dalla cartella del pacchetto estratto: `install.ps1` su Windows, `install.sh` su Linux.
+One script per platform, to be run as administrator from the folder of the
+extracted package: `install.ps1` on Windows, `install.sh` on Linux.
 
 ```text
-Verifica      sistema operativo, permessi di amministratore, spazio, porte libere
+Check         operating system, administrator permissions, space, free ports
 ↓
-Copia         programma nella sua cartella
+Copy          program into its folder
 ↓
-Dati          cartella dei dati con i permessi ristretti
+Data          data folder with restricted permissions
 ↓
-Collegamento  configure
+Connection    configure
 ↓
-Accesso       reset-password, se non esiste alcun account
+Access        reset-password, if no account exists
 ↓
-Servizio      registrazione e avvio
+Service       registration and start
 ↓
-Firewall      regola per la porta HTTPS, solo sulle reti private
+Firewall      rule for the HTTPS port, on private networks only
 ↓
-Verifica      il servizio risponde
+Check         the service answers
 ↓
-Pronto        access: indirizzi e impronta
+Ready         access: addresses and fingerprint
 ```
 
-Ogni passo dice che cosa sta facendo. Un passo che fallisce ferma lo script con una frase comprensibile e dice che cosa è già stato fatto.
+Every step says what it is doing. A step that fails stops the script with an
+understandable sentence and says what has already been done.
 
-**Il firewall.** Un servizio non fa comparire la richiesta del firewall di Windows: senza regola resterebbe irraggiungibile dagli altri dispositivi senza che nessuno lo dica. Lo script aggiunge una regola per la sola porta HTTPS, sulle sole reti private, e lo dichiara. Su Linux lo script non modifica il firewall: dice quale porta aprire se ne è attivo uno.
+**The firewall.** A service does not make the Windows firewall prompt appear:
+without a rule it would stay unreachable from the other devices with nobody
+saying so. The script adds a rule for the HTTPS port alone, on private
+networks alone, and declares it. On Linux the script does not modify the
+firewall: it says which port to open if one is active.
 
-**Se PIE è già installato**, lo script lo aggiorna: ferma il servizio, sostituisce il programma, lo riavvia. Non ripete `configure` né `reset-password`, e non tocca la cartella dei dati. La copia di sicurezza prima di un cambio di schema la fa il programma stesso (Persistence Specification).
+**If PIE is already installed**, the script updates it: stops the service,
+replaces the program, restarts it. It does not repeat `configure` nor
+`reset-password`, and does not touch the data folder. The backup copy before a
+change of schema is made by the program itself (Persistence Specification).
 
 ---
 
 ## Uninstallation Script
 
-`uninstall.ps1` e `uninstall.sh` fermano e rimuovono il servizio, la regola del firewall e la cartella del programma.
+`uninstall.ps1` and `uninstall.sh` stop and remove the service, the firewall
+rule and the folder of the program.
 
-**La cartella dei dati resta**, a meno che la persona non lo chieda esplicitamente con un'opzione (`-RemoveData`, `--remove-data`). Prima di cancellarla lo script dice che cosa contiene e chiede conferma. La cancellazione è effettiva.
+**The data folder stays**, unless the person asks explicitly with an option
+(`-RemoveData`, `--remove-data`). Before deleting it the script says what it
+contains and asks for confirmation. The deletion is real.
 
 ---
 
 ## Installation Guide
 
-Il pacchetto contiene una **guida**, `INSTALL.md`, scritta per una persona che non conosce il progetto, in linguaggio semplice. Comprende:
+The package contains a **guide**, written for a person who does not know the
+project, in plain language.
 
-* che cosa serve prima: una Data Source Technitium già funzionante, e come crearvi un utente di sola lettura e il suo token;
-* l'installazione, passo per passo, con ciò che lo script chiede;
-* come aprire PIE da un altro dispositivo e confrontare l'impronta, che cosa fare se non coincide;
-* il proxy di sistema e le VPN: PIE raggiunge Technitium direttamente, ignorandoli;
-* un profilo del browser dedicato su un computer condiviso, perché la cronologia conserva gli indirizzi aperti;
-* quanto a lungo PIE conserva i dati, e le copie di sicurezza da eliminare dopo un aggiornamento riuscito;
-* come aggiornare, come disinstallare, come riavere l'accesso.
+It exists in two languages, `INSTALL.md` in English and `INSTALL.it.md` in
+Italian, and each refers to the other at the top. The reason is that the
+interface is bilingual and the people who arrive at the project may come from
+an Italian page: a person installing in their own language reaches the one
+step that cannot be got wrong, comparing the fingerprint of the certificate,
+without having to translate it. Both are in the package.
 
-PIE **non installa Technitium** e non ne modifica la configurazione, come stabilito in Constraints.
+The guide comprises:
+
+* what is needed beforehand: a Technitium Data Source already working, and how
+  to create a read-only user on it and its token;
+* the installation, step by step, with what the script asks;
+* how to open PIE from another device and compare the fingerprint, and what to
+  do if it does not match;
+* the system proxy and VPNs: PIE reaches Technitium directly, ignoring them;
+* a dedicated browser profile on a shared computer, because the history keeps
+  the addresses opened;
+* how long PIE keeps the data, and the backup copies to delete after a
+  successful update;
+* how to update, how to uninstall, how to get access back.
+
+PIE **does not install Technitium** and does not modify its configuration, as
+established in Constraints.
 
 ---
 
 ## Field Tests
 
-La procedura è verificata sul campo prima di essere dichiarata realizzata:
+The procedure is verified in the field before it is declared built:
 
-| Prova | Dove |
+| Test | Where |
 | --- | --- |
-| Installazione, aggiornamento, disinstallazione | Windows, sul computer di sviluppo con il backend di sviluppo fermo |
-| Installazione, aggiornamento, disinstallazione | Linux, in WSL o in una macchina virtuale |
-| Accesso da un altro dispositivo | Un telefono o un portatile sulla rete di casa |
-| Una persona estranea installa seguendo la guida | Macchina pulita; è il criterio di Beta, e resta aperto finché non avviene |
+| Installation, update, uninstallation | Windows, on the development computer with the development backend stopped |
+| Installation, update, uninstallation | Linux, in WSL or in a virtual machine |
+| Access from another device | A phone or a laptop on the home network |
+| A stranger installs by following the guide | A clean machine; it is the Beta criterion, and stays open until it happens |
 
 ---
 
 # Not Yet Provided
 
-La prima procedura non realizza le parti seguenti della specifica. Restano obiettivi, e vanno dichiarati come tali.
+The first procedure does not realise the following parts of the specification.
+They remain objectives, and are to be declared as such.
 
-| Parte | Stato |
+| Part | State |
 | --- | --- |
-| Docker Installation | Non fornita. Il pacchetto Linux copre lo stesso uso su un server di casa |
-| Development Installation | È il repository stesso, con i comandi di `CLAUDE.md` |
-| Scelta della lingua all'installazione | Non necessaria: l'interfaccia è bilingue e segue il browser |
-| Proposta di installare componenti facoltativi della Data Source | Non fornita: `configure` dice che cosa manca e come ottenerlo, senza installarlo |
-| Verifica della ritenzione della Data Source rispetto alla frequenza di acquisizione | Non fornita all'installazione |
-| Registro delle fasi d'installazione su file | Lo script scrive sul terminale; nessun file |
-| Pagina di configurazione nel browser | Non fornita: la configurazione si fa con `configure` |
-| Altre architetture (ARM, per esempio Raspberry Pi) | Non fornite nella prima versione |
+| Docker Installation | Not supplied. The Linux package covers the same use on a home server |
+| Development Installation | It is the repository itself, with the commands of `CLAUDE.md` |
+| Choice of language at installation | Not necessary: the interface is bilingual and follows the browser |
+| The texts the scripts and the commands write at the terminal | English only. The guide, in both languages, says what each question asks and what to answer |
+| Proposal to install optional components of the Data Source | Not supplied: `configure` says what is missing and how to obtain it, without installing it |
+| Check of the retention of the Data Source against the frequency of acquisition | Not supplied at installation |
+| Log of the installation phases to a file | The script writes to the terminal; no file |
+| Configuration page in the browser | Not supplied: the configuration is done with `configure` |
+| Other architectures (ARM, a Raspberry Pi for instance) | Not supplied in the first version |
 
 ---
+
 # Design Principles
 
-L'installazione segue i seguenti principi.
+The installation follows these principles.
 
-* semplicità;
-* ripetibilità;
-* sicurezza;
-* modularità;
-* indipendenza dalla piattaforma.
+* simplicity;
+* repeatability;
+* safety;
+* modularity;
+* independence from the platform.
 
 ---
 
 # Constraints
 
-La procedura di installazione:
+The installation procedure:
 
-* non modifica le Data Sources;
-* non richiede modifiche ai backend supportati;
-* utilizza esclusivamente componenti ufficiali del progetto.
+* does not modify the Data Sources;
+* requires no modification to the backends supported;
+* uses components official to the project alone.
 
 ---
 

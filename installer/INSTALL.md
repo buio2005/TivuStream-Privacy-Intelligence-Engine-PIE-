@@ -1,181 +1,266 @@
-# Installare TivuStream PIE
+# Installing TivuStream PIE
 
-PIE legge il tuo server DNS e ti dice che cosa contatta la tua rete di casa. Tutto resta sul tuo computer: nessun dato della tua rete viene mandato altrove.
+*Versione italiana: [`INSTALL.it.md`](INSTALL.it.md)*
 
-Questa guida ti accompagna passo per passo. Non serve saper programmare.
+PIE reads your DNS server and tells you what your home network contacts.
+Everything stays on your computer: no data about your network is sent
+anywhere.
 
-**Le domande che PIE ti fa durante l'installazione sono in inglese.** Accanto a ogni passo trovi qui che cosa chiede e che cosa rispondere.
-
----
-
-## Prima di cominciare
-
-Ti servono tre cose.
-
-1. **Un computer che resta acceso**, con Windows 10 o 11 a 64 bit, oppure Linux a 64 bit con systemd (per esempio Ubuntu o Debian). PIE osserva la rete solo mentre il computer è acceso.
-2. **Technitium DNS Server già funzionante** sulla tua rete. PIE non lo installa e non ne cambia le impostazioni: lo legge soltanto.
-3. **Un token di Technitium**, cioè una chiave che permette a PIE di leggere i dati. Qui sotto trovi come crearlo.
-
-**Se Technitium gira in Docker**, controlla due cose prima di cominciare:
-* che riparta da solo dopo un riavvio del computer (`--restart unless-stopped`); altrimenti PIE, che parte da solo, non trova nulla da leggere;
-* che i suoi dati stiano in un volume (`-v technitium-data:/etc/dns`). Senza, aggiornare Technitium, cioè ricreare il container, cancella utenti, token e app, e PIE smette di collegarsi. Prima di un aggiornamento, in ogni caso, fai un backup da **Settings → Backup**.
-
-### Creare il token in Technitium
-
-Il token appartiene a un utente di Technitium creato apposta per PIE, che può solo **guardare**, mai modificare.
-
-1. Apri l'interfaccia di Technitium (di solito `http://indirizzo-del-server:5380`) ed entra come amministratore.
-2. Vai in **Administration → Users** e crea un utente, per esempio `pie`. Nella scheda dell'utente, togli la spunta dal gruppo **Everyone**: altrimenti l'utente riceve anche i permessi di quel gruppo, più di quelli che servono.
-3. Vai in **Administration → Permissions**. Per ciascuna delle due sezioni qui sotto, aggiungi l'utente `pie` con la sola casella **View** e salva:
-   * **Dashboard**, obbligatorio: senza, PIE non vede nulla;
-   * **Settings**, consigliato: permette a PIE di capire se le protezioni del DNS sono attive.
-
-   Non serve altro, nemmeno per sapere quale dispositivo ha contattato quale dominio (vedi sotto).
-4. Vai in **Administration → Sessions**, scegli **Create Token**, seleziona l'utente `pie` e dai un nome al token, per esempio `pie`. Copia il token: ti servirà tra poco, e Technitium non te lo mostrerà di nuovo.
-
-Non serve uscire da Technitium né entrare come `pie`: il token funziona da solo.
-
-### Quale dispositivo ha contattato quale dominio
-
-Di serie, Technitium dice a PIE quali domini sono stati contattati e quali dispositivi c'erano, ma non chi ha contattato cosa.
-
-Per saperlo va installata in Technitium l'app **Query Logs (Sqlite)** (menu **Apps → App Store**).
-
-**Pensaci prima di installarla.** Quell'app fa conservare a Technitium ogni singola richiesta di ogni dispositivo, per tutto il tempo previsto dalle sue impostazioni: di fatto la cronologia di navigazione di chi usa la rete. PIE, da parte sua, ne tiene solo i totali ora per ora. Se decidi di installarla, controlla nelle impostazioni dell'app per quanto tempo conserva i dati.
-
-Puoi aggiungerla anche dopo: PIE se ne accorge da solo.
+This guide takes you through it step by step. You do not need to know how to
+program.
 
 ---
 
-## Installare su Windows
+## Before you start
 
-1. Estrai il file `tivustream-pie-…-win-x64.zip` in una cartella qualsiasi, per esempio sul Desktop.
-2. Apri il menu Start, cerca **PowerShell**, fai clic con il tasto destro e scegli **Esegui come amministratore**.
-3. Scrivi `cd` seguito da uno spazio, trascina nella finestra la cartella estratta e premi Invio.
-4. Scrivi questo e premi Invio:
+You need three things.
+
+1. **A computer that stays on**, with 64-bit Windows 10 or 11, or 64-bit Linux
+   with systemd (Ubuntu or Debian, for instance). PIE observes the network
+   only while the computer is on.
+2. **Technitium DNS Server already working** on your network. PIE does not
+   install it and does not change its settings: it only reads it.
+3. **A Technitium token**, that is, a key that lets PIE read the data. How to
+   create one is below.
+
+**If Technitium runs in Docker**, check two things before you start:
+
+* that it restarts by itself after the computer reboots
+  (`--restart unless-stopped`); otherwise PIE, which does start by itself,
+  finds nothing to read;
+* that its data lives in a volume (`-v technitium-data:/etc/dns`). Without
+  one, updating Technitium — that is, recreating the container — deletes
+  users, tokens and apps, and PIE stops being able to connect. Before an
+  update, in any case, make a backup from **Settings → Backup**.
+
+### Creating the token in Technitium
+
+The token belongs to a Technitium user created specially for PIE, which can
+only **look**, never change anything.
+
+1. Open the Technitium interface (usually
+   `http://address-of-the-server:5380`) and sign in as administrator.
+2. Go to **Administration → Users** and create a user, `pie` for instance. In
+   the user's page, clear the **Everyone** group: otherwise the user also
+   receives the permissions of that group, more than are needed.
+3. Go to **Administration → Permissions**. For each of the two sections below,
+   add the user `pie` with the **View** box alone, and save:
+   * **Dashboard**, required: without it PIE sees nothing;
+   * **Settings**, recommended: it lets PIE work out whether the protections
+     of the DNS are on.
+
+   Nothing else is needed, not even to know which device contacted which
+   domain (see below).
+4. Go to **Administration → Sessions**, choose **Create Token**, select the
+   user `pie` and give the token a name, `pie` for instance. Copy the token:
+   you will need it shortly, and Technitium will not show it to you again.
+
+You do not need to sign out of Technitium, nor to sign in as `pie`: the token
+works on its own.
+
+### Which device contacted which domain
+
+As standard, Technitium tells PIE which domains were contacted and which
+devices were there, but not who contacted what.
+
+To know that, the **Query Logs (Sqlite)** app must be installed in Technitium
+(menu **Apps → App Store**).
+
+**Think about it before you install it.** That app makes Technitium keep every
+single request from every device, for as long as its settings provide: in
+practice the browsing history of whoever uses the network. PIE, for its part,
+keeps only the totals hour by hour. If you decide to install it, check in the
+app's settings how long it keeps the data.
+
+You can add it later: PIE notices by itself.
+
+---
+
+## Installing on Windows
+
+1. Extract the file `tivustream-pie-…-win-x64.zip` into any folder, the
+   Desktop for instance.
+2. Open the Start menu, look for **PowerShell**, right-click it and choose
+   **Run as administrator**.
+3. Type `cd` followed by a space, drag the extracted folder into the window
+   and press Enter.
+4. Type this and press Enter:
 
    ```text
    powershell -ExecutionPolicy Bypass -File .\install.ps1
    ```
 
-Lo script fa tutto da solo e si ferma solo per chiederti tre cose:
+The script does everything by itself and stops only to ask you three things:
 
-| Cosa chiede | Che cosa vuol dire | Che cosa rispondere |
+| What it asks | What it means | What to answer |
 | --- | --- | --- |
-| `Address of Technitium` | Dove si trova Technitium | L'indirizzo che usi per aprirlo, per esempio `http://192.168.1.10:5380`. Se Technitium è su questo stesso computer, premi solo Invio |
-| `API token` | Il token creato prima | Incollalo con il **tasto destro** del mouse (`Ctrl+V` in quella finestra può non funzionare) e premi Invio. Non lo vedrai comparire: è normale. Subito dopo PIE scrive quanti caratteri ha ricevuto: per un token di Technitium sono 64 |
-| `Name`, poi `New password` e `Repeat the password` | Il tuo account per entrare in PIE | Un nome in minuscolo, per esempio `maria`, e una password di almeno 12 caratteri, due volte |
+| `Address of Technitium` | Where Technitium is | The address you use to open it, `http://192.168.1.10:5380` for instance. If Technitium is on this same computer, just press Enter |
+| `API token` | The token you created earlier | Paste it with the **right** mouse button (`Ctrl+V` may not work in that window) and press Enter. You will not see it appear: that is normal. Straight afterwards PIE says how many characters it received: for a Technitium token that is 64 |
+| `Name`, then `New password` and `Repeat the password` | Your account for signing in to PIE | A name in lower case, `maria` for instance, and a password of at least 12 characters, twice |
 
-Dopo il token, PIE ti dice che cosa riesce a leggere e che cosa manca, e come ottenerlo. Se il token non funziona te lo dice con parole semplici e ti chiede se vuoi riprovare (`Try again? [Y/n]`: premi Invio per riprovare).
+After the token, PIE tells you what it can read and what is missing, and how
+to obtain it. If the token does not work it tells you so in plain words and
+asks whether you want to try again (`Try again? [Y/n]`: press Enter to try
+again).
 
-Alla fine lo script scrive gli indirizzi a cui aprire PIE e un'**impronta**, una lunga sequenza di lettere e numeri. Tienila a portata di mano per il primo accesso da un altro dispositivo.
+At the end the script writes the addresses to open PIE at, and a
+**fingerprint**, a long sequence of letters and numbers. Keep it to hand for
+the first sign in from another device.
 
-PIE ora parte da solo ogni volta che accendi il computer, anche se nessuno accede a Windows.
+PIE now starts by itself every time you turn the computer on, even if nobody
+signs in to Windows.
 
 ---
 
-## Installare su Linux
+## Installing on Linux
 
-1. Copia sul computer il file `tivustream-pie-…-linux-x64.tar.gz` ed estrailo:
+1. Copy the file `tivustream-pie-…-linux-x64.tar.gz` onto the computer and
+   extract it:
 
    ```text
    tar -xzf tivustream-pie-*-linux-x64.tar.gz
    cd tivustream-pie-*-linux-x64
    ```
 
-2. Avvia l'installazione:
+2. Start the installation:
 
    ```text
    sudo sh install.sh
    ```
 
-Le domande sono le stesse di Windows, nella tabella qui sopra.
+The questions are the same as on Windows, in the table above.
 
-Se il computer ha un firewall attivo, alla fine lo script ti dice il comando per aprire PIE alla tua rete: non lo modifica da solo.
+If the computer has a firewall on, at the end the script tells you the command
+to open PIE to your network: it does not change it by itself.
 
-Su una distribuzione minima può mancare una libreria (ICU): lo script te lo dice e ti dice quale pacchetto installare.
-
----
-
-## Aprire PIE
-
-**Sul computer dove l'hai installato:** apri `http://localhost:5000`. L'indirizzo comincia con `http` e il browser non mostra il lucchetto: è giusto così, perché quel collegamento non esce mai dal computer e non c'è nulla da proteggere lungo la strada.
-
-**Dal telefono o da un altro computer di casa:**
-
-1. Apri uno degli indirizzi scritti alla fine dell'installazione. Quello che comincia come quello del tuo router (spesso `https://192.168.…:5443`) è di solito quello giusto.
-2. Il browser avvisa che la connessione «non è privata». È normale: il certificato lo ha creato PIE, e nessun browser lo conosce ancora.
-3. Apri i dettagli del certificato e confronta l'impronta **SHA-256** con quella scritta da PIE.
-   * **Se coincide**, prosegui: stai parlando con il tuo PIE.
-   * **Se non coincide, non inserire la password.** Qualcun altro si sta mettendo in mezzo.
-
-L'avviso ricompare, una volta per dispositivo, quando PIE rinnova il certificato (circa una volta l'anno) o quando il router cambia l'indirizzo del computer.
-
-**Se hai perso l'impronta o gli indirizzi**, riscrivili così:
-
-* Windows, in PowerShell come amministratore: `& "C:\Program Files\TivuStream PIE\tivustream-pie.exe" access "--DataDirectory=C:\ProgramData\TivuStream PIE"`
-* Linux: `sudo /opt/tivustream-pie/tivustream-pie access --DataDirectory=/var/lib/tivustream-pie`
+On a minimal distribution a library may be missing (ICU): the script tells you
+so, and tells you which package to install.
 
 ---
 
-## Cose da sapere
+## Opening PIE
 
-**Rete di casa pubblica o privata.** Windows segna spesso la rete di casa come «pubblica», e su una rete pubblica PIE non si apre dagli altri dispositivi: il telefono aspetta e poi dice che il tempo è scaduto. Lo script d'installazione se ne accorge e chiede se segnarla come privata. Puoi farlo anche dopo, in **Impostazioni → Rete e Internet**, nelle proprietà della connessione, alla voce **Profilo di rete**. PIE non si apre mai sulle reti pubbliche, come il Wi-Fi di un bar.
+**On the computer where you installed it:** open `http://localhost:5000`. The
+address starts with `http` and the browser shows no padlock: that is right,
+because that connection never leaves the computer and there is nothing to
+protect along the way.
 
-**VPN e proxy.** PIE si collega a Technitium direttamente, senza passare da una VPN o da un proxy impostati sul computer. Una VPN accesa sul telefono, invece, di solito manda tutto dentro il suo tunnel, e l'indirizzo di PIE, che esiste solo in casa, non si raggiunge. Cerca nell'app della VPN l'opzione che lascia fuori la rete locale («Consenti accesso alla rete locale», *Allow LAN*, o lo *split tunneling*): con quella attiva, PIE si apre anche a VPN accesa. Altrimenti spegni la VPN mentre usi PIE.
+**From your phone or another computer in the house:**
 
-**Computer usato da più persone.** La cronologia del browser conserva gli indirizzi delle pagine aperte, e alcune pagine di PIE hanno il nome di un dominio nell'indirizzo. Se il computer è condiviso, usa per PIE un profilo del browser dedicato.
+1. Open one of the addresses written at the end of the installation. The one
+   that starts like your router's (often `https://192.168.…:5443`) is usually
+   the right one.
+2. The browser warns you that the connection "is not private". That is normal:
+   the certificate was created by PIE, and no browser knows it yet.
+3. Open the details of the certificate and compare the **SHA-256** fingerprint
+   with the one PIE wrote.
+   * **If it matches**, carry on: you are talking to your own PIE.
+   * **If it does not match, do not type your password.** Somebody else is
+     getting in between.
 
-**Quanto a lungo PIE conserva i dati.** Ora per ora per 30 giorni, poi giorno per giorno fino a 12 mesi, poi mese per mese fino a 5 anni, senza più il legame fra dispositivo e dominio. Oltre, niente. Ciò che viene cancellato è cancellato davvero.
+The warning comes back, once per device, when PIE renews the certificate
+(about once a year) or when the router changes the address of the computer.
 
-**Dove stanno i tuoi dati.**
+**If you have lost the fingerprint or the addresses**, write them out again
+like this:
+
+* Windows, in PowerShell as administrator:
+  `& "C:\Program Files\TivuStream PIE\tivustream-pie.exe" access "--DataDirectory=C:\ProgramData\TivuStream PIE"`
+* Linux:
+  `sudo /opt/tivustream-pie/tivustream-pie access --DataDirectory=/var/lib/tivustream-pie`
+
+---
+
+## Things worth knowing
+
+**Home network, public or private.** Windows often marks a home network as
+"public", and on a public network PIE does not open from the other devices:
+the phone waits and then says the time ran out. The installation script
+notices and asks whether to mark it as private. You can do it later too, in
+**Settings → Network & Internet**, in the properties of the connection, under
+**Network profile**. PIE never opens on public networks, such as the Wi-Fi of
+a café.
+
+**VPNs and proxies.** PIE connects to Technitium directly, without going
+through a VPN or a proxy set on the computer. A VPN on your phone, on the
+other hand, usually sends everything into its tunnel, and the address of PIE,
+which exists only in the house, cannot be reached. Look in the VPN app for the
+option that leaves the local network out ("Allow LAN access", or split
+tunnelling): with that on, PIE opens even with the VPN running. Otherwise turn
+the VPN off while you use PIE.
+
+**A computer used by several people.** The browser history keeps the addresses
+of the pages opened, and some pages of PIE have the name of a domain in the
+address. If the computer is shared, use a dedicated browser profile for PIE.
+
+**How long PIE keeps the data.** Hour by hour for 30 days, then day by day up
+to 12 months, then month by month up to 5 years, without the link between
+device and domain any more. Beyond that, nothing. What is deleted is really
+deleted.
+
+**Where your data lives.**
 
 | | Windows | Linux |
 | --- | --- | --- |
-| Programma | `C:\Program Files\TivuStream PIE` | `/opt/tivustream-pie` |
-| Dati, impostazioni, token | `C:\ProgramData\TivuStream PIE` | `/var/lib/tivustream-pie` |
+| Program | `C:\Program Files\TivuStream PIE` | `/opt/tivustream-pie` |
+| Data, settings, token | `C:\ProgramData\TivuStream PIE` | `/var/lib/tivustream-pie` |
 
-La cartella dei dati può essere aperta solo da PIE e dagli amministratori del computer.
+The data folder can be opened only by PIE and by the administrators of the
+computer.
 
-**Copie di sicurezza.** Quando un aggiornamento cambia la struttura del database, PIE ne fa prima una copia nella cartella dei dati (`pie.db.schema-…bak`). Le copie non si cancellano da sole e contengono tutto il dettaglio di quel momento: quando l'aggiornamento ti sembra riuscito, puoi eliminarle.
-
----
-
-## Aggiornare
-
-Estrai il pacchetto della nuova versione e lancia lo script di installazione esattamente come la prima volta. Lo script si accorge che PIE è già installato, sostituisce il programma e lo riavvia. I tuoi dati, le impostazioni e gli account restano.
+**Backup copies.** When an update changes the structure of the database, PIE
+makes a copy of it first, in the data folder (`pie.db.schema-…bak`). The
+copies do not delete themselves and contain all the detail of that moment:
+once the update looks right to you, you can delete them.
 
 ---
 
-## Se non riesci più a entrare
+## Updating
 
-Sul computer dove è installato PIE:
-
-* Windows, in PowerShell come amministratore: `& "C:\Program Files\TivuStream PIE\tivustream-pie.exe" reset-password maria "--DataDirectory=C:\ProgramData\TivuStream PIE"`
-* Linux: `sudo /opt/tivustream-pie/tivustream-pie reset-password maria --DataDirectory=/var/lib/tivustream-pie`
-
-Al posto di `maria` scrivi il tuo nome. PIE ti chiede la nuova password; al primo accesso dovrai sceglierne un'altra.
+Extract the package of the new version and run the installation script exactly
+as you did the first time. The script notices that PIE is already installed,
+replaces the program and restarts it. Your data, settings and accounts stay.
 
 ---
 
-## Disinstallare
+## If you can no longer get in
 
-Dalla cartella del pacchetto estratto:
+On the computer where PIE is installed:
 
-* Windows, in PowerShell come amministratore: `powershell -ExecutionPolicy Bypass -File .\uninstall.ps1`
+* Windows, in PowerShell as administrator:
+  `& "C:\Program Files\TivuStream PIE\tivustream-pie.exe" reset-password maria "--DataDirectory=C:\ProgramData\TivuStream PIE"`
+* Linux:
+  `sudo /opt/tivustream-pie/tivustream-pie reset-password maria --DataDirectory=/var/lib/tivustream-pie`
+
+In place of `maria` write your own name. PIE asks you for the new password; at
+the first sign in you will have to choose another one.
+
+---
+
+## Uninstalling
+
+From the folder of the extracted package:
+
+* Windows, in PowerShell as administrator:
+  `powershell -ExecutionPolicy Bypass -File .\uninstall.ps1`
 * Linux: `sudo sh uninstall.sh`
 
-Il programma viene rimosso, **i tuoi dati restano**: se reinstalli, PIE li ritrova. Per cancellare anche quelli aggiungi `-RemoveData` su Windows o `--remove-data` su Linux. Ti verrà chiesto di confermare scrivendo `YES`.
+The program is removed, **your data stays**: if you install again, PIE finds
+it. To delete that too, add `-RemoveData` on Windows or `--remove-data` on
+Linux. You will be asked to confirm by typing `YES`.
 
 ---
 
-## Se qualcosa va storto
+## If something goes wrong
 
-Lo script si ferma, dice che cosa non ha funzionato e che cosa ha già fatto. Di solito basta correggere la causa e lanciarlo di nuovo.
+The script stops, says what did not work and what it has already done. Usually
+it is enough to fix the cause and run it again.
 
-**Se l'installazione si è interrotta prima della fine**, lanciala di nuovo: riprende dall'inizio senza danni.
+**If the installation stopped before the end**, run it again: it starts over
+with no harm done.
 
-Per vedere che cosa ha segnalato PIE:
+To see what PIE reported:
 
-* Windows: **Visualizzatore eventi → Registri di Windows → Applicazione**, origine **TivuStreamPIE**;
+* Windows: **Event Viewer → Windows Logs → Application**, source
+  **TivuStreamPIE**;
 * Linux: `journalctl -u tivustream-pie`.

@@ -8,48 +8,50 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-19
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce **Network Privacy**, la prima applicazione sviluppata utilizzando il Privacy Intelligence Engine (PIE).
+This specification defines **Network Privacy**, the first application built
+using the Privacy Intelligence Engine (PIE).
 
-Network Privacy rappresenta il livello di presentazione dell'ecosistema PIE e consente all'utente di visualizzare, comprendere e gestire le informazioni prodotte dal Core.
+Network Privacy is the presentation layer of the PIE ecosystem and lets the
+person see, understand and manage the information produced by the Core.
 
 ---
 
 # Objectives
 
-L'applicazione ha i seguenti obiettivi.
+The application has the following objectives.
 
-* presentare informazioni in modo semplice;
-* visualizzare lo stato della rete;
-* mostrare il Network Privacy & Security Score (NPSS);
-* evidenziare minacce e anomalie;
-* fornire raccomandazioni operative;
-* semplificare l'analisi della rete.
+* to present information simply;
+* to show the state of the network;
+* to show the Network Privacy & Security Score (NPSS);
+* to bring threats and anomalies to attention;
+* to provide actionable recommendations;
+* to make analysing the network easier.
 
 ---
 
 # Scope
 
-Network Privacy è un'applicazione.
+Network Privacy is an application.
 
-Non è un motore di analisi.
+It is not an analysis engine.
 
-Non implementa algoritmi di classificazione.
+It implements no classification algorithms.
 
-Non comunica direttamente con le Data Sources.
+It does not communicate directly with the Data Sources.
 
-Utilizza esclusivamente le API pubbliche del Privacy Intelligence Engine.
+It uses only the public APIs of the Privacy Intelligence Engine.
 
 ---
 
 # Architecture
 
-Network Privacy opera esclusivamente all'interno del Query Flow.
+Network Privacy operates entirely within the Query Flow.
 
 ```text id="g1nvw8"
 Frontend
@@ -60,24 +62,24 @@ REST API
 
 ↓
 
-Risultati prodotti dal Privacy Intelligence Engine
+Results produced by the Privacy Intelligence Engine
 ```
 
-L'applicazione non partecipa in alcun modo all'Acquisition Flow.
+The application takes no part whatsoever in the Acquisition Flow.
 
 ---
 
 # Main Dashboard
 
-La Dashboard rappresenta il punto di ingresso dell'applicazione.
+The Dashboard is the entry point of the application.
 
-Visualizza una panoramica dello stato della rete.
+It shows an overview of the state of the network.
 
 ---
 
 # Primary Widgets
 
-La Dashboard comprende i seguenti componenti.
+The Dashboard comprises the following components.
 
 * Network Privacy & Security Score
 * Network Status
@@ -92,7 +94,7 @@ La Dashboard comprende i seguenti componenti.
 
 # Navigation
 
-L'applicazione è organizzata nelle seguenti sezioni.
+The application is organised into the following sections.
 
 * Dashboard
 * Devices
@@ -108,77 +110,77 @@ L'applicazione è organizzata nelle seguenti sezioni.
 
 # Devices
 
-La sezione Devices visualizza tutti i dispositivi rilevati.
+The Devices section shows every device detected.
 
-Per ogni dispositivo vengono mostrate le principali informazioni.
+For each device the principal information is shown.
 
-* nome;
-* indirizzo IP;
-* stato;
-* attività;
-* Alert;
-* Threat;
-* statistiche.
+* name;
+* IP address;
+* state;
+* activity;
+* Alerts;
+* Threats;
+* statistics.
 
 ---
 
 # Domains
 
-La sezione Domains visualizza i domini osservati dal sistema.
+The Domains section shows the domains the system observed.
 
-Per ogni dominio vengono mostrati.
+For each domain it shows.
 
-* categoria;
-* reputazione;
-* numero di richieste;
-* dispositivi coinvolti.
+* category;
+* reputation;
+* number of queries;
+* devices involved.
 
 ---
 
 # Threats
 
-La sezione Threats presenta tutte le minacce classificate dal Core.
+The Threats section presents every threat classified by the Core.
 
-Le informazioni possono essere filtrate e ordinate.
+The information can be filtered and sorted.
 
 ---
 
 # Alerts
 
-La sezione Alerts mostra gli eventi generati automaticamente dal sistema.
+The Alerts section shows the events the system generated automatically.
 
-Gli Alert sono organizzati per severità.
+Alerts are organised by severity.
 
 ---
 
 # Recommendations
 
-La sezione Recommendations raccoglie tutti i suggerimenti prodotti dal Core.
+The Recommendations section gathers every suggestion produced by the Core.
 
-Ogni raccomandazione è collegata agli eventi che l'hanno generata.
+Each recommendation is linked to the events that generated it.
 
 ---
 
 # Statistics
 
-La sezione Statistics presenta dati aggregati relativi alla rete.
+The Statistics section presents aggregated data about the network.
 
-Comprende:
+It covers:
 
-* traffico DNS;
-* query;
-* domini;
+* DNS traffic;
+* queries;
+* domains;
 * cache;
-* dispositivi;
-* protocolli.
+* devices;
+* protocols.
 
 ---
 
 # Reports
 
-L'applicazione consente la generazione di report.
+The application allows reports to be generated.
 
-Formati previsti.
+Formats planned.
 
 * PDF
 * CSV
@@ -188,241 +190,282 @@ Formati previsti.
 
 # Search
 
-L'applicazione include un sistema di ricerca globale.
+The application includes a global search.
 
-La ricerca consente di individuare rapidamente:
+Search makes it quick to find:
 
-* dispositivi;
-* domini;
-* Threat;
-* Alert.
+* devices;
+* domains;
+* Threats;
+* Alerts.
 
 ---
 
 # Filters
 
-Ogni elenco supporta filtri dinamici.
+Every list supports dynamic filters.
 
-Esempi.
+Examples.
 
-* categoria;
-* severità;
-* intervallo temporale;
-* dispositivo;
-* dominio.
+* category;
+* severity;
+* time range;
+* device;
+* domain.
 
 ---
 
 # Honesty of Presentation
 
-L'applicazione non presenta mai come misurato un dato che non lo è.
+The application never presents as measured something that is not.
 
-Questo requisito ha la stessa rilevanza dei requisiti funzionali.
+This requirement carries the same weight as the functional ones.
 
 ---
 
 ## Absent Versus Unmeasurable
 
-L'interfaccia distingue sempre tre condizioni.
+The interface always distinguishes three conditions.
 
-| Condizione            | Significato per l'utente                                    |
-| --------------------- | ------------------------------------------------------------ |
-| Nessun risultato      | È stato osservato, non è emerso nulla                         |
-| Parzialmente osservato| È stato osservato in parte, il resto non è accessibile        |
-| Non misurabile        | Non è stato osservato, la configurazione non lo consente      |
+| Condition           | What it means to the person                              |
+| ------------------- | --------------------------------------------------------- |
+| No result           | It was observed, and nothing came up                       |
+| Partly observed     | It was observed in part, the rest is not accessible        |
+| Not measurable      | It could not be observed: the source or the configuration does not provide it |
 
-Un valore pari a zero, una sezione vuota o un grafico piatto appartengono alla prima condizione e comunicano all'utente che la sua rete è in ordine.
+A value of zero, an empty section or a flat graph belong to the first
+condition and tell the person that their network is in order.
 
-Utilizzarli per rappresentare le altre due condizioni costituisce un'informazione falsa.
+Using them to represent the other two conditions is false information.
 
-Le sezioni non misurabili o parzialmente osservate vengono presentate in modo visivamente distinto, accompagnate dall'indicazione di cosa è stato valutato, cosa no e per quale motivo.
+Sections that are not measurable, or observed only in part, are presented in a
+visually distinct way, together with what was assessed, what was not, and why.
 
-Una condizione parziale non viene mai presentata come completa: l'interfaccia rende evidente che il risultato mostrato si riferisce a una porzione del fenomeno.
+A partial condition is never presented as a complete one: the interface makes
+plain that the result shown refers to a portion of the whole.
 
 ---
 
 ## Score Coverage
 
-Quando la copertura del Network Privacy & Security Score è inferiore a 100, l'interfaccia la mostra sempre accanto al punteggio.
+Whenever the coverage of the Network Privacy & Security Score is below 100,
+the interface shows it beside the score.
 
-Tutte le aree sono elencate, comprese quelle parzialmente misurate e quelle non misurabili, con l'indicazione degli indicatori valutati e del motivo dell'esclusione degli altri.
+Every area is listed, including those partly measured and those not
+measurable, together with the indicators that were assessed and the reason the
+others were excluded.
 
-L'andamento storico segnala le variazioni di copertura, poiché punteggi con copertura differente non sono confrontabili.
+The history marks changes in coverage, because scores with different coverage
+are not comparable.
 
 ---
 
 ## Guided Configuration
 
-Le Recommendation prodotte in seguito a una capacità mancante sono presentate come **azioni proposte**, non come avvisi di errore.
+Recommendations produced because of a missing capability are presented as
+**proposed actions**, not as error notices.
 
-Ogni proposta espone in modo simmetrico:
+Each proposal states, symmetrically:
 
-* quale analisi verrebbe abilitata;
-* quale intervento è richiesto;
-* quali conseguenze comporta, comprese quelle sfavorevoli.
+* which analysis it would enable;
+* what has to be done;
+* what it entails, including the unfavourable consequences.
 
-L'ultimo punto è vincolante.
+The last point is binding.
 
-Quando l'attivazione di una funzionalità comporta un aumento del consumo di risorse, la registrazione di dati aggiuntivi o un impatto sulle prestazioni, tali aspetti vengono dichiarati **prima** che l'utente scelga.
+Where enabling a feature increases resource consumption, records additional
+data, or affects performance, those aspects are declared **before** the person
+chooses.
 
-L'applicazione non presenta configurazioni elencandone soltanto i benefici.
+The application does not present a configuration by listing only its benefits.
 
-L'utente deve poter rifiutare una proposta e continuare a utilizzare il sistema senza limitazioni oltre a quelle dichiarate.
+The person must be able to decline a proposal and carry on using the system
+with no limitations beyond those declared.
 
 ---
 
 ## Qualified Values
 
-Un valore che dichiara una qualità diversa da esatta **non viene mai presentato come esatto**.
+A value that declares a quality other than exact is **never presented as
+exact**.
 
-| Qualità dichiarata | Presentazione richiesta                                     |
-| ------------------ | ------------------------------------------------------------ |
-| `LowerBound`       | Indicare che il valore reale è almeno quello mostrato         |
-| `PeriodBounded`    | Indicare il periodo, non un istante preciso                   |
-| `Estimated`        | Indicare che si tratta di una deduzione                       |
+| Declared quality | Presentation required                                  |
+| ---------------- | -------------------------------------------------------- |
+| `LowerBound`     | State that the real value is at least the one shown       |
+| `PeriodBounded`  | State the period, not a precise moment                    |
+| `Estimated`      | State that it is an inference                             |
 
-Presentare un limite inferiore come un conteggio, o l'inizio di un periodo come l'istante di un evento, è un'affermazione falsa anche quando il numero mostrato è corretto.
+Presenting a lower bound as a count, or the beginning of a period as the
+moment of an event, is a false statement even when the number shown is
+correct.
 
-L'interfaccia non arrotonda un valore incerto presentandolo come esatto.
+The interface does not round an uncertain value and present it as exact.
 
 ---
 
 ## Device Identity
 
-L'interfaccia dichiara su quale base è stata stabilita l'identità di un dispositivo.
+The interface declares on what basis the identity of a device was established.
 
-Quando l'identità deriva dall'indirizzo di rete, l'utente viene informato che il dispositivo potrebbe cambiare identità al cambiare dell'indirizzo.
+Where the identity derives from the network address, the person is told that
+the device may change identity when the address changes.
 
-Attribuire un comportamento a un dispositivo è l'affermazione più forte che il sistema produce. La sua solidità va resa visibile, non lasciata intendere.
+Attributing a behaviour to a device is the strongest claim the system makes.
+How solid it is must be made visible, not left to be inferred.
 
 ---
 
 ## Domain Classification
 
-Ogni classificazione mostrata dichiara **da dove proviene e quanto è recente**.
+Every classification shown declares **where it comes from and how recent it
+is**.
 
-| Elemento             | Presentazione richiesta                                       |
-| -------------------- | ------------------------------------------------------------- |
-| Lista di provenienza  | Nome della lista che ha prodotto la classificazione            |
-| Età della lista       | Data dell'ultimo aggiornamento riuscito di quella lista        |
-| Confidenza            | Distinzione fra corrispondenza diretta e inferenza sul dominio superiore |
+| Element              | Presentation required                                     |
+| -------------------- | ----------------------------------------------------------- |
+| List it comes from   | Name of the list that produced the classification            |
+| Age of the list      | Date of the last successful update of that list              |
+| Confidence           | Direct match distinguished from inference on the parent domain |
 
-Un dominio con categoria `Unknown` viene presentato come **non classificato**, mai come sicuro.
+A domain in the category `Unknown` is presented as **not classified**, never
+as safe.
 
-È la differenza fra dire che non si sa e dire che non c'è nulla. Solo la prima è vera.
+That is the difference between saying we do not know and saying there is
+nothing. Only the first is true.
 
 ---
 
 ## The Wording Belongs To The Interface
 
-Il Core non produce frasi. Ogni fattore arriva come **codice con i propri valori**, e l'interfaccia lo rende in parole.
+The Core produces no sentences. Every factor arrives as a **code with its own
+values**, and the interface renders it in words.
 
-Ne discende che i vincoli di onestà di questo documento si applicano al **catalogo delle traduzioni**, non soltanto al codice sorgente.
+It follows that the honesty constraints of this document apply to the
+**translation catalogue**, not only to the source code.
 
-Il catalogo è parte del prodotto. Una traduzione che scrivesse «rete pulita» al posto di «nessun tracciamento noto» violerebbe la specifica esattamente quanto lo farebbe il motore.
+The catalogue is part of the product. A translation that wrote "clean
+network" in place of "no known tracking" would breach this specification
+exactly as the engine would.
 
-Le regole seguenti valgono quindi per ogni lingua offerta.
+The rules below therefore hold for every language offered.
 
 ---
 
 ## Known, Not Absent
 
-Gli indicatori fondati sulla classificazione misurano ciò che le liste **riconoscono**.
+Indicators founded on classification measure what the lists **recognise**.
 
-L'interfaccia non presenta mai il punteggio pieno di quelle aree come assenza di tracciamento o di minacce.
+The interface never presents full marks in those areas as an absence of
+tracking or of threats.
 
-| Vietato                        | Richiesto                              |
-| ------------------------------ | -------------------------------------- |
-| «Nessun tracciamento»           | «Nessun tracciamento **noto**»          |
-| «Rete pulita»                   | «Nessuna minaccia riconosciuta dalle liste» |
-| «Sei protetto»                  | «Non è stato osservato nulla di noto»   |
+| Forbidden           | Required                                      |
+| ------------------- | ----------------------------------------------- |
+| "No tracking"       | "No **known** tracking"                          |
+| "Clean network"     | "No threat recognised by the lists"              |
+| "You are protected" | "Nothing known was observed"                     |
 
-La differenza non è prudenza formale. Un dominio assente da ogni lista può essere innocuo oppure un tracciatore che nessuna lista conosce, e il sistema non è in grado di distinguerli.
+The difference is not formal caution. A domain absent from every list may be
+harmless or may be a tracker no list knows about, and the system cannot tell
+them apart.
 
-Dire «nessun tracciamento» sarebbe l'unica affermazione dell'intero prodotto che il prodotto non può sostenere.
+Saying "no tracking" would be the one claim in the entire product that the
+product cannot support.
 
 ---
 
 ## Device Visibility
 
-L'elenco dei dispositivi comprende **soltanto i dispositivi che utilizzano questo servizio DNS**.
+The list of devices comprises **only the devices that use this DNS service**.
 
-Un apparecchio configurato con un resolver proprio, o che utilizza DNS cifrato verso un servizio esterno, non compare in alcuna statistica. Non risulta privo di attività: risulta inesistente.
+A device configured with a resolver of its own, or using encrypted DNS towards
+an external service, appears in no statistic. It does not show as having no
+activity: it does not show at all.
 
-L'interfaccia dichiara questa condizione accanto all'elenco dei dispositivi.
+The interface declares this condition beside the list of devices.
 
-La ragione è concreta. Chi osserva la propria rete pensa anzitutto a computer e telefoni, mentre televisori, console e apparecchi domestici vengono percepiti come oggetti d'uso anziché come dispositivi connessi. Sono anche quelli che più spesso portano un resolver cablato dal produttore.
+The reason is concrete. Someone watching their own network thinks first of
+computers and phones, while televisions, consoles and household appliances are
+perceived as objects of use rather than as connected devices. They are also
+the ones most likely to carry a resolver hardwired by the manufacturer.
 
-L'assenza di un apparecchio dall'elenco è quindi un'informazione, e va presentata come tale invece di essere lasciata interpretare come una buona notizia.
+The absence of a device from the list is therefore information, and is to be
+presented as such instead of being left to read as good news.
 
 ---
 
 ## Withheld Score
 
-Quando la copertura è inferiore alla soglia minima, il punteggio complessivo non esiste e l'interfaccia **non lo sostituisce con altro**.
+When coverage is below the minimum, the overall score does not exist and the
+interface **puts nothing in its place**.
 
-Viene presentato il dettaglio delle aree, con quelle misurate, quelle parziali e quelle non misurabili con il relativo motivo.
+The breakdown of the areas is presented, with those measured, those partial
+and those not measurable, each with its reason.
 
-La condizione va comunicata come una scelta del sistema, non come un guasto o un caricamento in corso: il sistema dispone di misure valide e sta dichiarando di non avere elementi sufficienti per un giudizio complessivo.
+The condition is to be communicated as a choice the system made, not as a
+fault or a load still running: the system holds valid measurements and is
+declaring that it has not enough to support an overall judgement.
 
-Nessun numero provvisorio, nessuna barra vuota, nessun segnaposto che suggerisca un valore in arrivo.
+No provisional figure, no empty bar, no placeholder suggesting a value is on
+its way.
 
 ---
 
 # User Experience
 
-L'interfaccia privilegia:
+The interface favours:
 
-* semplicità;
-* chiarezza;
-* leggibilità;
-* accessibilità.
+* simplicity;
+* clarity;
+* readability;
+* accessibility.
 
-Le informazioni critiche devono essere immediatamente identificabili.
+Critical information must be identifiable at once.
 
 ---
 
 # Data Refresh
 
-Le informazioni visualizzate vengono aggiornate attraverso le REST API.
+The information displayed is refreshed through the REST API.
 
-La frequenza di aggiornamento è configurabile.
+How often is configurable.
 
 ---
 
 # Notifications
 
-L'applicazione visualizza gli Alert prodotti dal Core.
+The application displays the Alerts produced by the Core.
 
-La gestione degli Alert rimane di competenza del Privacy Intelligence Engine.
+Handling Alerts remains the responsibility of the Privacy Intelligence Engine.
 
 ---
 
 # Security
 
-Network Privacy non memorizza credenziali delle Data Sources.
+Network Privacy does not store credentials of the Data Sources.
 
-L'accesso richiede un account con ruolo. Ciò che il ruolo non comprende viene dichiarato come trattenuto e non presentato come assente: vedi l'Authentication Specification.
+Access requires an account with a role. What the role does not include is
+declared as withheld and not presented as absent: see the Authentication
+Specification.
 
-Le comunicazioni avvengono esclusivamente tramite le REST API del Core.
+Communication happens only through the REST API of the Core.
 
 ---
 
 # Extensibility
 
-L'interfaccia è progettata per ospitare nuove sezioni senza modificare la struttura principale.
+The interface is designed to host new sections without changing its principal
+structure.
 
 ---
 
 # Design Principles
 
-Network Privacy segue i seguenti principi.
+Network Privacy follows these principles.
 
-* semplicità;
-* modularità;
-* leggibilità;
-* uniformità;
-* indipendenza dal backend.
+* simplicity;
+* modularity;
+* readability;
+* uniformity;
+* independence from the backend.
 
 ---
 
@@ -430,10 +473,10 @@ Network Privacy segue i seguenti principi.
 
 Network Privacy:
 
-* non contiene logica di business;
-* non esegue analisi;
-* non comunica direttamente con i backend;
-* utilizza esclusivamente le REST API del Privacy Intelligence Engine.
+* contains no business logic;
+* performs no analysis;
+* does not communicate directly with the backends;
+* uses only the REST API of the Privacy Intelligence Engine.
 
 ---
 

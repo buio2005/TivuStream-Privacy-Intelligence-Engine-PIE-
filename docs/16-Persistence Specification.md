@@ -8,29 +8,35 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-26
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce come il Privacy Intelligence Engine conserva i dati nel tempo.
+This specification defines how the Privacy Intelligence Engine keeps data over
+time.
 
-La conservazione è necessaria a funzionalità già previste da altre Specification: lo storico del Network Privacy & Security Score, il calcolo del trend, lo storico delle minacce, i confronti temporali e la generazione dei report.
+Keeping data is required by features other Specifications already provide for:
+the history of the Network Privacy & Security Score, the trend, the history of
+threats, comparisons over time, and the generation of reports.
 
 ---
 
 # Why Persistence Is Required
 
-Le Data Sources non conservano i dati indefinitamente.
+Data Sources do not keep data indefinitely.
 
-Technitium applica una ritenzione propria e, per i log delle query, un limite basato sul numero di record che su una rete reale corrisponde a una frazione di ora.
+Technitium applies a retention of its own and, for query logs, a limit based
+on the number of records which on a real network amounts to a fraction of an
+hour.
 
-Ne discende un principio.
+One principle follows.
 
-> Ciò che non viene conservato al momento dell'acquisizione è perduto in modo definitivo.
+> What is not kept at the moment of acquisition is lost for good.
 
-PIE non può quindi limitarsi a interrogare la sorgente al momento della richiesta: deve costruire il proprio storico.
+PIE cannot therefore query the source at the moment of the request: it must
+build its own history.
 
 ---
 
@@ -38,261 +44,340 @@ PIE non può quindi limitarsi a interrogare la sorgente al momento della richies
 
 ## Acquisitions
 
-Le acquisizioni convertite nel Unified Data Model.
+Acquisitions converted into the Unified Data Model.
 
-Comprendono `Statistics`, `Device`, `Domain` e, quando disponibile, `DomainActivity`.
+They comprise `Statistics`, `Device`, `Domain` and, where available,
+`DomainActivity`.
 
-Conservare le acquisizioni consente di **ricalcolare le analisi su dati storici** senza reinterrogare la sorgente, cosa impossibile data la ritenzione dei backend.
+Keeping acquisitions makes it possible to **recompute analyses over historical
+data** without querying the source again, which the retention of the backends
+makes impossible.
 
-Questo mantiene coerente lo storico quando un algoritmo di analisi viene modificato.
+This keeps the history coherent when an analysis algorithm is changed.
 
 ---
 
 ## Core Results
 
-I risultati prodotti dal Core.
+The results produced by the Core.
 
-Comprendono `NetworkSnapshot`, `Npss`, `Threat`, `Alert` e `Recommendation`.
+They comprise `NetworkSnapshot`, `Npss`, `Threat`, `Alert` and
+`Recommendation`.
 
-Conservarli evita di ricalcolare l'intera analisi a ogni richiesta, requisito rilevante su hardware modesto.
+Keeping them avoids recomputing the whole analysis on every request, which
+matters on modest hardware.
 
 ---
 
 ## Reference Data
 
-I dati di riferimento che l'installazione possiede, non ciò che la rete ha fatto.
+The reference data the installation holds, not what the network did.
 
-Comprendono `ClassificationList`.
+It comprises `ClassificationList`.
 
-Non appartengono ad alcun Observation Period e **non sono soggetti a ritenzione**: applicare la ritenzione a una lista significherebbe rimuovere lo strumento con cui si classifica anziché un'osservazione invecchiata.
+It belongs to no Observation Period and is **not subject to retention**:
+applying retention to a list would remove the means of classifying rather than
+an observation that has aged.
 
 ---
 
 ## Accounts And Sessions
 
-Chi usa PIE, non ciò che la rete ha fatto. Due entità interne al Backend, estranee al Unified Data Model.
+Who uses PIE, not what the network did. Two entities internal to the Backend,
+outside the Unified Data Model.
 
-* **account**: nome utente, ruolo, attivo, hash della password con i parametri dell'algoritmo, indicazione che la password va cambiata, istante di creazione;
-* **sessione**: hash dell'identificativo, account, creazione, ultimo uso, scadenza.
+* **account**: user name, role, whether active, password hash with the
+  parameters of the algorithm, whether the password must be changed, moment of
+  creation;
+* **session**: hash of the identifier, account, creation, last use, expiry.
 
-Non appartengono ad alcun Observation Period e **non sono soggette a ritenzione**: eliminare un account per età lascerebbe fuori chi lo possiede. Le sessioni scadute vengono invece eliminate.
+They belong to no Observation Period and are **not subject to retention**:
+deleting an account because of its age would lock out whoever owns it. Expired
+sessions, on the other hand, are deleted.
 
 ---
 
 ## What Is Never Persisted
 
-PIE **non conserva mai il dettaglio della singola interrogazione DNS**.
+PIE **never keeps the detail of an individual DNS query**.
 
-Il registro puntuale delle interrogazioni costituisce la cronologia di navigazione di ogni dispositivo della rete. L'aggregazione avviene nell'Adapter, prima che il dato raggiunga il Core, e ciò che viene conservato è esclusivamente il risultato aggregato.
+The per-query log is the browsing history of every device on the network.
+Aggregation happens in the Adapter, before the data reaches the Core, and what
+is kept is only the aggregated result.
 
-Questa è la principale misura di protezione dell'utente prevista dal progetto.
+This is the principal protection the project provides for the person using it.
 
-Non vengono inoltre conservati:
+Also never kept:
 
-* credenziali delle Data Sources in chiaro;
-* password degli account in chiaro, identificativi di sessione in chiaro, codice di configurazione iniziale;
-* risposte originali dei backend nel loro formato nativo;
-* dettagli diagnostici prodotti dai backend.
+* credentials of the Data Sources in the clear;
+* account passwords in the clear, session identifiers in the clear, the
+  initial setup code;
+* original responses from the backends in their native format;
+* diagnostic detail produced by the backends.
 
 ---
 
 # Observation Periods
 
-Questa sezione definisce il concetto centrale della persistenza.
+This section defines the central concept of persistence.
 
 ---
 
 ## The Problem
 
-Un'acquisizione **non è un insieme di eventi**: è l'osservazione di un intervallo temporale.
+An acquisition **is not a set of events**: it is the observation of an
+interval of time.
 
-Due osservazioni di intervalli sovrapposti descrivono in parte lo stesso traffico. Non sono sommabili.
+Two observations of overlapping intervals describe part of the same traffic.
+They cannot be added together.
 
-Un sistema che acquisisce ogni cinque minuti una finestra di sessanta produce dodici osservazioni all'ora che descrivono in larga parte gli stessi dati. Sommarle produrrebbe valori privi di senso; sceglierne una arbitrariamente scarterebbe informazione.
+A system acquiring a sixty minute window every five minutes produces twelve
+observations an hour describing largely the same data. Adding them would
+produce meaningless values; picking one arbitrarily would discard information.
 
 ---
 
 ## The Rule
 
-Le acquisizioni sono allineate a **periodi di osservazione fissi**.
+Acquisitions are aligned to **fixed observation periods**.
 
-Il periodo predefinito è l'**ora solare**.
+The default period is the **clock hour**.
 
-| Concetto              | Definizione                                                   |
-| --------------------- | -------------------------------------------------------------- |
-| Periodo               | Intervallo fisso, allineato all'ora                             |
-| Periodo corrente      | Quello in cui cade l'istante dell'acquisizione                  |
-| Periodo concluso      | Qualunque periodo interamente trascorso                         |
+| Concept          | Definition                                        |
+| ---------------- | --------------------------------------------------- |
+| Period           | A fixed interval, aligned to the hour                |
+| Current period   | The one the instant of acquisition falls into        |
+| Elapsed period   | Any period entirely in the past                      |
 
-Valgono le seguenti regole.
+The following rules hold.
 
-**Un'acquisizione osserva il periodo corrente.**
+**An acquisition observes the current period.**
 
-**Una nuova osservazione dello stesso periodo sostituisce la precedente**, non vi si aggiunge.
+**A further observation of the same period replaces the previous one**, it does
+not add to it.
 
-**Un periodo concluso è immutabile.** Una volta trascorso e osservato, non viene più aggiornato.
+**An elapsed period is immutable.** Once passed and observed, it is never
+updated again.
 
-**Lo storico è la sequenza dei periodi conclusi**, che non si sovrappongono e sono quindi aggregabili.
+**The history is the sequence of elapsed periods**, which do not overlap and
+can therefore be aggregated.
 
 ---
 
 ## Consequences
 
-L'idempotenza è garantita per costruzione: riacquisire lo stesso periodo più volte non altera il risultato.
+Idempotence is guaranteed by construction: acquiring the same period several
+times does not alter the result.
 
-La frequenza di acquisizione diventa un parametro di **freschezza**, non di correttezza. Acquisire ogni cinque minuti aggiorna il periodo corrente più spesso; non produce duplicazione.
+The frequency of acquisition becomes a parameter of **freshness**, not of
+correctness. Acquiring every five minutes updates the current period more
+often; it produces no duplication.
 
-La frequenza deve comunque restare **inferiore alla ritenzione della sorgente**, altrimenti un periodo può concludersi prima di essere stato osservato e i suoi dati sono perduti senza segnalazione.
+The frequency must nonetheless stay **below the retention of the source**,
+otherwise a period may elapse before it has been observed and its data is lost
+without notice.
 
-Il periodo di osservazione è configurabile. Periodi più brevi aumentano risoluzione e volume; periodi più lunghi riducono entrambi.
+The observation period is configurable. Shorter periods increase both
+resolution and volume; longer ones reduce both.
 
 ---
 
 # Retention
 
-La ritenzione è **a livelli**.
+Retention is **tiered**.
 
-| Livello              | Contenuto                              | Ritenzione predefinita |
-| -------------------- | -------------------------------------- | ---------------------- |
-| Periodi di osservazione | Dettaglio orario                    | 30 giorni              |
-| Aggregati giornalieri   | Sintesi per giorno                  | 12 mesi                |
-| Aggregati mensili       | Sintesi per mese                    | 5 anni                 |
+| Tier                | Content                          | Default retention |
+| ------------------- | -------------------------------- | ----------------- |
+| Observation periods | Hourly detail                    | 30 days           |
+| Daily aggregates    | A summary per day                | 12 months         |
+| Monthly aggregates  | A summary per month              | 5 years           |
 
-Alla scadenza di un livello i dati vengono consolidati nel livello successivo e il dettaglio viene eliminato.
+When a tier expires, the data is consolidated into the next one and the detail
+is deleted.
 
-Questo appiattisce la crescita dello spazio occupato, che altrimenti sarebbe lineare nel tempo.
+This flattens the growth of the space occupied, which would otherwise be
+linear in time.
 
-I valori predefiniti sono configurabili.
+The defaults are configurable.
 
-Il consolidamento è **irreversibile**: l'utente deve poterlo comprendere prima di ridurre la ritenzione del dettaglio.
+Consolidation is **irreversible**: the person must be able to understand that
+before reducing the retention of the detail.
 
-I dati di riferimento sono esclusi dalla ritenzione. Non descrivono un momento e non invecchiano insieme alle osservazioni.
+Reference data is excluded from retention. It describes no moment and does not
+age along with the observations.
 
 ---
 
 ## Consolidated Periods
 
-Un aggregato giornaliero o mensile è a sua volta un **periodo di osservazione**, più lungo. Vale per esso tutto ciò che vale per i periodi: non si sovrappone ad altri, è immutabile, è aggregabile.
+A daily or monthly aggregate is itself an **observation period**, a longer one.
+Everything that holds for periods holds for it: it does not overlap with
+others, it is immutable, it can be aggregated.
 
-Ogni periodo conserva due informazioni in più, interne allo Storage ed estranee al Unified Data Model:
+Every period keeps two further pieces of information, internal to the Storage
+and outside the Unified Data Model:
 
-| Informazione        | Significato                                                        |
-| ------------------- | ------------------------------------------------------------------- |
-| Livello             | Ora, giorno o mese                                                  |
-| Ore osservate       | Quante ore osservate sono confluite nel periodo; 1 per un'ora       |
+| Information      | Meaning                                                   |
+| ---------------- | ----------------------------------------------------------- |
+| Tier             | Hour, day or month                                           |
+| Hours observed   | How many observed hours went into the period; 1 for an hour  |
 
-Le ore osservate sono necessarie all'onestà dello storico. Un giorno di cui sono state osservate tre ore e un giorno osservato per intero hanno la stessa forma: senza questo numero, il primo sembrerebbe un giorno tranquillo. Un'ora mai osservata resta non osservata anche dopo il consolidamento, e non diventa un'ora a zero.
+The hours observed are necessary to the honesty of the history. A day of which
+three hours were observed and a day observed in full have the same shape:
+without this figure, the first would look like a quiet day. An hour never
+observed stays unobserved after consolidation, and does not become an hour at
+zero.
 
 ---
 
 ## Day And Month Boundaries
 
-Giorni e mesi seguono il **fuso orario locale del computer su cui PIE è in esecuzione**, perché è il giorno della persona che legge. Un giorno che comincia alle due di notte non è il giorno di nessuno.
+Days and months follow the **local time zone of the computer PIE runs on**,
+because it is the day of the person reading. A day that begins at two in the
+morning is nobody's day.
 
-Gli istanti di inizio e di fine restano conservati in UTC, come ogni altro istante. Nei giorni del cambio d'ora un giorno dura ventitré o venticinque ore: il periodo lo dice, perché conserva inizio e fine, non una durata.
+The instants of beginning and end are still kept in UTC, like every other
+instant. On the days the clocks change a day lasts twenty-three or twenty-five
+hours: the period says so, because it keeps a beginning and an end rather than
+a duration.
 
-Un cambio di fuso orario del computer non riscrive i periodi già consolidati.
+Changing the time zone of the computer does not rewrite periods already
+consolidated.
 
 ---
 
 ## When A Level Is Consolidated
 
-Si consolida sempre un **giorno intero** o un **mese intero**, mai una parte.
+A **whole day** or a **whole month** is always consolidated, never a part.
 
-| Operazione                    | Quando                                                         |
-| ----------------------------- | --------------------------------------------------------------- |
-| Ore → giorno                  | Il giorno è terminato da più della ritenzione oraria            |
-| Giorni → mese                 | Il mese è terminato da più della ritenzione giornaliera         |
-| Eliminazione dei mesi         | Il mese è terminato da più della ritenzione mensile             |
+| Operation           | When                                                      |
+| ------------------- | ----------------------------------------------------------- |
+| Hours → day         | The day ended longer ago than the hourly retention           |
+| Days → month        | The month ended longer ago than the daily retention          |
+| Deletion of months  | The month ended longer ago than the monthly retention        |
 
-Ogni consolidamento di un giorno o di un mese avviene in **una sola transazione**: si scrive l'aggregato, si elimina il dettaglio. Un'interruzione lascia il dettaglio intatto, e il consolidamento successivo lo riprende. Riconsolidare non produce duplicati, perché il dettaglio già consolidato non esiste più.
+Consolidating a day or a month happens in **a single transaction**: the
+aggregate is written, the detail is deleted. An interruption leaves the detail
+intact, and the next consolidation picks it up again. Consolidating twice
+produces no duplicates, because detail already consolidated no longer exists.
 
-Il consolidamento è un'**operazione pianificata**: viene eseguito all'avvio e poi una volta all'ora, mai durante una richiesta.
+Consolidation is a **scheduled operation**: it runs at startup and then once an
+hour, never during a request.
 
 ---
 
 ## What A Consolidated Period Contains
 
-Il principio è quello già applicato alla finestra delle ventiquattro ore: ciò che si somma viene sommato, ciò che non si somma viene dichiarato per quello che è.
+The principle is the one already applied to the twenty-four hour window: what
+adds up is added, and what does not add up is declared for what it is.
 
-| Dato                    | Giorno                                                       | Mese                                  |
-| ----------------------- | ------------------------------------------------------------ | ------------------------------------- |
-| Conteggi delle interrogazioni | Somma esatta                                           | Somma esatta                          |
-| Domini distinti, dispositivi attivi | Il maggiore fra il valore più alto di un periodo e i nomi o identificativi distinti conservati; sempre un **limite inferiore** | Come il giorno |
-| Stato DNSSEC            | Quello del periodo più recente                                | Come il giorno                        |
-| Dispositivi             | Uno per identificativo; identità dal periodo più recente; prima e ultima osservazione estreme | Come il giorno |
-| Domini                  | Uno per nome; occorrenze sommate; classificazione dal periodo più recente, con l'età della lista | Come il giorno |
-| Attività dispositivo → dominio | Conteggi sommati per dispositivo, dominio, esito e protocollo | **Non conservata** |
-| Configurazione della sorgente | Quella del periodo più recente                          | Come il giorno                        |
-| Punteggio               | L'ultimo prodotto nel giorno, con i suoi componenti          | L'ultimo prodotto nel mese            |
+| Data                          | Day                                                          | Month                                 |
+| ----------------------------- | ------------------------------------------------------------ | ------------------------------------- |
+| Query counts                  | Exact sum                                                    | Exact sum                             |
+| Distinct domains, active devices | The greater of the highest value of any period and the distinct names or identifiers kept; always a **lower bound** | As for the day |
+| DNSSEC state                  | That of the most recent period                               | As for the day                        |
+| Devices                       | One per identifier; identity from the most recent period; earliest and latest observation | As for the day |
+| Domains                       | One per name; occurrences summed; classification from the most recent period, with the age of the list | As for the day |
+| Device → domain activity      | Counts summed per device, domain, outcome and protocol       | **Not kept**                          |
+| Source configuration          | That of the most recent period                               | As for the day                        |
+| Score                         | The last produced within the day, with its components        | The last produced within the month    |
 
-La qualità di ogni dato consolidato è la **meno precisa** fra quelle dei periodi che lo compongono.
+The quality of every consolidated value is the **least precise** among those of
+the periods composing it.
 
 ---
 
 ## Device Activity Beyond Thirty Days
 
-L'attività per dispositivo e per dominio è la parte dei dati più vicina a una cronologia di navigazione, anche aggregata per ora.
+Activity per device and per domain is the part of the data closest to a
+browsing history, even aggregated by the hour.
 
-Negli aggregati giornalieri è conservata per dodici mesi, perché consente di rispondere a domande sul singolo dispositivo in un intervallo ancora recente.
+In daily aggregates it is kept for twelve months, because it allows questions
+about a single device to be answered over an interval that is still recent.
 
-Negli aggregati mensili **non è conservata**. Dopo dodici mesi resta noto quali domini la rete ha contattato e quali dispositivi erano presenti, non più quale dispositivo ha contattato quale dominio. Conservarla per cinque anni ne farebbe un archivio della navigazione di ogni persona della casa, a fronte di un uso che nessuna funzionalità prevista richiede.
+In monthly aggregates it is **not kept**. After twelve months it remains known
+which domains the network contacted and which devices were present, but no
+longer which device contacted which domain. Keeping it for five years would
+make it an archive of the browsing of every person in the household, for a use
+that no planned feature requires.
 
-Questa è una scelta editoriale, approvata come tale.
+This is an editorial choice, approved as such.
 
 ---
 
 ## Score In Consolidated Periods
 
-Un punteggio non si somma e non si media: la media di due punteggi con coperture diverse non misura nulla.
+A score is neither summed nor averaged: the average of two scores with
+different coverage measures nothing.
 
-Un periodo consolidato conserva quindi **l'ultimo punteggio prodotto al suo interno**, invariato: valore, stato, trend, copertura, versione dell'algoritmo, istante di produzione, componenti.
+A consolidated period therefore keeps **the last score produced within it**,
+unchanged: value, status, trend, coverage, algorithm version, moment of
+production, components.
 
-Il punteggio valuta le ventiquattro ore che precedono la sua produzione, come stabilisce la Specification 07. L'ultimo punteggio di un giorno valuta quindi quel giorno. L'ultimo punteggio di un mese valuta l'ultimo giorno del mese, **non il mese**, e va presentato come tale quando lo storico sarà mostrato.
+The score judges the twenty-four hours preceding its production, as
+Specification 07 establishes. The last score of a day therefore judges that
+day. The last score of a month judges the last day of the month, **not the
+month**, and is to be presented as such when the history is shown.
 
-Un periodo in cui non è stato prodotto alcun punteggio non ne ha uno. Non se ne calcola uno a posteriori.
+A period in which no score was produced has none. None is computed after the
+fact.
 
 ---
 
 ## Recalculation
 
-Il consolidamento riduce ciò che può essere ricalcolato. Oltre la ritenzione oraria un algoritmo nuovo può essere applicato ai giorni, non alle ore; oltre la ritenzione giornaliera, ai mesi, senza l'attività per dispositivo.
+Consolidation reduces what can be recomputed. Beyond the hourly retention a
+new algorithm can be applied to days, not to hours; beyond the daily
+retention, to months, without the activity per device.
 
-È la conseguenza dichiarata della conservazione del minimo necessario.
+It is the declared consequence of keeping the minimum necessary.
 
 ---
 
 ## Effective Deletion
 
-Il dettaglio eliminato dal consolidamento non deve restare leggibile nel file.
+Detail removed by consolidation must not stay readable in the file.
 
-SQLite, per impostazione predefinita, lascia il contenuto delle righe eliminate nelle pagine libere finché non vengono riutilizzate. Lo Storage abilita la **cancellazione sicura** (`secure_delete`), che sovrascrive quel contenuto. Il costo è una scrittura in più al momento dell'eliminazione, trascurabile ai volumi di PIE.
+SQLite, by default, leaves the content of deleted rows in free pages until they
+are reused. The Storage enables **secure deletion** (`secure_delete`), which
+overwrites that content. The cost is one additional write at the moment of
+deletion, negligible at the volumes PIE handles.
 
-Il file non si riduce: lo spazio liberato viene riutilizzato dalle acquisizioni successive. La crescita si appiattisce; non diventa una diminuzione.
+The file does not shrink: the space freed is reused by later acquisitions.
+Growth flattens; it does not become a reduction.
 
 ---
 
 ## Retention Configuration
 
-| Parametro                         | Predefinito | Minimo |
-| --------------------------------- | ----------- | ------ |
-| `Storage:Retention:HourlyDays`    | 30          | 2      |
-| `Storage:Retention:DailyMonths`   | 12          | 1      |
-| `Storage:Retention:MonthlyYears`  | 5           | 1      |
+| Parameter                         | Default | Minimum |
+| --------------------------------- | ------- | ------- |
+| `Storage:Retention:HourlyDays`    | 30      | 2       |
+| `Storage:Retention:DailyMonths`   | 12      | 1       |
+| `Storage:Retention:MonthlyYears`  | 5       | 1       |
 
-Il minimo della ritenzione oraria protegge la finestra delle ventiquattro ore, che si legge dal dettaglio orario: consolidare un giorno ancora in finestra toglierebbe al punteggio e alle pagine i dati su cui si basano.
+The minimum for hourly retention protects the twenty-four hour window, which
+is read from the hourly detail: consolidating a day still within the window
+would take from the score and from the pages the data they rest on.
 
-Una ritenzione più fine **prevale** su una più grossolana: un mese non viene consolidato, né eliminato, finché contiene dati che un livello più fine deve ancora conservare. Una ritenzione oraria di quattrocento giorni conserva quindi le ore per quattrocento giorni anche con una ritenzione giornaliera di dodici mesi.
+A finer retention **prevails** over a coarser one: a month is neither
+consolidated nor deleted while it holds data a finer tier must still keep. An
+hourly retention of four hundred days therefore keeps the hours for four
+hundred days even with a daily retention of twelve months.
 
-Un valore sotto il minimo **impedisce l'avvio**, con un messaggio che dice quale parametro e quale minimo. Un valore corretto in silenzio cambierebbe ciò che viene eliminato senza che la persona lo sappia.
+A value below the minimum **prevents startup**, with a message saying which
+parameter and which minimum. A value silently corrected would change what gets
+deleted without the person knowing.
 
-Ridurre una ritenzione ha effetto al consolidamento successivo e non può essere annullato. La documentazione per la persona lo dice prima di spiegare come farlo.
+Reducing a retention takes effect at the next consolidation and cannot be
+undone. The documentation for the person says so before explaining how to do
+it.
 
 ---
 
 # Architectural Placement
 
-La persistenza è responsabilità di un componente del Backend denominato **Storage**.
+Persistence is the responsibility of a Backend component named **Storage**.
 
 ```text
 Adapter Manager
@@ -310,13 +395,17 @@ Core
 Storage
 ```
 
-Valgono i seguenti vincoli.
+The following constraints hold.
 
-**Il Core non conosce lo Storage.** Produce risultati e non sa dove finiscano, coerentemente con il vincolo che non conosca né sorgenti né destinatari.
+**The Core does not know the Storage.** It produces results and does not know
+where they end up, consistently with the constraint that it know neither
+sources nor recipients.
 
-**Il Unified Data Model non contiene elementi di persistenza.** Nessun attributo di mapping, nessun riferimento a tecnologie di archiviazione, nessuna dipendenza. La conversione fra modello e archiviazione avviene interamente dentro lo Storage.
+**The Unified Data Model contains no element of persistence.** No mapping
+attribute, no reference to storage technology, no dependency. Conversion
+between the model and storage happens entirely inside the Storage.
 
-**Il Query Flow legge dallo Storage**, mai dalle Data Sources.
+**The Query Flow reads from the Storage**, never from the Data Sources.
 
 ---
 
@@ -324,138 +413,158 @@ Valgono i seguenti vincoli.
 
 ## Database
 
-**SQLite**, in un unico file locale.
+**SQLite**, in a single local file.
 
-La scelta è coerente con i principi Local First e Self Hosted: nessun servizio aggiuntivo da installare, nessuna porta da esporre, nessun processo separato da gestire.
+The choice is consistent with the Local First and Self Hosted principles: no
+additional service to install, no port to expose, no separate process to look
+after.
 
-Il file risiede in una posizione determinata dalla configurazione, insieme agli altri dati applicativi.
+The file lives in a location determined by the configuration, together with
+the other application data.
 
 ---
 
 ## List Files
 
-I domini contenuti nelle liste di classificazione sono conservati **su file**, non nel database.
+The domains contained in the classification lists are kept **in files**, not in
+the database.
 
-Ogni lista è un file nella cartella `data/lists/`, accanto al database.
+Each list is a file in the `data/lists/` folder, beside the database.
 
-Il file conserva il **formato originale** della lista scaricata. Nessuna conversione, nessuna normalizzazione preventiva.
+The file keeps the **original format** of the list as downloaded. No
+conversion, no normalisation in advance.
 
-Le ragioni della separazione.
+The reasons for the separation.
 
-* Una lista può contenere centinaia di migliaia di domini, che farebbero crescere il database di ordini di grandezza rispetto alle osservazioni.
-* Un file di testo è ispezionabile con un editor qualsiasi, mentre una tabella richiede uno strumento SQL. La Specification 08 richiede che l'utente possa verificare perché un dominio è stato classificato.
-* Un aggiornamento sostituisce un file, operazione atomica, anziché riscrivere centinaia di migliaia di righe.
-* I domini di una lista non sono osservazioni e non hanno un periodo: tenerli fuori dal database evita che la ritenzione li sfiori.
+* A list may contain hundreds of thousands of domains, which would grow the
+  database by orders of magnitude relative to the observations.
+* A text file can be inspected with any editor, while a table requires an SQL
+  tool. Specification 08 requires that the person be able to check why a
+  domain was classified.
+* An update replaces a file, an atomic operation, rather than rewriting
+  hundreds of thousands of rows.
+* The domains of a list are not observations and have no period: keeping them
+  outside the database prevents retention from touching them.
 
-Il database conserva la **descrizione** della lista. Il file conserva il **contenuto**.
+The database keeps the **description** of the list. The file keeps the
+**content**.
 
-Una descrizione priva del file corrispondente indica una lista mai scaricata, e viene dichiarata come tale.
+A description without its corresponding file indicates a list never
+downloaded, and is declared as such.
 
 ---
 
 ## Data Access
 
-L'accesso avviene tramite **SQL esplicito**.
+Access happens through **explicit SQL**.
 
-Schema e interrogazioni restano visibili e ispezionabili, senza livelli di comportamento implicito.
+Schema and queries stay visible and inspectable, with no layers of implicit
+behaviour.
 
-La scelta risponde ai principi di Simplicity e Transparency e al divieto di introdurre astrazioni non necessarie.
+The choice follows the Simplicity and Transparency principles and the
+prohibition on introducing unnecessary abstractions.
 
 ---
 
 ## Dependency
 
-| Voce      | Valore                                                    |
-| --------- | ---------------------------------------------------------- |
-| Nome      | `Microsoft.Data.Sqlite`                                     |
-| Scopo     | Accesso al database SQLite                                  |
-| Licenza   | MIT                                                         |
-| Manutenzione | Microsoft, parte dell'ecosistema .NET                    |
+| Item        | Value                                                |
+| ----------- | ------------------------------------------------------ |
+| Name        | `Microsoft.Data.Sqlite`                                |
+| Purpose     | Access to the SQLite database                          |
+| Licence     | MIT                                                    |
+| Maintenance | Microsoft, part of the .NET ecosystem                  |
 
-È la prima dipendenza esterna del progetto.
+It is the first external dependency of the project.
 
-La versione viene fissata in `Directory.Packages.props`, secondo il Central Package Management già adottato.
+The version is pinned in `Directory.Packages.props`, following the Central
+Package Management already adopted.
 
 ---
 
 # Schema Management
 
-Il database possiede una **versione dello schema**, conservata al suo interno.
+The database carries a **schema version**, kept inside it.
 
-All'avvio il sistema confronta la versione attesa con quella presente.
+At startup the system compares the expected version with the one present.
 
-| Condizione            | Comportamento                                            |
-| --------------------- | --------------------------------------------------------- |
-| Versioni coincidenti  | Avvio normale                                              |
-| Schema più vecchio    | Migrazione, preceduta da copia di sicurezza                |
-| Schema più recente    | Avvio rifiutato con messaggio esplicito                    |
+| Condition            | Behaviour                                           |
+| -------------------- | ----------------------------------------------------- |
+| Versions match       | Normal start                                          |
+| Schema older         | Migration, preceded by a backup copy                  |
+| Schema newer         | Start refused with an explicit message                |
 
-L'ultimo caso indica un tentativo di utilizzare dati prodotti da una versione successiva del software. Procedere comporterebbe corruzione silenziosa.
+The last case indicates an attempt to use data produced by a later version of
+the software. Carrying on would cause silent corruption.
 
-Le migrazioni sono **esplicite e ordinate**. Non viene generata alcuna migrazione automatica a partire dal modello.
+Migrations are **explicit and ordered**. No migration is generated
+automatically from the model.
 
 ---
 
 # Backup
 
-La Installation Specification prevede una copia di sicurezza prima di ogni aggiornamento.
+The Installation Specification provides for a backup copy before every update.
 
-La copia comprende il database, la configurazione e la cartella delle liste.
+The copy comprises the database, the configuration and the lists folder.
 
-Trattandosi di file locali, la copia consiste nella loro duplicazione a servizio fermo.
+As these are local files, the copy consists of duplicating them with the
+service stopped.
 
-Le liste sono comunque riscaricabili: la loro assenza da una copia di sicurezza non comporta perdita di osservazioni.
+The lists can be downloaded again in any case: their absence from a backup
+does not mean any observation is lost.
 
 ---
 
 # Privacy
 
-Il database contiene dati relativi all'attività di rete dell'utente.
+The database contains data about the network activity of the person using PIE.
 
-Si applicano le seguenti regole.
+The following rules apply.
 
-* Il contenuto non lascia mai il dispositivo.
-* Non viene trasmessa alcuna telemetria.
-* La ritenzione è configurabile e dichiarata all'utente.
-* L'utente può eliminare i dati conservati.
-* L'eliminazione è effettiva, non una marcatura logica.
+* The content never leaves the device.
+* No telemetry is transmitted.
+* Retention is configurable and declared to the person.
+* The person can delete the data kept.
+* Deletion is effective, not a logical marking.
 
-L'installazione dichiara quali dati vengono conservati, dove risiedono e per quanto tempo, come previsto dalla Installation Specification.
+The installation declares which data is kept, where it lives and for how long,
+as the Installation Specification provides.
 
 ---
 
 # Performance
 
-Su un dispositivo modesto valgono le seguenti priorità.
+On a modest device the following priorities hold.
 
-* Scritture raggruppate anziché per singola entità.
-* Interrogazioni di lettura servite da indici espliciti.
-* Consolidamento eseguito come operazione pianificata, non durante una richiesta.
-* Nessun ricalcolo dell'analisi durante il Query Flow.
+* Writes grouped rather than made per entity.
+* Read queries served by explicit indexes.
+* Consolidation run as a scheduled operation, not during a request.
+* No recomputation of the analysis during the Query Flow.
 
 ---
 
 # Design Principles
 
-La persistenza segue i seguenti principi.
+Persistence follows these principles.
 
-* idempotenza per costruzione;
-* immutabilità dei periodi conclusi;
-* conservazione del minimo necessario;
-* trasparenza dello schema;
-* indipendenza del modello dati dalla tecnologia di archiviazione.
+* idempotence by construction;
+* immutability of elapsed periods;
+* keeping the minimum necessary;
+* transparency of the schema;
+* independence of the data model from the storage technology.
 
 ---
 
 # Constraints
 
-Lo Storage:
+The Storage:
 
-* non esegue analisi;
-* non modifica i dati che riceve;
-* non è raggiungibile dal Frontend;
-* non è conosciuto dal Core;
-* non conserva il dettaglio della singola interrogazione.
+* performs no analysis;
+* does not modify the data it receives;
+* is not reachable from the Frontend;
+* is not known to the Core;
+* does not keep the detail of an individual query.
 
 ---
 

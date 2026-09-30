@@ -8,35 +8,38 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce il **Unified Data Model** utilizzato dal Privacy Intelligence Engine.
+This specification defines the **Unified Data Model** used by the Privacy
+Intelligence Engine.
 
-Il Data Model rappresenta il linguaggio comune attraverso il quale tutti i componenti del Core comunicano tra loro.
+The Data Model is the common language through which every component of the
+Core communicates.
 
-Ogni Adapter converte i dati provenienti dalle Data Sources in questo formato.
+Every Adapter converts the data coming from the Data Sources into this format.
 
 ---
 
 # Objectives
 
-Il Unified Data Model garantisce:
+The Unified Data Model guarantees:
 
-* indipendenza dai backend;
-* uniformità delle informazioni;
-* semplicità di elaborazione;
-* estendibilità;
-* compatibilità tra i moduli del Core.
+* independence from the backends;
+* uniformity of the information;
+* simplicity of processing;
+* extensibility;
+* compatibility between the modules of the Core.
 
 ---
 
 # Overview
 
-Tutte le informazioni elaborate dal sistema vengono rappresentate attraverso un insieme di entità standardizzate.
+All information processed by the system is represented through a set of
+standardised entities.
 
 ```text id="tczvlt"
 Data Source
@@ -58,7 +61,7 @@ Privacy Intelligence Engine
 
 # Primary Entities
 
-Il modello dati è composto dalle seguenti entità principali.
+The data model is composed of the following principal entities.
 
 * DataSource
 * NetworkSnapshot
@@ -79,7 +82,7 @@ Il modello dati è composto dalle seguenti entità principali.
 
 # DataSource
 
-Rappresenta l'origine delle informazioni elaborate dal sistema.
+Represents the origin of the information the system processes.
 
 ## Properties
 
@@ -95,36 +98,41 @@ Rappresenta l'origine delle informazioni elaborate dal sistema.
 
 ## Capabilities
 
-Il campo `capabilities` dichiara **quali entità del Unified Data Model quella Data Source è in grado di fornire**.
+The `capabilities` field declares **which entities of the Unified Data Model
+that Data Source is able to provide**.
 
-Non descrive le funzionalità del prodotto esterno.
+It does not describe the features of the external product.
 
-Questa distinzione è essenziale.
+This distinction is essential.
 
-* Il supporto di un backend a DNSSEC o a DNS over TLS è un **dato analizzato**, e trova posto in `Statistics` o nella configurazione.
-* Una capability è invece un'informazione **strutturale**, che il Core utilizza per sapere quali analisi può eseguire.
+* A backend's support for DNSSEC or for DNS over TLS is **data to be
+  analysed**, and belongs in `Statistics` or in the configuration.
+* A capability is instead **structural** information, which the Core uses to
+  know which analyses it can perform.
 
-Il vocabolario delle capability coincide con i nomi delle entità del Unified Data Model.
+The vocabulary of capabilities coincides with the names of the entities of the
+Unified Data Model.
 
-| Capability            | Significato                                          |
+| Capability            | Meaning                                              |
 | --------------------- | ---------------------------------------------------- |
-| `Statistics`          | La sorgente fornisce statistiche aggregate            |
-| `Device`              | La sorgente permette di identificare i dispositivi    |
-| `Domain`              | La sorgente espone i domini osservati                 |
-| `DomainActivity`      | La sorgente correla dispositivi e domini              |
-| `SourceConfiguration` | La sorgente espone le proprie impostazioni            |
+| `Statistics`          | The source provides aggregated statistics             |
+| `Device`              | The source allows devices to be identified            |
+| `Domain`              | The source exposes the domains observed               |
+| `DomainActivity`      | The source relates devices and domains                |
+| `SourceConfiguration` | The source exposes its own settings                   |
 
-Nuove capability possono essere aggiunte quando vengono introdotte nuove entità.
+New capabilities may be added when new entities are introduced.
 
-Una capability assente significa che il dato **non è misurabile** con quella sorgente nella sua configurazione corrente.
+An absent capability means the data is **not measurable** with that source in
+its current configuration.
 
-Non significa che il dato sia pari a zero.
+It does not mean the data is zero.
 
 ---
 
 # NetworkSnapshot
 
-Rappresenta lo stato completo della rete in un determinato momento.
+Represents the complete state of the network at a given moment.
 
 ## Properties
 
@@ -137,13 +145,13 @@ Rappresenta lo stato completo della rete in un determinato momento.
 * recommendations
 * npss
 
-Ogni Snapshot rappresenta un'istantanea completa del sistema.
+Every Snapshot is a complete picture of the system.
 
 ---
 
 # Statistics
 
-Contiene le statistiche aggregate della rete.
+Holds the aggregated statistics of the network.
 
 ## Properties
 
@@ -157,17 +165,20 @@ Contiene le statistiche aggregate della rete.
 * encryptedQueries
 * dnssecEnabled
 
-Il campo `uniqueDomains` è tipicamente un **limite inferiore**: le sorgenti restituiscono elenchi troncati, quindi i domini distinti osservati sono almeno quel numero.
+The `uniqueDomains` field is typically a **lower bound**: sources return
+truncated lists, so the distinct domains observed are at least that number.
 
-La qualità è dichiarata da `uniqueDomainsQuality`.
+The quality is declared by `uniqueDomainsQuality`.
 
 ---
 
 # SourceConfiguration
 
-Rappresenta le impostazioni della Data Source che incidono su privacy e sicurezza.
+Represents the settings of the Data Source that bear on privacy and security.
 
-Le funzionalità offerte da un backend costituiscono **dati da analizzare**, distinti dalle capability, che dichiarano invece quali entità la sorgente è in grado di fornire.
+The features a backend offers are **data to be analysed**, distinct from the
+capabilities, which declare instead which entities the source is able to
+provide.
 
 ## Properties
 
@@ -179,17 +190,20 @@ Le funzionalità offerte da un backend costituiscono **dati da analizzare**, dis
 * filterListCount
 * filterListUpdateIntervalHours
 
-Le proprietà sono espresse in termini indipendenti dal backend.
+The properties are expressed in terms independent of any backend.
 
-Il campo `encryptedTransports` elenca i trasporti cifrati abilitati sulla sorgente.
+The `encryptedTransports` field lists the encrypted transports enabled on the
+source.
 
-Il campo `clientSubnetForwardingEnabled` descrive una funzione che **riduce** la privacy comunicando ai server esterni la sottorete di provenienza dell'interrogazione. Il suo valore positivo peggiora la valutazione.
+The `clientSubnetForwardingEnabled` field describes a feature that **reduces**
+privacy by telling external servers which subnet a query came from. A positive
+value worsens the evaluation.
 
 ---
 
 # Device
 
-Rappresenta un dispositivo identificato dal sistema.
+Represents a device identified by the system.
 
 ## Properties
 
@@ -209,7 +223,7 @@ Rappresenta un dispositivo identificato dal sistema.
 
 ## Associated Objects
 
-Ogni Device può essere associato a:
+Every Device may be associated with:
 
 * DomainActivity
 * Threat
@@ -220,7 +234,7 @@ Ogni Device può essere associato a:
 
 # Domain
 
-Rappresenta un dominio osservato durante l'analisi.
+Represents a domain observed during the analysis.
 
 ## Properties
 
@@ -235,29 +249,34 @@ Rappresenta un dominio osservato durante l'analisi.
 * observationQuality
 * occurrences
 
-Le proprietà relative alla categoria descrivono **come** la classificazione è stata ottenuta.
+The properties relating to the category describe **how** the classification
+was obtained.
 
-| Proprietà                 | Significato                                                  |
-| ------------------------- | ------------------------------------------------------------ |
-| `categoryConfidence`      | Affidabilità della classificazione                            |
-| `categorySource`          | Lista dalla quale proviene                                    |
-| `categorySourceUpdatedAt` | Ultimo aggiornamento riuscito di quella lista                 |
+| Property                  | Meaning                                                 |
+| ------------------------- | --------------------------------------------------------- |
+| `categoryConfidence`      | Reliability of the classification                          |
+| `categorySource`          | The list it comes from                                     |
+| `categorySourceUpdatedAt` | Last successful update of that list                        |
 
-Sono assenti quando la categoria è `Unknown`, ossia quando il dominio non è stato classificato.
+They are absent when the category is `Unknown`, that is, when the domain was
+not classified.
 
-La data di aggiornamento della lista consente all'utente di valutare quanto sia recente il giudizio, non solo quale esso sia.
+The update date of the list lets the person judge how recent the verdict is,
+not only what it says.
 
-Il campo `reputation` è **opzionale**.
+The `reputation` field is **optional**.
 
-La reputazione è prodotta dal Threat Engine. Un Adapter non la assegna mai e la lascia vuota.
+Reputation is produced by the Threat Engine. An Adapter never assigns it and
+leaves it empty.
 
-Un valore assente significa che la reputazione non è ancora stata valutata: è un'affermazione sul sistema, non sul dominio.
+An absent value means the reputation has not been assessed yet: it is a
+statement about the system, not about the domain.
 
 ---
 
 # DomainActivity
 
-Rappresenta l'interazione tra un Device e un Domain.
+Represents the interaction between a Device and a Domain.
 
 ## Properties
 
@@ -274,62 +293,77 @@ Rappresenta l'interazione tra un Device e un Domain.
 
 ## Conditional Availability
 
-`DomainActivity` è l'unica entità la cui disponibilità **dipende dalla Data Source**.
+`DomainActivity` is the only entity whose availability **depends on the Data
+Source**.
 
-Alcune sorgenti la forniscono nativamente. Altre la espongono solo dopo l'attivazione di componenti facoltativi. Altre ancora non la forniscono affatto.
+Some sources provide it natively. Others expose it only after optional
+components are enabled. Others do not provide it at all.
 
-Una Data Source dichiara di poterla fornire attraverso la capability `DomainActivity`.
+A Data Source declares that it can provide it through the `DomainActivity`
+capability.
 
-Quando la capability è assente:
+When the capability is absent:
 
-* il Core non produce oggetti `DomainActivity`;
-* le analisi che ne dipendono vengono dichiarate non misurabili;
-* il sistema genera una Recommendation che indica come rendere disponibile il dato.
+* the Core produces no `DomainActivity` objects;
+* the analyses that depend on it are declared not measurable;
+* the system generates a Recommendation stating how to make the data
+  available.
 
-L'assenza della capability non è un errore e non interrompe l'elaborazione.
+The absence of the capability is not an error and does not interrupt
+processing.
 
-Il Core non deve mai sostituire il dato mancante con valori stimati o predefiniti.
+The Core must never replace the missing data with estimated or default values.
 
 ---
 
 ## Aggregation Criterion
 
-Una `DomainActivity` rappresenta una singola combinazione di dispositivo, dominio, **esito** e **protocollo**.
+A `DomainActivity` represents a single combination of device, domain,
+**outcome** and **protocol**.
 
-Esito e protocollo concorrono all'identità dell'entità e non vengono accorpati.
+Outcome and protocol contribute to the identity of the entity and are not
+merged.
 
-Un dispositivo che ha raggiunto lo stesso dominio sia normalmente sia venendo bloccato ha prodotto **due fatti distinti**, e vengono rappresentati da due oggetti separati.
+A device that reached the same domain both normally and while being blocked
+has produced **two distinct facts**, and they are represented by two separate
+objects.
 
-Accorparli in un unico oggetto costringerebbe a scegliere un esito prevalente, affermando qualcosa che non è avvenuto.
+Merging them into a single object would force a prevailing outcome to be
+chosen, asserting something that did not happen.
 
-Le proprietà `queryCount`, `firstSeen` e `lastSeen` si riferiscono alla combinazione così definita.
+The `queryCount`, `firstSeen` and `lastSeen` properties refer to the
+combination so defined.
 
 ---
 
 # ScoreFactor
 
-Rappresenta una ragione che ha determinato il punteggio di un'area.
+Represents a reason that determined the score of an area.
 
 ## Properties
 
 * code
 * values
 
-La proprietà `code` identifica l'affermazione. La proprietà `values` contiene i valori che la completano.
+The `code` property identifies the statement. The `values` property holds the
+values that complete it.
 
-Un fattore **non contiene testo**.
+A factor **contains no text**.
 
-Il Core produce risultati, non prosa. Una frase già scritta appartiene a una lingua sola, e renderebbe impossibile presentare lo stesso risultato in più lingue senza modificare il Core.
+The Core produces results, not prose. A sentence already written belongs to
+one language, and would make it impossible to present the same result in
+several languages without changing the Core.
 
-I valori numerici viaggiano come numeri, non come testo già formattato: la convenzione con cui si scrive una percentuale appartiene alla lingua, non alla misura.
+Numeric values travel as numbers, not as text already formatted: how a
+percentage is written belongs to the language, not to the measurement.
 
-L'elenco dei codici e il loro significato sono definiti nella NPSS Specification.
+The list of codes and their meaning are defined in the NPSS Specification.
 
 ---
 
 # ClassificationList
 
-Rappresenta una lista utilizzata per classificare i domini.
+Represents a list used to classify domains.
 
 ## Properties
 
@@ -341,17 +375,19 @@ Rappresenta una lista utilizzata per classificare i domini.
 * entryCount
 * enabled
 
-La proprietà `licence` è obbligatoria: una lista priva di licenza dichiarata non viene distribuita con il progetto.
+The `licence` property is mandatory: a list with no declared licence is not
+distributed with the project.
 
-La proprietà `updatedAt` indica l'ultimo aggiornamento **riuscito**. Un tentativo fallito non la modifica: la lista conservata resta valida e semplicemente invecchia.
+The `updatedAt` property indicates the last **successful** update. A failed
+attempt does not change it: the list held stays valid and simply grows older.
 
-Il funzionamento è descritto nella Threat Intelligence Specification.
+How it works is described in the Threat Intelligence Specification.
 
 ---
 
 # Threat
 
-Rappresenta una minaccia classificata dal sistema.
+Represents a threat classified by the system.
 
 ## Properties
 
@@ -367,7 +403,7 @@ Rappresenta una minaccia classificata dal sistema.
 
 # Alert
 
-Rappresenta un evento significativo prodotto dal Core.
+Represents a significant event produced by the Core.
 
 ## Properties
 
@@ -383,7 +419,7 @@ Rappresenta un evento significativo prodotto dal Core.
 
 # Recommendation
 
-Rappresenta un suggerimento generato automaticamente dal sistema.
+Represents a suggestion generated automatically by the system.
 
 ## Properties
 
@@ -397,7 +433,7 @@ Rappresenta un suggerimento generato automaticamente dal sistema.
 
 # Network Privacy & Security Score (NPSS)
 
-Rappresenta il punteggio sintetico dello stato della rete.
+Represents the summary score of the state of the network.
 
 ## Properties
 
@@ -409,29 +445,36 @@ Rappresenta il punteggio sintetico dello stato della rete.
 * generatedAt
 * breakdown
 
-I campi `overallScore` e `status` sono **opzionali**.
+The `overallScore` and `status` fields are **optional**.
 
-Sono assenti quando la copertura è inferiore alla soglia minima definita dalla NPSS Specification: sotto quel livello un giudizio sintetico non è sostenibile, e viene presentato il solo dettaglio.
+They are absent when coverage is below the minimum threshold defined by the
+NPSS Specification: below that level a summary judgement is not supportable,
+and only the detail is presented.
 
-Il campo `coverage` indica la somma dei `maxScore` di tutte le aree, su un massimo di 100.
+The `coverage` field holds the sum of the `maxScore` of every area, out of a
+maximum of 100.
 
-Corrisponde quindi alla porzione del sistema di valutazione effettivamente osservata.
+It therefore corresponds to the portion of the evaluation system actually
+observed.
 
-Un valore inferiore a 100 significa che il punteggio è stato calcolato su una parte soltanto degli indicatori previsti.
+A value below 100 means the score was computed over only part of the
+indicators provided for.
 
-Il campo `status` assume i valori definiti nella tabella Score Range della NPSS Specification.
+The `status` field takes the values defined in the Score Range table of the
+NPSS Specification.
 
-Il campo `trend` assume i valori Improving, Stable o Decreasing.
+The `trend` field takes the values Improving, Stable or Decreasing.
 
-Il campo `algorithmVersion` identifica la versione dell'algoritmo che ha prodotto il punteggio.
+The `algorithmVersion` field identifies the version of the algorithm that
+produced the score.
 
 ---
 
 # ScoreComponent
 
-Rappresenta il contributo di una singola area di valutazione al NPSS.
+Represents the contribution of a single area of evaluation to the NPSS.
 
-La collezione `breakdown` è composta da elementi di questo tipo.
+The `breakdown` collection is made of elements of this type.
 
 ## Properties
 
@@ -442,45 +485,55 @@ La collezione `breakdown` è composta da elementi di questo tipo.
 * weight
 * factors
 
-Il campo `component` corrisponde a una delle aree definite nella NPSS Specification.
+The `component` field corresponds to one of the areas defined in the NPSS
+Specification.
 
-Il campo `state` dichiara in che misura l'area è stata valutata.
+The `state` field declares to what extent the area was assessed.
 
-| Valore              | Significato                                                            |
-| ------------------- | ----------------------------------------------------------------------- |
-| `Measured`          | Tutti gli indicatori dell'area sono stati valutati                       |
-| `PartiallyMeasured` | Solo una parte degli indicatori è stata valutata                         |
-| `NotMeasurable`     | Nessun indicatore è valutabile e `score` non è significativo             |
+| Value               | Meaning                                                              |
+| ------------------- | ---------------------------------------------------------------------- |
+| `Measured`          | Every indicator of the area was assessed                                |
+| `PartiallyMeasured` | Only some of the indicators were assessed                               |
+| `NotMeasurable`     | No indicator can be assessed and `score` is not meaningful              |
 
 ---
 
 ## Weight and Maximum Score
 
-Il campo `weight` indica il **peso nominale** dell'area, definito dall'algoritmo NPSS.
+The `weight` field holds the **nominal weight** of the area, defined by the
+NPSS algorithm.
 
-Il campo `maxScore` indica il **punteggio effettivamente ottenibile**, cioè la porzione di peso corrispondente agli indicatori realmente valutati.
+The `maxScore` field holds the **score actually obtainable**, that is, the
+portion of the weight corresponding to the indicators really assessed.
 
-| Stato               | Relazione                    |
-| ------------------- | ---------------------------- |
-| `Measured`          | `maxScore` uguale a `weight` |
-| `PartiallyMeasured` | `maxScore` minore di `weight`|
-| `NotMeasurable`     | `maxScore` uguale a zero     |
+| State               | Relation                      |
+| ------------------- | ----------------------------- |
+| `Measured`          | `maxScore` equal to `weight`  |
+| `PartiallyMeasured` | `maxScore` less than `weight` |
+| `NotMeasurable`     | `maxScore` equal to zero      |
 
-La porzione di peso non misurata **non concorre né al punteggio ottenuto né al punteggio ottenibile**.
+The unmeasured portion of the weight **contributes neither to the score
+obtained nor to the score obtainable**.
 
-Non può quindi in alcun caso migliorare il risultato: ciò che non è stato osservato viene escluso dal calcolo, non stimato né presunto favorevole.
+It therefore cannot in any case improve the result: what was not observed is
+excluded from the calculation, neither estimated nor presumed favourable.
 
 ---
 
-Quando `state` è diverso da `Measured`, il campo `factors` deve indicare quali indicatori sono stati valutati e quali no, con il relativo motivo.
+When `state` is other than `Measured`, the `factors` field must state which
+indicators were assessed and which were not, each with its reason.
 
-Il campo `factors` contiene i fattori che hanno determinato il punteggio dell'area, sotto forma di `ScoreFactor`.
+The `factors` field holds the factors that determined the score of the area,
+in the form of `ScoreFactor`.
 
-La conservazione dei factors costituisce il requisito che rende ogni variazione del punteggio spiegabile.
+Keeping the factors is the requirement that makes every change in the score
+explainable.
 
-Un'area non misurabile non viene mai rappresentata come area con punteggio zero.
+An area that is not measurable is never represented as an area with a score of
+zero.
 
-Le condizioni descrivono situazioni distinte e devono restare distinguibili in ogni punto del sistema.
+The conditions describe distinct situations and must remain distinguishable at
+every point of the system.
 
 ---
 
@@ -514,21 +567,25 @@ NetworkSnapshot
 
 # Ownership of Properties
 
-Non tutte le proprietà di un'entità sono di competenza di chi la produce per primo.
+Not every property of an entity belongs to whoever produces it first.
 
-Un Adapter acquisisce e converte. Non classifica, non valuta, non attribuisce reputazioni: quelle sono responsabilità del Core.
+An Adapter acquires and converts. It does not classify, does not judge, does
+not attribute reputations: those are responsibilities of the Core.
 
-Ne discende una regola.
+A rule follows.
 
-> Una proprietà che soltanto il Core può valorizzare è opzionale nel modello, e resta vuota finché il Core non la valorizza.
+> A property only the Core can populate is optional in the model, and stays
+> empty until the Core populates it.
 
-Un Adapter non deve mai riempire tali proprietà con valori convenzionali o segnaposto: equivarrebbe ad affermare qualcosa che non ha osservato.
+An Adapter must never fill such properties with conventional or placeholder
+values: that would amount to asserting something it has not observed.
 
-Fanno eccezione i casi in cui la documentazione definisce esplicitamente un valore di ricaduta, come `Unknown` per la categoria di un dominio.
+The exception is where the documentation explicitly defines a fallback value,
+such as `Unknown` for the category of a domain.
 
-Proprietà attualmente soggette a questa regola.
+Properties currently subject to this rule.
 
-| Entità   | Proprietà    | Assegnata da  |
+| Entity   | Property     | Assigned by   |
 | -------- | ------------ | ------------- |
 | `Domain` | `reputation` | Threat Engine |
 
@@ -536,177 +593,197 @@ Proprietà attualmente soggette a questa regola.
 
 ## Status Vocabularies
 
-Gli stati operativi utilizzano insiemi di valori definiti.
+Operational states use defined sets of values.
 
 **DataSource.status**
 
-| Valore        | Significato                                     |
-| ------------- | ------------------------------------------------ |
-| `Online`      | La sorgente ha risposto correttamente             |
-| `Unreachable` | La sorgente non è raggiungibile o ha rifiutato    |
+| Value         | Meaning                                          |
+| ------------- | ------------------------------------------------- |
+| `Online`      | The source answered correctly                      |
+| `Unreachable` | The source cannot be reached or refused            |
 
-È l'unica parte della descrizione che soltanto l'Adapter può stabilire.
+It is the only part of the description that only the Adapter can establish.
 
 **Device.status**
 
-| Valore     | Significato                                          |
-| ---------- | ----------------------------------------------------- |
-| `Active`   | Il dispositivo ha prodotto traffico nella finestra     |
-| `Inactive` | Il dispositivo non ha prodotto traffico nella finestra |
+| Value      | Meaning                                               |
+| ---------- | ------------------------------------------------------ |
+| `Active`   | The device produced traffic within the window           |
+| `Inactive` | The device produced no traffic within the window        |
 
-Lo stato descrive la presenza, non la salute. La valutazione del comportamento appartiene al Device Engine.
+The state describes presence, not health. Judging behaviour belongs to the
+Device Engine.
 
-Entrambi gli insiemi sono minimi e potranno essere estesi quando emergeranno esigenze documentate.
+Both sets are minimal and may be extended when documented needs arise.
 
 ---
 
 # Data Availability
 
-Il modello distingue tre condizioni che non devono mai essere confuse.
+The model distinguishes three conditions that must never be confused.
 
-| Condizione        | Significato                                                  |
-| ----------------- | ------------------------------------------------------------ |
-| Dato presente     | L'informazione è stata acquisita ed è valorizzata             |
-| Dato assente      | L'informazione è misurabile ma non si è verificato nulla      |
-| Dato non misurabile | La sorgente non è in grado di fornire l'informazione        |
+| Condition           | Meaning                                                    |
+| ------------------- | ------------------------------------------------------------ |
+| Data present        | The information was acquired and is populated                 |
+| Data absent         | The information is measurable and nothing happened            |
+| Data not measurable | The source is not able to provide the information             |
 
-Un valore pari a zero appartiene alla seconda condizione e costituisce un'affermazione sul mondo reale.
+A value of zero belongs to the second condition and is a statement about the
+real world.
 
-La terza condizione è invece un'affermazione sul sistema, e va rappresentata attraverso l'assenza della relativa capability, mai attraverso un valore.
+The third condition is instead a statement about the system, and is to be
+represented through the absence of the relevant capability, never through a
+value.
 
-Questa distinzione discende direttamente dal principio di Transparency.
+This distinction follows directly from the Transparency principle.
 
 ---
 
 # Measurement Quality
 
-La disponibilità di un dato non esaurisce ciò che occorre dichiarare.
+The availability of a piece of data does not exhaust what has to be declared.
 
-Un valore può essere conosciuto **con precisione differente**, e trattare la conoscenza come binaria costringe a una scelta fra due errori: inventare un valore plausibile, oppure scartare un'informazione realmente posseduta.
+A value may be known **with differing precision**, and treating knowledge as
+binary forces a choice between two errors: inventing a plausible value, or
+discarding information actually held.
 
-Il punteggio distingue già fra area misurata, parzialmente misurata e non misurabile. Il medesimo criterio si applica al singolo valore.
+The score already distinguishes between an area measured, partly measured and
+not measurable. The same criterion applies to the individual value.
 
 ---
 
 ## Quality Levels
 
-| Qualità         | Significato                                                        |
-| --------------- | ------------------------------------------------------------------ |
-| `Exact`         | Misurato direttamente                                               |
-| `LowerBound`    | Il valore reale è almeno quello indicato, possibilmente superiore    |
-| `PeriodBounded` | L'evento è avvenuto entro il periodo di osservazione, istante ignoto |
-| `Estimated`     | Dedotto con un metodo che va dichiarato                             |
+| Quality         | Meaning                                                              |
+| --------------- | ---------------------------------------------------------------------- |
+| `Exact`         | Measured directly                                                       |
+| `LowerBound`    | The real value is at least the one stated, possibly higher               |
+| `PeriodBounded` | The event happened within the observation period, the moment unknown     |
+| `Estimated`     | Inferred by a method that has to be declared                             |
 
 ---
 
 ## Principle
 
-> Un valore conosciuto con minore precisione viene **qualificato**, non cancellato e non arrotondato al plausibile.
+> A value known with less precision is **qualified**, not discarded and not
+> rounded to the plausible.
 
-Due esempi mostrano la differenza rispetto al trattamento binario.
+Two examples show the difference from binary treatment.
 
-**Domini univoci.** La sorgente restituisce elenchi troncati. Il numero di domini distinti non è "approssimato" in senso vago: è un **limite inferiore**, ossia un'affermazione precisa. Presentarlo come conteggio esatto è falso; ometterlo scarta un dato utile.
+**Unique domains.** The source returns truncated lists. The number of distinct
+domains is not "approximate" in any vague sense: it is a **lower bound**, that
+is, a precise statement. Presenting it as an exact count is false; omitting it
+discards useful data.
 
-**Istante di prima osservazione.** Quando il dato deriva da statistiche su finestra, il sistema sa che l'evento è avvenuto **entro quel periodo**, non a quale minuto. Scrivere l'inizio del periodo come se fosse l'istante osservato è un'invenzione; lasciare vuoto perde una conoscenza reale.
+**Instant of first observation.** Where the data derives from statistics over
+a window, the system knows the event happened **within that period**, not at
+which minute. Writing the beginning of the period as though it were the
+instant observed is an invention; leaving it empty loses knowledge actually
+held.
 
-Quando la stessa proprietà diventa disponibile con precisione maggiore, ad esempio dai log delle interrogazioni, la qualità dichiarata cambia di conseguenza e **l'utente vede la differenza**.
+When the same property becomes available with greater precision, for instance
+from query logs, the declared quality changes accordingly and **the person
+sees the difference**.
 
 ---
 
 ## Application
 
-| Entità           | Proprietà                  | Qualità dichiarata da        |
+| Entity           | Property                   | Quality declared by          |
 | ---------------- | -------------------------- | ---------------------------- |
 | `Statistics`     | `uniqueDomains`            | `uniqueDomainsQuality`       |
 | `Device`         | `firstSeen`, `lastSeen`    | `observationQuality`         |
 | `Domain`         | `firstSeen`, `lastSeen`    | `observationQuality`         |
 | `DomainActivity` | `firstSeen`, `lastSeen`    | `observationQuality`         |
 
-Una proprietà priva di qualifica dichiarata è da intendersi `Exact`.
+A property with no declared quality is to be understood as `Exact`.
 
-L'interfaccia non presenta mai un valore qualificato come se fosse esatto.
+The interface never presents a qualified value as though it were exact.
 
 ---
 
 # Device Identity
 
-L'identità di un dispositivo può fondarsi su basi di solidità differente.
+The identity of a device may rest on grounds of differing solidity.
 
-| Base              | Significato                                              |
-| ----------------- | -------------------------------------------------------- |
-| `HardwareAddress` | Identità stabile, indipendente dall'indirizzo di rete     |
-| `NetworkAddress`  | Identità derivata dall'indirizzo di rete                  |
+| Basis             | Meaning                                                   |
+| ----------------- | ----------------------------------------------------------- |
+| `HardwareAddress` | A stable identity, independent of the network address        |
+| `NetworkAddress`  | An identity derived from the network address                 |
 
-L'identità basata sull'indirizzo di rete comporta due conseguenze che l'utente deve conoscere.
+An identity based on the network address carries two consequences the person
+has to know.
 
-* Un dispositivo che cambia indirizzo appare come un dispositivo differente.
-* Un indirizzo riassegnato ad altro dispositivo fonde due identità distinte.
+* A device that changes address appears as a different device.
+* An address reassigned to another device merges two distinct identities.
 
-Il campo `identityBasis` di `Device` dichiara su quale base l'identità è stata stabilita.
+The `identityBasis` field of `Device` declares on what basis the identity was
+established.
 
-Attribuire un comportamento a un dispositivo è un'affermazione forte. Il sistema deve rendere evidente quanto sia solida.
+Attributing a behaviour to a device is a strong claim. The system must make
+plain how solid it is.
 
 ---
 
 # Entity Identity
 
-Ogni entità possiede un identificatore univoco.
+Every entity carries a unique identifier.
 
-Gli identificatori sono indipendenti dal backend utilizzato.
+Identifiers are independent of the backend in use.
 
 ---
 
 # Versioning
 
-Il Unified Data Model possiede una propria versione indipendente.
+The Unified Data Model carries a version of its own.
 
-Le modifiche incompatibili incrementano la Major Version.
+Incompatible changes increment the Major Version.
 
-Le modifiche compatibili incrementano la Minor Version.
+Compatible changes increment the Minor Version.
 
 ---
 
 # Serialization
 
-Il Unified Data Model deve poter essere serializzato nei seguenti formati.
+The Unified Data Model must be serialisable in the following formats.
 
 * JSON
 * CSV
-* XML (eventuale supporto futuro)
+* XML (possible future support)
 
-La serializzazione non modifica la struttura logica delle entità.
+Serialisation does not change the logical structure of the entities.
 
 ---
 
 # Extensibility
 
-Nuove proprietà possono essere aggiunte mantenendo la retrocompatibilità.
+New properties may be added while keeping backward compatibility.
 
-Nuove entità devono integrarsi attraverso relazioni già definite.
+New entities must integrate through relations already defined.
 
 ---
 
 # Design Principles
 
-Il Data Model segue i seguenti principi.
+The Data Model follows these principles.
 
-* uniformità;
-* indipendenza;
-* semplicità;
-* modularità;
-* estendibilità;
-* riutilizzabilità.
+* uniformity;
+* independence;
+* simplicity;
+* modularity;
+* extensibility;
+* reusability.
 
 ---
 
 # Constraints
 
-Il Unified Data Model:
+The Unified Data Model:
 
-* non contiene logica di business;
-* non contiene logica di presentazione;
-* non dipende da uno specifico backend;
-* rappresenta l'unico formato dati utilizzato dal Core.
+* contains no business logic;
+* contains no presentation logic;
+* does not depend on any specific backend;
+* is the only data format used by the Core.
 
 ---
 

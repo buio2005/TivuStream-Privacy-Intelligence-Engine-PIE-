@@ -8,61 +8,63 @@
 
 **Status:** Official
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questo documento descrive le modalità di contribuzione al progetto.
+This document describes how to contribute to the project.
 
-Non introduce requisiti nuovi.
+It introduces no new requirement.
 
-Raccoglie in forma operativa le regole già definite in `AI_DEVELOPMENT_GUIDE.md` e nelle Specification presenti in `docs/`.
+It gathers, in operational form, the rules already defined in
+`AI_DEVELOPMENT_GUIDE.md` and in the Specifications in `docs/`.
 
-In caso di divergenza, la documentazione ufficiale prevale su questo documento.
+In case of divergence, the official documentation prevails over this document.
 
 ---
 
 # Development Model
 
-Il progetto segue un modello **Documentation First**.
+The project follows a **Documentation First** model.
 
-La documentazione rappresenta la fonte autorevole.
+The documentation is the authoritative source.
 
-Il codice implementa quanto definito nelle Specification.
+The code implements what the Specifications define.
 
-Il codice non definisce l'architettura.
+The code does not define the architecture.
 
 ---
 
 # Before Contributing
 
-Prima di scrivere codice è necessario leggere nell'ordine:
+Before writing code it is necessary to read, in this order:
 
 1. `README.md`
 2. `PROJECT_CONTEXT.md`
 3. `AI_DEVELOPMENT_GUIDE.md`
-4. le Specification interessate in `docs/`
+4. the Specifications concerned, in `docs/`
 
-Un contributo che non sia riconducibile a una Specification ufficiale non può essere accettato.
+A contribution that cannot be traced back to an official Specification cannot
+be accepted.
 
 ---
 
 # Documentation Priority
 
-In caso di conflitto valgono le seguenti priorità.
+In case of conflict the following priorities hold.
 
 1. `AI_DEVELOPMENT_GUIDE.md`
-2. Specification in `docs/`
+2. The Specifications in `docs/`
 3. `README.md`
-4. Codice esistente
+4. The existing code
 
 ---
 
 # Architecture
 
-L'architettura del progetto è fissa.
+The architecture of the project is fixed.
 
 ```text
 Frontend
@@ -84,93 +86,100 @@ Adapter
 Data Source
 ```
 
-Il sistema utilizza due flussi distinti.
+The system uses two distinct flows.
 
-L'**Acquisition Flow** è innescato dallo Scheduler e orchestrato dall'Adapter Manager.
+The **Acquisition Flow** is triggered by the Scheduler and orchestrated by the
+Adapter Manager.
 
-Il **Query Flow** serve le richieste del Frontend e non raggiunge mai le Data Sources.
+The **Query Flow** serves the requests of the Frontend and never reaches the
+Data Sources.
 
 ---
 
 # Architectural Rules
 
-Le seguenti regole non possono essere derogate.
+The following rules admit no exception.
 
-* Il Core non comunica direttamente con le Data Sources.
-* Il Core non orchestra l'acquisizione dei dati.
-* Ogni Data Source possiede un Adapter dedicato.
-* Gli Adapter convertono i dati e non eseguono analisi.
-* Il Frontend non contiene logica di business.
-* Il Core non contiene logica di presentazione.
-* Il Unified Data Model è l'unico formato dati interno.
+* The Core does not communicate directly with the Data Sources.
+* The Core does not orchestrate the acquisition of data.
+* Every Data Source has a dedicated Adapter.
+* The Adapters convert the data and perform no analysis.
+* The Frontend contains no business logic.
+* The Core contains no presentation logic.
+* The Unified Data Model is the only internal data format.
 
-Il progetto che implementa il Core non referenzia gli Adapter né l'host delle REST API.
+The project implementing the Core references neither the Adapters nor the host
+of the REST APIs.
 
-Questo isolamento è verificato in fase di compilazione: un riferimento aggiunto per comodità fa fallire la build.
+This isolation is verified at compile time: a reference added for convenience
+makes the build fail.
 
 ---
 
 # What Is Not Allowed
 
-Un contributo non deve:
+A contribution must not:
 
-* modificare autonomamente l'architettura;
-* rinominare componenti ufficiali;
-* introdurre dipendenze non approvate;
-* creare nuove cartelle senza autorizzazione;
-* modificare le Specification senza richiesta esplicita;
-* creare modelli dati paralleli al Unified Data Model.
+* modify the architecture on its own;
+* rename official components;
+* introduce dependencies that have not been approved;
+* create new folders without authorisation;
+* modify the Specifications without an explicit request;
+* create data models parallel to the Unified Data Model.
 
 ---
 
 # Missing Requirements
 
-Se una Specification non descrive un comportamento necessario:
+If a Specification does not describe a behaviour that is needed:
 
-* non inventare una soluzione;
-* non introdurre nuove architetture;
-* chiedere chiarimenti;
-* oppure proporre una soluzione chiaramente identificata come proposta.
+* do not invent a solution;
+* do not introduce new architectures;
+* ask for clarification;
+* or propose a solution clearly identified as a proposal.
 
-Le proposte restano separate dall'implementazione richiesta.
+Proposals stay separate from the implementation asked for.
 
 ---
 
 # Terminology
 
-Utilizzare esclusivamente la terminologia definita in `docs/00-Glossary.md`.
+Use only the terminology defined in `docs/00-Glossary.md`.
 
-Non introdurre sinonimi.
+Do not introduce synonyms.
 
-I moduli del Core utilizzano tutti il suffisso **Engine**.
+The modules of the Core all use the **Engine** suffix.
 
-Alcuni esempi di termini da evitare.
+Some examples of terms to avoid.
 
-| Evitare                                   | Utilizzare                              |
-| ----------------------------------------- | --------------------------------------- |
-| Privacy Score                             | Network Privacy & Security Score (NPSS) |
-| Connector                                 | Adapter                                 |
-| Threat Intelligence (come nome di modulo) | Threat Engine                           |
+| Avoid | Use |
+| --- | --- |
+| Privacy Score | Network Privacy & Security Score (NPSS) |
+| Connector | Adapter |
+| Threat Intelligence (as the name of a module) | Threat Engine |
 
-L'elenco completo è contenuto nel Glossary.
+The complete list is in the Glossary.
 
 ---
 
 # Language
 
-La comunicazione con il team avviene nella lingua del progetto.
+**The project is in English**: issues, pull requests, source code and
+documentation.
 
-Il codice sorgente è scritto in inglese.
+Identifiers, namespaces, classes, methods, file names and commit messages are
+in English.
 
-Sono in inglese identificatori, namespace, classi, metodi, nomi di file e messaggi di commit.
+The official terminology of the project is not translated.
 
-La terminologia ufficiale del progetto non viene tradotta.
+The interface is bilingual, Italian and English, and every text there lives in
+the translation catalogue; a new text is added to both languages at once.
 
 ---
 
 # Coding Principles
 
-Ogni implementazione rispetta i seguenti principi.
+Every implementation respects the following principles.
 
 * Single Responsibility
 * Separation of Concerns
@@ -179,13 +188,13 @@ Ogni implementazione rispetta i seguenti principi.
 * Simplicity
 * Maintainability
 
-Il codice privilegia la leggibilità sulle soluzioni compatte.
+The code favours readability over compact solutions.
 
-Le astrazioni non necessarie vengono evitate.
+Unnecessary abstractions are avoided.
 
-I componenti restano piccoli.
+Components stay small.
 
-La logica non viene duplicata.
+Logic is not duplicated.
 
 ---
 
@@ -202,7 +211,7 @@ scripts/
 tools/
 ```
 
-Il Backend è organizzato come segue.
+The Backend is organised as follows.
 
 ```text
 backend/
@@ -213,8 +222,13 @@ backend/
 │   ├── TivuStream.Pie.Core/
 │   ├── TivuStream.Pie.Adapters/
 │   ├── TivuStream.Pie.Adapters.Technitium/
+│   ├── TivuStream.Pie.Storage/
 │   └── TivuStream.Pie.Api/
 └── tests/
+    ├── TivuStream.Pie.Core.Tests/
+    ├── TivuStream.Pie.Storage.Tests/
+    ├── TivuStream.Pie.Adapters.Technitium.Tests/
+    └── TivuStream.Pie.Api.Tests/
 ```
 
 ---
@@ -239,150 +253,155 @@ backend/
 
 # Code Style
 
-Le convenzioni di formattazione sono definite in `.editorconfig` e vengono applicate automaticamente dagli editor compatibili.
+The formatting conventions are defined in `.editorconfig` and are applied
+automatically by compatible editors.
 
-Le terminazioni di riga sono normalizzate da `.gitattributes`.
+Line endings are normalised by `.gitattributes`.
 
-Nessuna di queste impostazioni va aggirata manualmente.
+Neither of these settings is to be worked around by hand.
 
-Le principali convenzioni C#.
+The main C# conventions.
 
-* namespace file-scoped;
-* direttive `using` esterne al namespace;
-* PascalCase per tipi, metodi, proprietà e costanti;
-* camelCase per parametri e variabili locali;
-* prefisso `_` per i campi privati;
-* prefisso `I` per le interfacce.
+* file-scoped namespaces;
+* `using` directives outside the namespace;
+* PascalCase for types, methods, properties and constants;
+* camelCase for parameters and local variables;
+* the `_` prefix for private fields;
+* the `I` prefix for interfaces.
 
 ---
 
 # Prerequisites
 
-Per compilare il Backend è necessario un **.NET SDK 10.x**.
+Compiling the Backend requires a **.NET SDK 10.x**.
 
-La versione è vincolata da `global.json` nella radice del repository.
+The version is constrained by `global.json` in the root of the repository.
 
-Un SDK di major version differente produce un errore esplicito anziché una build silenziosamente diversa.
+An SDK of a different major version produces an explicit error rather than a
+silently different build.
 
-Verificare l'SDK installato.
+To check the SDK installed.
 
 ```bash
 dotnet --list-sdks
 ```
 
-L'aggiornamento a una major version successiva è una decisione esplicita e comporta la modifica di `global.json` e di `Directory.Build.props`.
+Moving to a later major version is an explicit decision and involves changing
+`global.json` and `Directory.Build.props`.
 
 ---
 
 # Build
 
-La build tratta i warning come errori.
+The build treats warnings as errors.
 
-Un contributo che genera warning non è considerato completo.
+A contribution that produces warnings is not considered complete.
 
-Ogni versione dell'SDK introduce nuove regole degli analizzatori: `global.json` garantisce che un aggiornamento dell'ambiente non faccia fallire la build di codice non modificato.
+Every version of the SDK introduces new analyser rules: `global.json`
+guarantees that an update of the environment does not make the build of
+unchanged code fail.
 
-Comandi principali.
+Main commands.
 
 ```bash
 dotnet restore backend/TivuStream.Pie.sln
-dotnet build backend/TivuStream.Pie.sln
+dotnet build   backend/TivuStream.Pie.sln
+dotnet test    backend/TivuStream.Pie.sln
 ```
 
 ---
 
 # Dependencies
 
-Prima di introdurre una libreria esterna verificare:
+Before introducing an external library, check:
 
-* reale necessità;
-* qualità;
-* manutenzione attiva;
-* compatibilità della licenza.
+* that it is really needed;
+* its quality;
+* that it is actively maintained;
+* the compatibility of its licence.
 
-Preferire sempre le librerie già presenti nel framework.
+Always prefer the libraries already present in the framework.
 
-Ogni dipendenza introdotta viene documentata con nome, versione, licenza e scopo.
+Every dependency introduced is documented with its name, version, licence and
+purpose.
 
-L'introduzione di una nuova dipendenza richiede approvazione esplicita.
+Introducing a new dependency requires explicit approval.
 
 ---
 
 # Error Handling and Logging
 
-Ogni errore deve essere gestito, registrato e comprensibile.
+Every error must be handled, recorded and understandable.
 
-Ogni operazione significativa deve poter essere registrata.
+Every significant operation must be capable of being recorded.
 
-I log non devono contenere informazioni sensibili.
+The logs must contain no sensitive information.
 
 ---
 
 # Security
 
-Ogni implementazione considera:
+Every implementation takes into account:
 
-* validazione dell'input;
-* autenticazione;
-* autorizzazione;
-* protezione delle credenziali;
+* input validation;
+* authentication;
+* authorisation;
+* protection of credentials;
 * HTTPS.
 
-Le credenziali delle Data Sources restano confinate all'interno del relativo Adapter.
+The credentials of the Data Sources stay confined inside their Adapter.
 
-Nessuna credenziale, database locale o file di ambiente viene versionato.
+No credential, local database or environment file is ever committed.
 
 ---
 
 # Git Workflow
 
-Ogni modifica interessa esclusivamente il task corrente.
+Every change concerns the current task alone.
 
-Le modifiche non correlate vanno evitate.
+Unrelated changes are to be avoided.
 
-I messaggi di commit sono scritti in inglese.
+Commit messages are written in English.
 
 ---
 
 # Documentation Changes
 
-Quando l'implementazione rivela un'inconsistenza nella documentazione:
+When the implementation reveals an inconsistency in the documentation:
 
-* non modificare silenziosamente l'implementazione per aggirarla;
-* segnalare l'inconsistenza;
-* proporre un aggiornamento della documentazione;
-* attendere approvazione.
+* do not silently modify the implementation to work around it;
+* report the inconsistency;
+* propose an update of the documentation;
+* wait for approval.
 
-Ogni modifica alla documentazione viene registrata in `CHANGELOG.md`.
+Every change to the documentation is recorded in `CHANGELOG.md`.
 
 ---
 
 # Before Submitting
 
-Prima di considerare completato un contributo verificare:
+Before considering a contribution complete, check:
 
-* il progetto compila;
-* nessun warning;
-* architettura rispettata;
-* documentazione rispettata;
-* naming coerente con il Glossary;
-* nessuna logica duplicata;
-* nessun codice morto;
-* nessuna dipendenza non necessaria.
+* the project compiles;
+* no warnings;
+* the architecture is respected;
+* the documentation is respected;
+* naming is consistent with the Glossary;
+* no duplicated logic;
+* no dead code;
+* no unnecessary dependency.
 
 ---
 
 # License
 
-La licenza definitiva del progetto non è ancora stata scelta.
+The project is released under **GPL-3.0**.
 
-La decisione verrà presa prima della prima Beta pubblica.
+Contributions are accepted under that licence.
 
-I contributi dovranno rispettare la licenza adottata.
+Open source components integrated keep their own original licences.
 
-Le componenti open source integrate mantengono le rispettive licenze originali.
-
-La politica completa è descritta in `docs/14-License Specification.md`.
+The complete policy is described in `docs/14-License Specification.md`.
 
 ---
 
@@ -392,4 +411,4 @@ La politica completa è descritta in `docs/14-License Specification.md`.
 * `PROJECT_CONTEXT.md`
 * `AI_DEVELOPMENT_GUIDE.md`
 * `CHANGELOG.md`
-* Specification in `docs/`
+* The Specifications in `docs/`

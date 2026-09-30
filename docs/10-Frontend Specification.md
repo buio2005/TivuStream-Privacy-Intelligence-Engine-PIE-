@@ -8,37 +8,38 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-26
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce l'architettura e i principi del Frontend utilizzato dalle applicazioni sviluppate sopra il Privacy Intelligence Engine.
+This specification defines the architecture and the principles of the Frontend
+used by applications built on top of the Privacy Intelligence Engine.
 
-Il Frontend rappresenta esclusivamente il livello di presentazione del sistema.
+The Frontend is solely the presentation layer of the system.
 
 ---
 
 # Objectives
 
-Il Frontend ha i seguenti obiettivi.
+The Frontend has the following objectives.
 
-* visualizzare i dati prodotti dal Core;
-* offrire un'interfaccia semplice e moderna;
-* garantire un'esperienza utente coerente;
-* mantenere la completa separazione dalla logica di business.
+* to display the data produced by the Core;
+* to offer a simple and modern interface;
+* to provide a coherent user experience;
+* to stay completely separate from business logic.
 
 ---
 
 # Scope
 
-Il Frontend:
+The Frontend:
 
-* utilizza esclusivamente le REST API del Core;
-* non comunica direttamente con le Data Sources;
-* non implementa algoritmi di analisi;
-* non modifica il Unified Data Model.
+* uses only the REST API of the Core;
+* does not communicate directly with the Data Sources;
+* implements no analysis algorithms;
+* does not modify the Unified Data Model.
 
 ---
 
@@ -64,7 +65,7 @@ Privacy Intelligence Engine
 
 # Application Structure
 
-Il Frontend è suddiviso in moduli indipendenti.
+The Frontend is divided into independent modules.
 
 * Dashboard
 * Devices
@@ -76,66 +77,102 @@ Il Frontend è suddiviso in moduli indipendenti.
 * Reports
 * Settings
 
-Ogni modulo rappresenta una vista indipendente.
+Each module is an independent view.
 
 ---
 
 # Dashboard
 
-La Dashboard costituisce il punto di ingresso dell'applicazione.
+The Dashboard is the entry point of the application.
 
-Visualizza le informazioni principali prodotte dal Core.
+It displays the principal information produced by the Core.
 
 ---
 
 # Domain Detail
 
-Si raggiunge dal nome di un dominio nell'elenco dei domini, all'indirizzo `/domains/{domain}`. Legge `/api/v1/domains/{domain}`, che copre lo stesso intervallo dell'elenco (API Specification).
+Reached from the name of a domain in the domain list, at the address
+`/domains/{domain}`. It reads `/api/v1/domains/{domain}`, which covers the
+same interval as the list (API Specification).
 
-## Contenuto
+## Content
 
-* Il nome del dominio e un ritorno all'elenco.
-* L'intervallo, le ore osservate su quelle richieste, e l'ora in corso quando lo è: con le stesse frasi dell'elenco.
-* Categoria, confidenza, lista e data della lista, prima e ultima osservazione, interrogazioni nell'intervallo: con le stesse frasi dell'elenco. Un dominio non classificato resta tale, senza colore che possa leggersi come approvazione.
-* La reputazione. Oggi nessuna è valutata, perché il Threat Engine non esiste: la pagina lo dice come affermazione sul sistema, non sul dominio.
-* L'attività per dispositivo, secondo `activityAccess`.
+* The name of the domain and a way back to the list.
+* The interval, the hours observed against those requested, and the hour in
+  progress when there is one: in the same words as the list.
+* Category, confidence, list and date of the list, first and last observation,
+  queries within the interval: in the same words as the list. A domain that is
+  not classified stays so, with no colour that could read as approval.
+* The reputation. None is assessed today, because the Threat Engine does not
+  exist: the page says so as a statement about the system, not about the
+  domain.
+* Activity by device, according to `activityAccess`.
 
-## Attività per dispositivo
+## Activity by device
 
-| `activityAccess` | Cosa si mostra |
+| `activityAccess` | What is shown |
 | --- | --- |
-| `Available`, elenco non vuoto | Una riga per elemento: dispositivo, interrogazioni, esito, trasporto, prima e ultima osservazione |
-| `Available`, elenco vuoto | `domainDetail.activityEmpty` |
+| `Available`, list not empty | One row per item: device, queries, outcome, transport, first and last observation |
+| `Available`, list empty | `domainDetail.activityEmpty` |
 | `Unavailable` | `domainDetail.activityUnavailable` |
-| `Withheld` | `domains.activityWithheld`, già nel catalogo |
+| `Withheld` | `domains.activityWithheld`, already in the catalogue |
 
-Nessuno dei tre casi senza righe si presenta come un elenco vuoto senza spiegazione, e nessuno come un errore.
+None of the three cases without rows is presented as an empty list without
+explanation, and none as an error.
 
-In ogni riga:
+In each row:
 
-* **Dispositivo.** Il nome, quando c'è, con l'indirizzo accanto; altrimenti l'indirizzo. Un dispositivo che la sorgente non ha descritto nell'intervallo (API Specification, Device Identification) si mostra con `domainDetail.deviceUndescribed`, dove `{id}` sono i primi otto caratteri dell'identificativo, così due dispositivi non descritti restano distinti, e con `domainDetail.deviceUndescribedNote`. Quando l'identità poggia sull'indirizzo di rete, la riga lo dichiara con `domainDetail.identityNetworkAddress`: è l'affermazione più forte del sistema, e quanto sia solida si vede invece di essere sottintesa.
-* **Esito.** «Bloccato» o «Non bloccato». Non «Risolto»: non essere bloccato non dice che la risposta sia andata a buon fine.
-* **Trasporto.** Un nome dal catalogo. Un valore sconosciuto al catalogo si mostra con il proprio identificativo; un valore vuoto è `domainDetail.transportUnknown`.
+* **Device.** The name where there is one, with the address beside it;
+  otherwise the address. A device the source did not describe within the
+  interval (API Specification, Device Identification) is shown with
+  `domainDetail.deviceUndescribed`, where `{id}` is the first eight characters
+  of the identifier, so that two undescribed devices stay distinct, and with
+  `domainDetail.deviceUndescribedNote`. Where the identity rests on the
+  network address, the row declares it with
+  `domainDetail.identityNetworkAddress`: it is the strongest claim the system
+  makes, and how solid it is can be seen rather than assumed.
+* **Outcome.** "Blocked" or "Not blocked". Not "Resolved": not being blocked
+  does not say the answer succeeded.
+* **Transport.** A name from the catalogue. A value the catalogue does not
+  know is shown with its own identifier; an empty value is
+  `domainDetail.transportUnknown`.
 
-Le righe non si sommano in un totale per dispositivo: il totale del dominio è già dichiarato sopra, e una somma per dispositivo farebbe credere che l'identità regga fra un indirizzo e l'altro anche quando poggia sull'indirizzo.
+The rows are not added up into a total per device: the total for the domain is
+already stated above, and a total per device would suggest that the identity
+holds across a change of address even when it rests on the address.
 
-## Stati della pagina
+## States of the page
 
-| Situazione | Cosa si mostra |
+| Situation | What is shown |
 | --- | --- |
-| In lettura | Il messaggio di caricamento esistente |
-| `404 DomainNotObserved` | `domainDetail.notObserved`, e il ritorno all'elenco |
-| Motore non raggiungibile o rifiuto inatteso | `domainDetail.unavailable` con `domains.unavailableReason`: una lettura fallita non dice nulla sulla rete |
+| Reading | The existing loading message |
+| `404 DomainNotObserved` | `domainDetail.notObserved`, and the way back to the list |
+| Engine unreachable or unexpected refusal | `domainDetail.unavailable` with `domains.unavailableReason`: a failed read says nothing about the network |
 
-## Regole
+## Rules
 
-* I dati del dettaglio stanno in uno store proprio, svuotato alla fine della sessione come gli altri (Authentication Specification, F2).
-* Cambiando dominio senza lasciare la pagina, il dettaglio precedente non resta visibile mentre si legge il nuovo.
-* **L'indirizzo della pagina contiene il nome del dominio, e la cronologia del browser lo conserva dopo l'uscita.** È un limite dichiarato della regola «nessun dato di rete sopravvive all'uscita»: gli store si svuotano, la cronologia del browser non è dell'interfaccia. Chi entra dopo, con qualunque ruolo, vede comunque l'elenco dei domini; chi usa lo stesso browser senza entrare può leggerli nella cronologia. L'interfaccia non distingue i collegamenti già visitati, così la pagina non segnala quali domini ha aperto chi c'era prima. Se il computer è condiviso, la procedura d'installazione consiglierà un profilo del browser dedicato. Scelta del 2026-09-26: togliere il dominio dall'indirizzo avrebbe impedito il ricaricamento e i preferiti per proteggere da chi ha già il browser in mano.
+* The detail data lives in a store of its own, emptied at the end of the
+  session like the others (Authentication Specification, F2).
+* Moving to another domain without leaving the page does not leave the
+  previous detail visible while the new one is being read.
+* **The address of the page contains the name of the domain, and the browser
+  history keeps it after signing out.** This is a declared limit of the rule
+  "no network data survives signing out": the stores are emptied, the browser
+  history does not belong to the interface. Whoever signs in afterwards, with
+  any role, sees the domain list anyway; whoever uses the same browser without
+  signing in can read them in the history. The interface does not distinguish
+  links already visited, so the page does not reveal which domains the
+  previous person opened. On a shared computer the installation procedure will
+  recommend a dedicated browser profile. Decision of 2026-09-26: removing the
+  domain from the address would have broken reloading and bookmarks in order
+  to protect against someone who already has the browser in their hands.
 
-## Messaggi
+## Messages
 
-| Codice | Italiano | Inglese |
+The Italian column is the catalogue as shown, not a translation of the
+English: both are the product.
+
+| Code | Italian | English |
 | --- | --- | --- |
 | `domainDetail.back` | Torna ai domini osservati | Back to observed domains |
 | `domainDetail.reputation` | Reputazione: {value} | Reputation: {value} |
@@ -166,9 +203,9 @@ Le righe non si sommano in un totale per dispositivo: il totale del dominio è g
 
 # Layout
 
-Il layout deve essere responsivo.
+The layout must be responsive.
 
-L'interfaccia deve adattarsi a:
+The interface must adapt to:
 
 * Desktop;
 * Tablet;
@@ -178,19 +215,19 @@ L'interfaccia deve adattarsi a:
 
 # Navigation
 
-La navigazione deve essere semplice e coerente.
+Navigation must be simple and coherent.
 
-Le principali sezioni dell'applicazione devono essere sempre raggiungibili.
+The principal sections of the application must always be reachable.
 
-La voce per la gestione degli account è visibile soltanto a un `Administrator`.
+The entry for managing accounts is visible only to an `Administrator`.
 
 ---
 
 # Components
 
-Il Frontend utilizza componenti riutilizzabili.
+The Frontend uses reusable components.
 
-Esempi.
+Examples.
 
 * Cards
 * Tables
@@ -205,158 +242,174 @@ Esempi.
 
 # Data Presentation
 
-Le informazioni vengono presentate privilegiando:
+Information is presented favouring:
 
-* chiarezza;
-* leggibilità;
-* sintesi.
+* clarity;
+* readability;
+* brevity.
 
-Le informazioni tecniche sono disponibili solo quando richieste.
+Technical information is available only where asked for.
 
 ---
 
 # Data Refresh
 
-Il Frontend aggiorna i dati utilizzando le REST API.
+The Frontend refreshes data using the REST API.
 
-L'aggiornamento può essere:
+Refreshing may be:
 
-* manuale;
-* automatico.
+* manual;
+* automatic.
 
 ---
 
 # State Management
 
-Lo stato dell'applicazione viene mantenuto localmente.
+The state of the application is held locally.
 
-Il Frontend non modifica i dati prodotti dal Core.
+The Frontend does not modify the data produced by the Core.
 
 ---
 
 # Error Handling
 
-Gli errori vengono presentati in maniera comprensibile.
+Errors are presented in an understandable way.
 
-L'interfaccia evita messaggi tecnici quando non necessari.
+The interface avoids technical messages where they are not needed.
 
 ---
 
 # Accessibility
 
-L'interfaccia deve rispettare i principali criteri di accessibilità.
+The interface must respect the principal criteria of accessibility.
 
-Particolare attenzione viene dedicata a:
+Particular attention is given to:
 
-* contrasto;
-* leggibilità;
-* navigazione da tastiera;
-* responsività.
+* contrast;
+* readability;
+* keyboard navigation;
+* responsiveness.
 
 ---
 
 # Internationalization
 
-L'architettura supporta la localizzazione dell'interfaccia.
+The architecture supports localisation of the interface.
 
-Le traduzioni vengono gestite separatamente dal codice.
+Translations are managed separately from the code.
 
-Le lingue offerte sono **italiano e inglese**.
+The languages offered are **Italian and English**.
 
-La localizzazione va prevista dalla prima riga del Frontend. Aggiungerla a interfaccia costruita comporta la riscrittura di ogni testo già scritto.
+Localisation is to be provided for from the first line of the Frontend. Adding
+it to an interface already built means rewriting every text already written.
 
 ---
 
 ## Text Produced From The Backend
 
-Il Backend non trasmette frasi.
+The Backend transmits no sentences.
 
-I fattori che spiegano il punteggio arrivano come codici con i propri valori, elencati nella NPSS Specification. Il Frontend li rende in parole.
+The factors that explain the score arrive as codes with their own values,
+listed in the NPSS Specification. The Frontend renders them in words.
 
-Ne consegue che il catalogo delle traduzioni **contiene affermazioni sul risultato dell'analisi**, non soltanto etichette di interfaccia.
+It follows that the translation catalogue **contains statements about the
+result of the analysis**, not merely interface labels.
 
-I vincoli di onestà della Network Privacy Specification si applicano integralmente a quel catalogo, in ogni lingua.
+The honesty constraints of the Network Privacy Specification apply to that
+catalogue in full, in every language.
 
-Un codice sconosciuto al catalogo viene mostrato come tale, con il proprio identificativo, e non omesso: un fattore che scompare toglierebbe all'utente una ragione del punteggio senza dichiararlo.
+A code the catalogue does not know is shown as such, with its own identifier,
+and not omitted: a factor that disappeared would take away a reason for the
+score without declaring it.
 
 ---
 
 # Themes
 
-Il sistema supporta temi grafici configurabili.
+The system supports configurable visual themes.
 
-La gestione del tema non modifica il comportamento dell'applicazione.
+Handling themes does not change the behaviour of the application.
 
 ---
 
 # Performance
 
-Il Frontend privilegia:
+The Frontend favours:
 
-* caricamento rapido;
-* rendering efficiente;
-* riduzione delle richieste HTTP;
-* riutilizzo dei componenti.
+* fast loading;
+* efficient rendering;
+* fewer HTTP requests;
+* reuse of components.
 
 ---
 
 # Authentication
 
-L'accesso è definito dall'**Authentication Specification**, che contiene anche i testi dei messaggi in entrambe le lingue.
+Access is defined by the **Authentication Specification**, which also holds
+the text of the messages in both languages.
 
-L'applicazione si trova sempre in uno di cinque stati, distinti fra loro: `Checking`, `SetupRequired`, `Unauthenticated`, `Authenticated`, `PasswordChangeRequired`.
+The application is always in one of five states, distinct from one another:
+`Checking`, `SetupRequired`, `Unauthenticated`, `Authenticated`,
+`PasswordChangeRequired`.
 
-Le schermate sono: configurazione iniziale, accesso, cambio password, gestione degli account (solo `Administrator`).
+The screens are: initial setup, sign in, password change, account management
+(`Administrator` only).
 
-Regole:
+Rules:
 
-* **Nessun dato di rete sopravvive all'uscita.** Alla chiusura della sessione gli store svuotano ogni dato letto.
-* Una sessione terminata mentre l'utente era entrato non si presenta come un accesso fallito.
-* Credenziali sbagliate, motore non raggiungibile e connessione non sicura sono tre situazioni diverse e producono messaggi diversi. Dire «credenziali errate» quando il motore non ha risposto è un'affermazione falsa.
-* Ciò che il ruolo non comprende è mostrato come **trattenuto**: non come assenza e non come errore.
+* **No network data survives signing out.** When the session ends, the stores
+  empty every piece of data read.
+* A session that ended while the person was signed in is not presented as a
+  failed sign in.
+* Wrong credentials, an unreachable engine and an insecure connection are
+  three different situations and produce three different messages. Saying
+  "wrong credentials" when the engine did not answer is a false statement.
+* What the role does not include is shown as **withheld**: not as an absence
+  and not as an error.
 
 ---
 
 # Security
 
-Il Frontend:
+The Frontend:
 
-* non memorizza credenziali delle Data Sources;
-* non conserva password né identificativi di sessione in alcuna memoria persistente: il cookie di sessione non è leggibile dal codice della pagina;
-* non espone informazioni sensibili;
-* comunica esclusivamente tramite HTTPS.
+* does not store credentials of the Data Sources;
+* keeps no password and no session identifier in any persistent storage: the
+  session cookie is not readable by the code of the page;
+* exposes no sensitive information;
+* communicates only over HTTPS.
 
 ---
 
 # Extensibility
 
-Nuovi componenti possono essere aggiunti senza modificare quelli esistenti.
+New components can be added without changing the existing ones.
 
-L'architettura privilegia la modularità.
+The architecture favours modularity.
 
 ---
 
 # Design Principles
 
-Il Frontend segue i seguenti principi.
+The Frontend follows these principles.
 
-* semplicità;
-* uniformità;
-* modularità;
-* leggibilità;
-* accessibilità;
-* indipendenza dal backend.
+* simplicity;
+* uniformity;
+* modularity;
+* readability;
+* accessibility;
+* independence from the backend.
 
 ---
 
 # Constraints
 
-Il Frontend:
+The Frontend:
 
-* non contiene logica di business;
-* non contiene algoritmi di analisi;
-* non comunica direttamente con le Data Sources;
-* utilizza esclusivamente le REST API del Privacy Intelligence Engine.
+* contains no business logic;
+* contains no analysis algorithms;
+* does not communicate directly with the Data Sources;
+* uses only the REST API of the Privacy Intelligence Engine.
 
 ---
 

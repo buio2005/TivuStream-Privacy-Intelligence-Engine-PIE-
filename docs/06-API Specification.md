@@ -8,35 +8,36 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-26
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce le API pubbliche del Privacy Intelligence Engine.
+This specification defines the public APIs of the Privacy Intelligence Engine.
 
-Le API rappresentano l'unica interfaccia ufficiale tra il Core e le applicazioni che utilizzano il motore.
+The APIs are the only official interface between the Core and the applications
+that use the engine.
 
 ---
 
 # Objectives
 
-Le API sono progettate per essere:
+The APIs are designed to be:
 
-* semplici;
-* coerenti;
-* indipendenti dal backend;
-* versionabili;
-* facilmente estendibili.
+* simple;
+* coherent;
+* independent of the backend;
+* versionable;
+* easy to extend.
 
 ---
 
 # Architecture
 
-Le REST API appartengono al Query Flow.
+The REST API belongs to the Query Flow.
 
-Una richiesta API restituisce esclusivamente risultati già elaborati dal Core.
+An API request returns only results already processed by the Core.
 
 ```text id="jlwmxt"
 Frontend Application
@@ -47,32 +48,33 @@ REST API
 
 ↓
 
-Risultati prodotti dal Privacy Intelligence Engine
+Results produced by the Privacy Intelligence Engine
 ```
 
-Nessun endpoint attiva una comunicazione verso gli Adapter o le Data Sources.
+No endpoint triggers communication towards the Adapters or the Data Sources.
 
-L'acquisizione dei dati appartiene all'Acquisition Flow ed è descritta nella Architecture Specification.
+Acquiring the data belongs to the Acquisition Flow and is described in the
+Architecture Specification.
 
 ---
 
 # API Versioning
 
-Le API utilizzano il versionamento nel percorso.
+The APIs carry the version in the path.
 
-Esempio.
+Example.
 
 ```text id="u4e5vi"
 /api/v1/
 ```
 
-Ogni modifica incompatibile genera una nuova Major Version.
+Every incompatible change produces a new Major Version.
 
 ---
 
 # Protocol
 
-Le API utilizzano:
+The APIs use:
 
 * HTTPS
 * JSON UTF-8
@@ -82,7 +84,7 @@ Le API utilizzano:
 
 # Standard Response
 
-Ogni risposta utilizza una struttura comune.
+Every response uses a common structure.
 
 ```json
 {
@@ -107,13 +109,15 @@ Ogni risposta utilizza una struttura comune.
 }
 ```
 
-Un errore può portare un campo `reason` che ne precisa il motivo in forma leggibile da un programma, per esempio `TooShort` per una password rifiutata. Quando non c'è, il campo è assente e non `null`.
+An error may carry a `reason` field stating the cause in a form a program can
+read, for instance `TooShort` for a rejected password. Where there is none the
+field is absent, not `null`.
 
 ---
 
 # Observed Period
 
-Le risposte che descrivono ciò che è stato osservato dichiarano **a quale periodo si riferiscono**.
+Responses describing what was observed declare **which period they refer to**.
 
 ```json
 {
@@ -124,15 +128,27 @@ Le risposte che descrivono ciò che è stato osservato dichiarano **a quale peri
 }
 ```
 
-Il campo `period` è assente quando nessuna osservazione è stata ancora registrata.
+The `period` field is absent when no observation has been recorded yet.
 
-I due conteggi non sono ridondanti. Un'installazione accesa da sei ore che dichiarasse «ultime 24 ore» direbbe il falso: `periodsRequested` è l'intervallo chiesto, `periodsObserved` è quello che esiste davvero.
+The two counts are not redundant. An installation running for six hours that
+declared "the last 24 hours" would be stating something false:
+`periodsRequested` is the interval asked for, `periodsObserved` is the one
+that exists.
 
-La ragione non è formale. Un elenco vuoto senza il proprio periodo è ambiguo: chi legge non distingue «la rete non ha contattato nulla» da «l'ora in corso è appena cominciata». La prima è un'affermazione sulla rete, la seconda sul momento in cui si guarda, e presentarle allo stesso modo è un'informazione falsa.
+The reason is not formal. An empty list without its period is ambiguous:
+whoever reads it cannot tell "the network contacted nothing" from "the current
+hour has only just begun". The first is a statement about the network, the
+second about the moment of looking, and presenting them alike is false
+information.
 
-Il requisito discende dalla regola Absent Versus Unmeasurable della Network Privacy Specification.
+The requirement follows from the Absent Versus Unmeasurable rule of the
+Network Privacy Specification.
 
-**Endpoint interessati.** `/domains`, `/domains/{domain}`, `/devices`, `/statistics` e `/npss` coprono la stessa finestra, le ultime ventiquattro ore, e la dichiarano con gli stessi tre campi. Una sola finestra per tutto ciò che descrive la rete: due pagine che mostrassero intervalli diversi senza dirlo si contraddirebbero.
+**Endpoints concerned.** `/domains`, `/domains/{domain}`, `/devices`,
+`/statistics` and `/npss` cover the same window, the last twenty-four hours,
+and declare it with the same three fields. One window for everything that
+describes the network: two pages showing different intervals without saying so
+would contradict each other.
 
 ---
 
@@ -144,16 +160,16 @@ Il requisito discende dalla regola Absent Versus Unmeasurable della Network Priv
 /api/v1/dashboard
 ```
 
-Restituisce il riepilogo completo dello stato della rete.
+Returns the complete summary of the state of the network.
 
-Include:
+It includes:
 
 * NPSS
-* statistiche
-* dispositivi
-* alert
-* minacce
-* raccomandazioni
+* statistics
+* devices
+* alerts
+* threats
+* recommendations
 
 ---
 
@@ -165,15 +181,18 @@ Include:
 /api/v1/npss
 ```
 
-Restituisce il Network Privacy & Security Score.
+Returns the Network Privacy & Security Score.
 
-Comprende:
+It comprises:
 
-* punteggio;
-* dettaglio;
-* storico;
-* trend;
-* la finestra valutata, con `period`, `periodsObserved`, `periodsRequested`, come ogni risposta che descrive ciò che è stato osservato (vedi Observed Period). È la finestra di ventiquattro ore che termina con il periodo in cui il punteggio è stato prodotto (NPSS Specification, Evaluation Window).
+* the score;
+* the breakdown;
+* the history;
+* the trend;
+* the window judged, with `period`, `periodsObserved`, `periodsRequested`,
+  like every response describing what was observed (see Observed Period). It
+  is the twenty-four hour window ending with the period in which the score was
+  produced (NPSS Specification, Evaluation Window).
 
 ---
 
@@ -185,7 +204,8 @@ Comprende:
 /api/v1/devices
 ```
 
-Restituisce i dispositivi osservati nelle **ultime ventiquattro ore**, insieme all'intervallo effettivamente coperto (vedi Observed Period).
+Returns the devices observed in the **last twenty-four hours**, together with
+the interval actually covered (see Observed Period).
 
 ```json
 {
@@ -210,27 +230,32 @@ Restituisce i dispositivi osservati nelle **ultime ventiquattro ore**, insieme a
 }
 ```
 
-Oggi restituisce i dispositivi del solo periodo più recente, cioè dell'ora in corso, e non lo dice: pochi minuti dopo lo scoccare dell'ora l'elenco è quasi vuoto, ed è indistinguibile da una rete in cui quasi nessun dispositivo è attivo.
-
 ### Aggregation
 
-Un elemento per identificativo di dispositivo nella finestra.
+One element per device identifier within the window.
 
-| Proprietà | Regola |
+| Property | Rule |
 | --- | --- |
-| `hostname`, `ipAddress`, `macAddress`, `vendor`, `operatingSystem`, `identityBasis` | Dal periodo **più recente** in cui il dispositivo compare, come la classificazione dei domini |
-| `firstSeen` | Il più antico fra i periodi inclusi |
-| `lastSeen` | Il più recente fra i periodi inclusi |
-| `observationQuality` | La qualità meno precisa fra quelle aggregate |
-| `status` | `Active`: un dispositivo compare nella finestra perché vi ha prodotto traffico |
+| `hostname`, `ipAddress`, `macAddress`, `vendor`, `operatingSystem`, `identityBasis` | From the **most recent** period the device appears in, like the classification of domains |
+| `firstSeen` | The earliest among the periods included |
+| `lastSeen` | The latest among the periods included |
+| `observationQuality` | The least precise among those aggregated |
+| `status` | `Active`: a device appears in the window because it produced traffic there |
 
-Ordinamento per indirizzo, come oggi.
+Ordered by address.
 
-L'aggregazione è lecita perché l'identificativo è derivato in modo deterministico dall'indirizzo o dall'indirizzo hardware. Un dispositivo riconosciuto dall'indirizzo di rete che ha cambiato indirizzo nella finestra compare due volte, e `identityBasis` lo dichiara.
+The aggregation is lawful because the identifier is derived deterministically
+from the address or from the hardware address. A device recognised by its
+network address that changed address within the window appears twice, and
+`identityBasis` declares it.
 
 ### What The List Does Not Carry
 
-L'entità Device del Data Model comprende `domainActivities` e `threats`. L'elenco **non li porta**: oggi viaggiano come elenchi vuoti, e un elenco vuoto si legge «nessuna attività, nessuna minaccia» quando significa «non compreso in questa risposta». L'attività di un dispositivo appartiene al suo dettaglio, `/devices/{id}`, non ancora implementato.
+The Device entity of the Data Model comprises `domainActivities` and
+`threats`. The list **does not carry them**: today they would travel as empty
+lists, and an empty list reads as "no activity, no threats" when it means "not
+included in this response". The activity of a device belongs to its detail,
+`/devices/{id}`, not yet implemented.
 
 ---
 
@@ -240,7 +265,7 @@ L'entità Device del Data Model comprende `domainActivities` e `threats`. L'elen
 /api/v1/devices/{id}
 ```
 
-Restituisce il dettaglio di un singolo dispositivo.
+Returns the detail of a single device.
 
 ---
 
@@ -252,13 +277,13 @@ Restituisce il dettaglio di un singolo dispositivo.
 /api/v1/threats
 ```
 
-Restituisce tutte le minacce rilevate.
+Returns every threat detected.
 
-Supporta filtri.
+It supports filters.
 
-* categoria;
-* severità;
-* intervallo temporale.
+* category;
+* severity;
+* time range.
 
 ---
 
@@ -268,7 +293,7 @@ Supporta filtri.
 /api/v1/threats/{id}
 ```
 
-Restituisce il dettaglio di una specifica minaccia.
+Returns the detail of a specific threat.
 
 ---
 
@@ -280,13 +305,13 @@ Restituisce il dettaglio di una specifica minaccia.
 /api/v1/alerts
 ```
 
-Restituisce gli Alert generati dal Core.
+Returns the Alerts generated by the Core.
 
-Supporta filtri per:
+It supports filters by:
 
-* severità;
-* stato;
-* categoria.
+* severity;
+* state;
+* category.
 
 ---
 
@@ -298,7 +323,7 @@ Supporta filtri per:
 /api/v1/recommendations
 ```
 
-Restituisce tutte le Recommendations prodotte dal sistema.
+Returns every Recommendation the system has produced.
 
 ---
 
@@ -310,7 +335,8 @@ Restituisce tutte le Recommendations prodotte dal sistema.
 /api/v1/domains
 ```
 
-Restituisce i domini osservati nelle **ultime ventiquattro ore**, insieme all'intervallo effettivamente coperto.
+Returns the domains observed in the **last twenty-four hours**, together with
+the interval actually covered.
 
 ```json
 {
@@ -321,35 +347,47 @@ Restituisce i domini osservati nelle **ultime ventiquattro ore**, insieme all'in
 }
 ```
 
-Un elenco vuoto accompagnato dall'intervallo significa che in quell'arco non è stato osservato alcun dominio. Senza l'intervallo la stessa risposta non direbbe nulla di verificabile.
+An empty list accompanied by the interval means that no domain was observed in
+that span. Without the interval the same response would say nothing
+verifiable.
 
 ---
 
 ### Aggregation
 
-I periodi di osservazione sono fissi e **non si sovrappongono**, quindi le occorrenze di uno stesso dominio in periodi diversi si sommano senza contare due volte il medesimo traffico.
+Observation periods are fixed and **do not overlap**, so the occurrences of
+the same domain in different periods add up without counting the same traffic
+twice.
 
-È la scelta compiuta nella Persistence Specification che rende lecita questa somma. Con finestre mobili di acquisizione l'aggregazione sarebbe stata impossibile.
+It is the choice made in the Persistence Specification that makes this sum
+lawful. With rolling acquisition windows the aggregation would have been
+impossible.
 
-| Proprietà              | Regola                                                        |
-| ---------------------- | -------------------------------------------------------------- |
-| `occurrences`          | Somma dei periodi inclusi                                       |
-| `firstSeen`            | Il più antico fra i periodi inclusi                             |
-| `lastSeen`             | Il più recente fra i periodi inclusi                            |
-| `observationQuality`   | La qualità meno precisa fra quelle aggregate                    |
-| Classificazione        | Quella del periodo **più recente** in cui il dominio compare    |
+| Property               | Rule                                                        |
+| ---------------------- | ------------------------------------------------------------ |
+| `occurrences`          | Sum of the periods included                                   |
+| `firstSeen`            | The earliest among the periods included                       |
+| `lastSeen`             | The latest among the periods included                         |
+| `observationQuality`   | The least precise among those aggregated                      |
+| Classification         | That of the **most recent** period the domain appears in      |
 
-L'ultima riga è una scelta e va motivata. Ogni periodo conserva la classificazione che era possibile dare allora; presentando la più recente si mostra ciò che si sa **adesso**, e l'età della lista dichiarata insieme alla categoria dice quanto quel «adesso» sia recente.
+The last row is a choice and has to be motivated. Every period keeps the
+classification it was possible to give then; presenting the most recent one
+shows what is known **now**, and the age of the list declared alongside the
+category says how recent that "now" is.
 
-Mostrare la classificazione più antica, o una sintesi delle diverse classificazioni ricevute, produrrebbe un'affermazione che nessun periodo ha mai fatto.
+Showing the oldest classification, or a synthesis of the different
+classifications received, would produce a statement no period ever made.
 
 ---
 
 ### The Last Hour Is In Progress
 
-L'intervallo restituito comprende il periodo corrente, che non è concluso.
+The interval returned includes the current period, which has not elapsed.
 
-La sua fine è quindi un istante futuro, e l'interfaccia dichiara che l'ultima ora è ancora in corso anziché presentarla come osservata per intero.
+Its end is therefore an instant in the future, and the interface declares that
+the last hour is still in progress rather than presenting it as observed in
+full.
 
 ---
 
@@ -359,7 +397,8 @@ La sua fine è quindi un istante futuro, e l'interfaccia dichiara che l'ultima o
 /api/v1/domains/{domain}
 ```
 
-Restituisce il dettaglio del dominio **sullo stesso intervallo dell'elenco**: le ultime ventiquattro ore, insieme all'intervallo effettivamente coperto.
+Returns the detail of the domain **over the same interval as the list**: the
+last twenty-four hours, together with the interval actually covered.
 
 ```json
 {
@@ -387,63 +426,92 @@ Restituisce il dettaglio del dominio **sullo stesso intervallo dell'elenco**: le
 }
 ```
 
-Comprende:
+It comprises:
 
-* categoria, con confidenza, lista e data della lista;
-* reputazione;
-* frequenza;
-* attività per dispositivo, quando la sorgente la offre e il ruolo di chi chiede lo consente.
+* the category, with confidence, list and date of the list;
+* the reputation;
+* the frequency;
+* the activity per device, where the source offers it and the role of the
+  requester allows it.
 
 ### Same Interval As The List
 
-Il dettaglio copre lo stesso intervallo di `/domains` e lo dichiara con gli stessi tre campi (vedi Observed Period).
+The detail covers the same interval as `/domains` and declares it with the
+same three fields (see Observed Period).
 
-Il vincolo nasce da un difetto. Leggendo il solo periodo più recente, un dominio che l'elenco mostra perché contattato dieci ore prima risponderebbe `DomainNotObserved`: l'elenco afferma che il dominio è stato osservato, il dettaglio lo nega. Due risposte dello stesso motore non si contraddicono.
+The constraint arose from a defect. Reading only the most recent period, a
+domain the list shows because it was contacted ten hours earlier would answer
+`DomainNotObserved`: the list asserts the domain was observed, the detail
+denies it. Two answers from the same engine do not contradict each other.
 
-`domain` è aggregato con le regole della sezione Aggregation di `/domains`, e quindi coincide con la riga dell'elenco.
+`domain` is aggregated by the rules of the Aggregation section of `/domains`,
+and therefore matches the row in the list.
 
-Un dominio assente dall'intervallo risponde `404 DomainNotObserved`.
+A domain absent from the interval answers `404 DomainNotObserved`.
 
 ### Activity Aggregation
 
-Un elemento di `activities` per ogni combinazione di **dispositivo, esito (bloccato o no) e trasporto** nell'intervallo. Un dispositivo che ha raggiunto il dominio sia direttamente sia attraverso un blocco compare due volte, perché sono due fatti diversi.
+One element of `activities` for every combination of **device, outcome
+(blocked or not) and transport** within the interval. A device that reached
+the domain both directly and through a block appears twice, because they are
+two different facts.
 
-| Proprietà | Regola |
+| Property | Rule |
 | --- | --- |
-| `queryCount` | Somma dei periodi inclusi |
-| `firstSeen` | Il più antico fra i periodi inclusi |
-| `lastSeen` | Il più recente fra i periodi inclusi |
-| `observationQuality` | La qualità meno precisa fra quelle aggregate |
+| `queryCount` | Sum of the periods included |
+| `firstSeen` | The earliest among the periods included |
+| `lastSeen` | The latest among the periods included |
+| `observationQuality` | The least precise among those aggregated |
 
-Ordinamento per `queryCount` decrescente.
+Ordered by `queryCount` descending.
 
-La somma è lecita per la stessa ragione di quella dei domini, periodi che non si sovrappongono, e perché l'identificativo del dispositivo è derivato in modo deterministico: lo stesso indirizzo, o lo stesso indirizzo hardware, produce lo stesso identificativo in ogni periodo. Quanto quell'identità sia solida lo dichiara `identityBasis`.
+The sum is lawful for the same reason as that of the domains, periods that do
+not overlap, and because the identifier of the device is derived
+deterministically: the same address, or the same hardware address, produces
+the same identifier in every period. How solid that identity is, is declared
+by `identityBasis`.
 
 ### Device Identification
 
-L'identificativo del dispositivo, da solo, non dice nulla a chi legge. Ogni elemento porta con sé `hostname` (quando la sorgente lo fornisce), `ipAddress` e `identityBasis`, presi dal periodo **più recente** dell'intervallo in cui il dispositivo compare: la stessa regola della classificazione.
+The identifier of a device tells the reader nothing on its own. Every element
+carries `hostname` (where the source provides it), `ipAddress` and
+`identityBasis`, taken from the **most recent** period within the interval in
+which the device appears: the same rule as the classification.
 
-Il dettaglio non rimanda a `/devices` perché `/devices` descrive il solo periodo più recente: un dispositivo attivo dieci ore prima resterebbe senza nome.
+The detail carries the device information itself rather than deferring to
+`/devices`, so that a single response is complete.
 
-Un dispositivo può comparire nell'attività senza comparire fra i dispositivi di alcun periodo dell'intervallo: la sorgente li riporta in due resoconti diversi, e quello dei dispositivi è limitato. Allora `hostname`, `ipAddress` e `identityBasis` sono `null` tutti e tre, e l'attività resta: il traffico c'è stato, chi l'ha prodotto non è noto oltre l'identificativo, e nulla viene supposto.
+A device may appear in the activity without appearing among the devices of any
+period in the interval: the source reports them in two different accounts, and
+the one for devices is limited. In that case `hostname`, `ipAddress` and
+`identityBasis` are all three `null`, and the activity remains: the traffic
+happened, who produced it is not known beyond the identifier, and nothing is
+assumed.
 
-Questi campi esistono solo con `Available`. Per un `Viewer` nessuna informazione sui dispositivi compare nella risposta.
+These fields exist only with `Available`. For a `Viewer` no information about
+devices appears in the response.
 
 ### Activity Access
 
-Il campo `activityAccess` dichiara che cosa significa l'elenco `activities`.
+The `activityAccess` field declares what the `activities` list means.
 
-| Valore | Significato |
+| Value | Meaning |
 | --- | --- |
-| `Available` | La sorgente offre l'attività e chi chiede può leggerla. `activities` è l'elenco |
-| `Unavailable` | La sorgente non offre l'attività. `activities` è vuoto e non significa nulla |
-| `Withheld` | La sorgente la offre, ma il ruolo di chi chiede non la comprende. `activities` è vuoto e non significa nulla |
+| `Available` | The source offers the activity and the requester may read it. `activities` is the list |
+| `Unavailable` | The source does not offer the activity. `activities` is empty and means nothing |
+| `Withheld` | The source offers it, but the role of the requester does not include it. `activities` is empty and means nothing |
 
-Un elenco vuoto per mancanza di diritto e un elenco vuoto perché nessun dispositivo ha contattato il dominio sono affermazioni diverse. Il campo esiste perché non vengano presentate allo stesso modo.
+An empty list for want of a right and an empty list because no device
+contacted the domain are different statements. The field exists so that they
+are not presented alike.
 
-Se la sorgente offra l'attività lo stabilisce l'acquisizione più recente, come oggi.
+Whether the source offers the activity is established by the most recent
+acquisition.
 
-`Available` con un elenco vuoto significa che la sorgente non ha registrato attività per dispositivo verso questo dominio nell'intervallo, per esempio perché i periodi in cui compare sono stati acquisiti quando non la offriva. Il dominio è stato osservato: manca il dettaglio, non il traffico.
+`Available` with an empty list means the source recorded no activity per
+device towards this domain within the interval, for instance because the
+periods it appears in were acquired when the source did not offer it. The
+domain was observed: what is missing is the detail, not the traffic.
 
 ---
 
@@ -455,7 +523,8 @@ Se la sorgente offra l'attività lo stabilisce l'acquisizione più recente, come
 /api/v1/statistics
 ```
 
-Restituisce le statistiche aggregate della rete nelle **ultime ventiquattro ore**, insieme all'intervallo effettivamente coperto (vedi Observed Period).
+Returns the aggregated statistics of the network over the **last twenty-four
+hours**, together with the interval actually covered (see Observed Period).
 
 ```json
 {
@@ -476,25 +545,32 @@ Restituisce le statistiche aggregate della rete nelle **ultime ventiquattro ore*
 }
 ```
 
-Oggi restituisce le statistiche del solo periodo più recente, cioè dell'ora in corso, e non lo dice.
-
-Quando nella finestra non esiste alcun periodo, `period` e `statistics` sono `null`. Una serie di zeri direbbe che la rete non ha interrogato nulla, quando non è stato osservato nulla. Oggi quel caso risponde `503 AcquisitionPending`, «nessuna acquisizione registrata», che è falso quando esistono acquisizioni più vecchie della finestra.
+When no period exists within the window, `period` and `statistics` are
+`null`. A row of zeros would say the network queried nothing, when nothing was
+observed. Nor is "nothing acquired yet" an answer: it is false when
+acquisitions older than the window exist.
 
 ### Aggregation
 
-| Proprietà | Regola |
+| Property | Rule |
 | --- | --- |
-| `totalQueries`, `blockedQueries`, `cachedQueries`, `failedQueries`, `encryptedQueries` | Somma dei periodi inclusi, lecita perché non si sovrappongono |
-| `uniqueDomains` | Il maggiore fra il valore orario più alto e i nomi distinti registrati nella finestra |
-| `uniqueDomainsQuality` | `LowerBound` quando la finestra comprende più di un periodo; altrimenti quella del periodo |
-| `activeDevices` | Il maggiore fra il valore orario più alto e gli identificativi distinti registrati nella finestra |
-| `dnssecEnabled` | Dal periodo più recente: è configurazione, non traffico |
+| `totalQueries`, `blockedQueries`, `cachedQueries`, `failedQueries`, `encryptedQueries` | Sum of the periods included, lawful because they do not overlap |
+| `uniqueDomains` | The greater of the highest hourly value and the distinct names recorded within the window |
+| `uniqueDomainsQuality` | `LowerBound` when the window covers more than one period; otherwise that of the period |
+| `activeDevices` | The greater of the highest hourly value and the distinct identifiers recorded within the window |
+| `dnssecEnabled` | From the most recent period: it is configuration, not traffic |
 
-I domini distinti di ore diverse **non si sommano**: lo stesso dominio contattato in due ore verrebbe contato due volte. Il valore orario più alto e i nomi distinti conservati sono entrambi limiti inferiori (la sorgente restituisce elenchi troncati), e il maggiore dei due è ancora un limite inferiore.
+Distinct domains from different hours **do not add up**: the same domain
+contacted in two hours would be counted twice. The highest hourly value and
+the distinct names kept are both lower bounds (the source returns truncated
+lists), and the greater of the two is still a lower bound.
 
-Per i dispositivi vale lo stesso ragionamento, con la riserva dell'identità: un dispositivo riconosciuto dall'indirizzo di rete che cambia indirizzo conta due volte, esattamente come in `/devices`.
+The same reasoning holds for devices, with the reservation about identity: a
+device recognised by network address that changes address counts twice,
+exactly as in `/devices`.
 
-Il punteggio non cambia: il NPSS continua a essere calcolato come descritto nella NPSS Specification.
+The score does not change: the NPSS is still computed as described in the NPSS
+Specification.
 
 ---
 
@@ -506,7 +582,7 @@ Il punteggio non cambia: il NPSS continua a essere calcolato come descritto nell
 /api/v1/timeline
 ```
 
-Restituisce gli eventi ordinati cronologicamente.
+Returns events ordered chronologically.
 
 ---
 
@@ -518,9 +594,9 @@ Restituisce gli eventi ordinati cronologicamente.
 /api/v1/reports
 ```
 
-Genera un nuovo report.
+Generates a new report.
 
-Formati supportati.
+Formats supported.
 
 * PDF
 * CSV
@@ -536,7 +612,7 @@ Formati supportati.
 /api/v1/sources
 ```
 
-Restituisce l'elenco delle Data Sources registrate.
+Returns the list of registered Data Sources.
 
 ---
 
@@ -548,9 +624,9 @@ Restituisce l'elenco delle Data Sources registrate.
 /api/v1/health
 ```
 
-Restituisce lo stato operativo del sistema.
+Returns the operational state of the system.
 
-Comprende:
+It comprises:
 
 * Core
 * Adapter
@@ -567,7 +643,7 @@ Comprende:
 /api/v1/settings
 ```
 
-Restituisce la configurazione corrente.
+Returns the current configuration.
 
 ---
 
@@ -577,31 +653,41 @@ Restituisce la configurazione corrente.
 /api/v1/settings
 ```
 
-Aggiorna la configurazione del sistema.
+Updates the configuration of the system.
 
 ---
 
 # Authentication
 
-L'autenticazione è definita dall'**Authentication Specification**: account locali con ruolo, sessione tramite cookie, rifiuto per impostazione predefinita.
+Authentication is defined by the **Authentication Specification**: local
+accounts with a role, a session by cookie, refusal by default.
 
-Ogni endpoint richiede una sessione valida. **Fanno eccezione soltanto `POST /api/v1/setup` e `POST /api/v1/auth/login`**, che servono a ottenerla e non restituiscono alcun dato sulla rete o sul sistema.
+Every endpoint requires a valid session. **Only `POST /api/v1/setup` and
+`POST /api/v1/auth/login` are the exception**, since they serve to obtain one
+and return no data about the network or the system.
 
-Gli endpoint che la gestiscono (`/setup`, `/auth/*`, `/accounts`) e i codici di errore che introduce (`SetupRequired`, `AuthenticationRequired`, `AuthenticationFailed`, `Forbidden`, `PasswordChangeRequired`, `TransportNotSecure`, `OriginNotAllowed`, `TooManyAttempts` e altri) sono descritti in quel documento, che ne è la fonte.
+The endpoints that handle it (`/setup`, `/auth/*`, `/accounts`) and the error
+codes it introduces (`SetupRequired`, `AuthenticationRequired`,
+`AuthenticationFailed`, `Forbidden`, `PasswordChangeRequired`,
+`TransportNotSecure`, `OriginNotAllowed`, `TooManyAttempts` and others) are
+described in that document, which is their source.
 
 ---
 
 # Authorization
 
-Ogni endpoint **dichiara il ruolo minimo** che richiede. Un endpoint che non lo dichiara richiede `Administrator`: dimenticare una dichiarazione produce un rifiuto, non un'apertura.
+Every endpoint **declares the minimum role** it requires. An endpoint that does
+not declare one requires `Administrator`: forgetting a declaration produces a
+refusal, not an opening.
 
-Ciò che un ruolo non può leggere non viene omesso in silenzio: la risposta lo dichiara. Vedi Activity Access.
+What a role may not read is not omitted in silence: the response declares it.
+See Activity Access.
 
 ---
 
 # Error Handling
 
-Gli errori sono classificati nelle seguenti categorie.
+Errors are classified into the following categories.
 
 * Validation
 * Authentication
@@ -610,61 +696,65 @@ Gli errori sono classificati nelle seguenti categorie.
 * Network
 * Internal
 
-Ogni errore utilizza un codice identificativo univoco.
+Every error uses a unique identifying code.
 
-Due codici valgono per ogni endpoint:
+Two codes hold for every endpoint:
 
-| Stato | Codice | Categoria | Quando |
+| Status | Code | Category | When |
 | --- | --- | --- | --- |
-| 400 | `RequestUnreadable` | Validation | Il corpo della richiesta non si può leggere: non è JSON, non ha la forma attesa, contiene testo non valido |
-| 500 | `InternalError` | Internal | Un guasto che il codice non ha previsto |
+| 400 | `RequestUnreadable` | Validation | The body of the request cannot be read: it is not JSON, does not have the expected shape, or contains invalid text |
+| 500 | `InternalError` | Internal | A failure the code did not anticipate |
 
-Entrambi usano la struttura comune **in ogni ambiente di esecuzione**. `InternalError` non dice nulla della causa né della richiesta: la pagina diagnostica del framework, che elenca le intestazioni e con esse il cookie di sessione, non viene mai mostrata (Authentication Specification, V11). La causa va nel registro dell'applicazione, senza segreti.
+Both use the common structure **in every runtime environment**.
+`InternalError` says nothing about the cause or about the request: the
+diagnostic page of the framework, which lists the headers and with them the
+session cookie, is never shown (Authentication Specification, V11). The cause
+goes into the application log, without secrets.
 
 ---
 
 # Logging
 
-Le richieste API possono essere registrate a fini diagnostici.
+API requests may be recorded for diagnostic purposes.
 
-I log non devono contenere dati sensibili.
+Logs must contain no sensitive data.
 
 ---
 
 # Rate Limiting
 
-Le API supportano limitazioni configurabili sul numero di richieste.
+The APIs support configurable limits on the number of requests.
 
 ---
 
 # Compatibility
 
-Le API mantengono la retrocompatibilità all'interno della stessa Major Version.
+The APIs keep backward compatibility within the same Major Version.
 
 ---
 
 # Design Principles
 
-Le API seguono i seguenti principi.
+The APIs follow these principles.
 
-* una responsabilità per endpoint;
-* risposte prevedibili;
-* indipendenza dal backend;
-* semplicità;
-* versionamento esplicito;
-* estendibilità.
+* one responsibility per endpoint;
+* predictable responses;
+* independence from the backend;
+* simplicity;
+* explicit versioning;
+* extensibility.
 
 ---
 
 # Constraints
 
-Le API:
+The APIs:
 
-* non espongono direttamente i backend;
-* non restituiscono dati non normalizzati;
-* non contengono logica di business;
-* non attivano l'Acquisition Flow;
-* rappresentano l'unico punto di accesso ufficiale al Core.
+* do not expose the backends directly;
+* do not return data that has not been normalised;
+* contain no business logic;
+* do not trigger the Acquisition Flow;
+* are the only official point of access to the Core.
 
 ---
 

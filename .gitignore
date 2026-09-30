@@ -81,6 +81,8 @@ secrets.json
 *.p12
 *.key
 *.pem
+*.cer
+*.crt
 
 # ---------------------------------------------------------------------------
 # Ricognizione temporanea

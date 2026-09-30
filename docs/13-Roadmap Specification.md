@@ -8,26 +8,28 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-26
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce la roadmap ufficiale del progetto **TivuStream Privacy Intelligence Engine (PIE)**.
+This specification defines the official roadmap of the **TivuStream Privacy
+Intelligence Engine (PIE)**.
 
-La roadmap identifica le principali fasi di sviluppo, gli obiettivi di ogni milestone e la progressione prevista del progetto.
+The roadmap identifies the principal phases of development, the objectives of
+each milestone, and the progression expected of the project.
 
 ---
 
 # Objectives
 
-La roadmap ha i seguenti obiettivi.
+The roadmap has the following objectives.
 
-* pianificare lo sviluppo;
-* definire le milestone;
-* mantenere una progressione coerente;
-* facilitare la gestione del progetto.
+* to plan the development;
+* to define the milestones;
+* to maintain a coherent progression;
+* to make the project easier to manage.
 
 ---
 
@@ -37,7 +39,12 @@ La roadmap ha i seguenti obiettivi.
 
 **Project Status:** In Development
 
-**Development Status:** In Progress. Il repository non è pubblico. Dei criteri di Beta sono soddisfatti quello sull'autenticazione (Specification 18, milestone A1–A7), quello sul trasporto cifrato (Specification 19, milestone S1–S4, con una prova da un portatile sulla rete di casa il 2026-09-26) e quello sulla ritenzione (Specification 16 alla 1.3.0, consolidamento attivo dal 2026-09-26); gli altri no, o non sono stati verificati: vedi Release Criteria.
+**Development Status:** In Progress. The repository is not public. Of the Beta
+criteria, those on authentication (Specification 18, milestones A1–A7), on
+encrypted transport (Specification 19, milestones S1–S4, tested from a laptop
+on a home network on 2026-09-26) and on retention (Specification 16 at 1.3.0,
+consolidation active since 2026-09-26) are satisfied; the others are not, or
+have not been verified: see Release Criteria.
 
 ---
 
@@ -47,12 +54,12 @@ La roadmap ha i seguenti obiettivi.
 
 ### Foundation
 
-Obiettivi.
+Objectives.
 
-* completamento della documentazione;
-* definizione dell'architettura;
-* definizione delle API;
-* definizione del Unified Data Model.
+* completing the documentation;
+* defining the architecture;
+* defining the APIs;
+* defining the Unified Data Model.
 
 **Status:** Completed
 
@@ -62,16 +69,19 @@ Obiettivi.
 
 ### Backend Core
 
-Obiettivi.
+Objectives.
 
-* implementazione del Core;
-* implementazione del Unified Data Model;
-* implementazione delle REST API;
-* implementazione del sistema di configurazione.
+* implementing the Core;
+* implementing the Unified Data Model;
+* implementing the REST API;
+* implementing the configuration system.
 
 **Status:** In Progress
 
-**Situazione:** Esistono il Unified Data Model, il sistema di configurazione, la persistenza e sei endpoint di lettura. L'autenticazione (Specification 18), HTTPS (Specification 19) e il consolidamento a livelli (Specification 16) sono realizzati.
+**Where it stands:** The Unified Data Model, the configuration system, the
+persistence layer and six read endpoints exist. Authentication (Specification
+18), HTTPS (Specification 19) and tiered consolidation (Specification 16) are
+built.
 
 ---
 
@@ -79,16 +89,19 @@ Obiettivi.
 
 ### Adapter Layer
 
-Obiettivi.
+Objectives.
 
 * Adapter Manager;
 * Technitium Adapter;
-* comunicazione con le HTTP API;
-* normalizzazione dei dati.
+* communication with the HTTP APIs;
+* normalisation of the data.
 
 **Status:** In Progress
 
-**Situazione:** Esistono il Technitium Adapter (livello base, Domain Activity, configurazione della sorgente) e la comunicazione con le HTTP API. Mancano l'implementazione dell'Adapter Manager, di cui esiste la sola interfaccia, e la prova su una seconda versione di Technitium.
+**Where it stands:** The Technitium Adapter (base level, Domain Activity,
+source configuration) and communication with the HTTP APIs exist. Missing are
+the implementation of the Adapter Manager, of which only the interface exists,
+and a test against a second version of Technitium.
 
 ---
 
@@ -96,7 +109,7 @@ Obiettivi.
 
 ### Core Modules
 
-Obiettivi.
+Objectives.
 
 * Threat Engine;
 * Device Engine;
@@ -106,7 +119,10 @@ Obiettivi.
 
 **Status:** In Progress
 
-**Situazione:** Esistono il motore di classificazione e il motore NPSS. Mancano Device, Alert e Recommendation Engine: per questo l'area Device Health non è misurabile e quindici punti del punteggio restano esclusi.
+**Where it stands:** The classification engine and the NPSS engine exist.
+Missing are the Device, Alert and Recommendation Engines: because of this the
+Device Health area is not measurable and fifteen points of the score stay
+excluded.
 
 ---
 
@@ -114,7 +130,7 @@ Obiettivi.
 
 ### Frontend
 
-Obiettivi.
+Objectives.
 
 * Dashboard;
 * Devices;
@@ -126,7 +142,8 @@ Obiettivi.
 
 **Status:** In Progress
 
-**Situazione:** Esistono Dashboard e Domini. Mancano Devices, Threats, Alerts, Recommendations e Statistics.
+**Where it stands:** Dashboard and Domains exist. Missing are Devices,
+Threats, Alerts, Recommendations and Statistics.
 
 ---
 
@@ -134,12 +151,12 @@ Obiettivi.
 
 ### Reporting
 
-Obiettivi.
+Objectives.
 
-* Report PDF;
-* Report CSV;
-* esportazione JSON;
-* storico.
+* PDF reports;
+* CSV reports;
+* JSON export;
+* history.
 
 **Status:** Planned
 
@@ -149,16 +166,18 @@ Obiettivi.
 
 ### Testing
 
-Obiettivi.
+Objectives.
 
-* unit test;
-* integration test;
-* performance test;
-* security test.
+* unit tests;
+* integration tests;
+* performance tests;
+* security tests.
 
 **Status:** In Progress
 
-**Situazione:** Esistono le prove ai confini di Adapter, persistenza, API e Frontend, oltre a quelle del Core. Mancano le prove di integrazione, di prestazioni e di sicurezza.
+**Where it stands:** Tests exist at the boundaries of the Adapter, the
+persistence layer, the API and the Frontend, as well as those of the Core.
+Missing are integration, performance and security tests.
 
 ---
 
@@ -166,12 +185,12 @@ Obiettivi.
 
 ### Beta Release
 
-Obiettivi.
+Objectives.
 
-* rilascio Beta;
-* raccolta feedback;
-* correzione bug;
-* ottimizzazioni.
+* Beta release;
+* gathering feedback;
+* fixing defects;
+* optimisation.
 
 **Status:** Planned
 
@@ -181,11 +200,11 @@ Obiettivi.
 
 ### Stable Release
 
-Obiettivi.
+Objectives.
 
-* Versione 1.0;
-* documentazione aggiornata;
-* rilascio pubblico.
+* Version 1.0;
+* documentation brought up to date;
+* public release.
 
 **Status:** Planned
 
@@ -193,43 +212,45 @@ Obiettivi.
 
 # Milestones
 
-| Milestone | Description           | Status    |
-| --------- | --------------------- | --------- |
-| M1        | Documentation Release | Completed |
+| Milestone | Description           | Status      |
+| --------- | --------------------- | ----------- |
+| M1        | Documentation Release | Completed   |
 | M2        | Backend Core          | In Progress |
 | M3        | Technitium Adapter    | In Progress |
 | M4        | Core Modules          | In Progress |
 | M5        | Frontend              | In Progress |
-| M6        | Reports               | Planned   |
+| M6        | Reports               | Planned     |
 | M7        | Testing               | In Progress |
-| M8        | Beta Release          | Planned   |
-| M9        | Stable Release        | Planned   |
+| M8        | Beta Release          | Planned     |
+| M9        | Stable Release        | Planned     |
 
-## Corrispondenza con il CHANGELOG
+## Correspondence with the CHANGELOG
 
-Le voci del CHANGELOG numerate `M5.x` (storage, schema e persistenza) e `M6.x` (Frontend) precedono l'allineamento con questa Roadmap e non coincidono con i suoi numeri.
+Changelog entries numbered `M5.x` (storage, schema and persistence) and `M6.x`
+(Frontend) predate the alignment with this Roadmap and do not match its
+numbers.
 
-| Voce del CHANGELOG | Milestone della Roadmap |
+| Changelog entry | Roadmap milestone |
 | --- | --- |
 | `M2.x`, `M3.x`, `M4.x` | M2, M3, M4 |
-| `M5.x` (persistenza) | M2, Backend Core |
+| `M5.x` (persistence) | M2, Backend Core |
 | `M6.x` (Frontend) | M5, Frontend |
 
-La cronologia non viene riscritta. Le voci future usano i numeri di questa Roadmap.
+The history is not rewritten. Future entries use the numbers of this Roadmap.
 
 ---
 
 # Version Strategy
 
-Il progetto utilizza il versionamento semantico.
+The project uses semantic versioning.
 
-Formato.
+Format.
 
 ```text id="1ikjlwm"
 MAJOR.MINOR.PATCH
 ```
 
-Esempio.
+Example.
 
 ```text id="c7i4bn4"
 1.0.0
@@ -239,90 +260,99 @@ Esempio.
 
 # Documentation Roadmap
 
-La documentazione segue una versione indipendente dal codice.
+The documentation carries a version independent of the code.
 
-Documentation Release 1.0.0 rappresenta la baseline originale del progetto.
+Documentation Release 1.0.0 is the original baseline of the project.
 
-La Documentation Release corrente è indicata nella sezione Current Status.
+The current Documentation Release is stated in the Current Status section.
 
-Ogni Specification possiede inoltre una propria versione, aggiornata soltanto quando il documento viene modificato.
+Every Specification also carries its own version, updated only when the
+document is modified.
 
-Lo storico completo è registrato in `CHANGELOG.md`.
+The full history is recorded in `CHANGELOG.md`.
 
 ---
 
 # Development Principles
 
-Ogni nuova funzionalità deve:
+Every new feature must:
 
-* rispettare l'architettura definita;
-* utilizzare il Unified Data Model;
-* mantenere la compatibilità con le API;
-* essere documentata.
+* respect the architecture defined;
+* use the Unified Data Model;
+* keep compatibility with the APIs;
+* be documented.
 
 ---
 
 # Release Criteria
 
-I criteri sono **verificabili**: ciascuno si può dichiarare soddisfatto o non
-soddisfatto senza interpretazione.
+The criteria are **verifiable**: each can be declared satisfied or not
+satisfied without interpretation.
 
-Un criterio espresso come «le API sono stabili» non è verificabile e non
-distingue un rilascio pronto da uno che sembra pronto.
+A criterion expressed as "the APIs are stable" is not verifiable and does not
+distinguish a release that is ready from one that looks ready.
 
 ---
 
 ## Repository Publication
 
-Rendere pubblico il codice **non** coincide con rilasciare il prodotto.
+Making the code public is **not** the same as releasing the product.
 
-| Criterio | Verifica |
+| Criterion | Verification |
 | --- | --- |
-| Documentazione in inglese | Nessun documento in `/docs` resta in italiano |
-| Licenza dichiarata | `LICENSE.md` presente, nota in testa ai sorgenti |
-| Debiti dichiarati | Il README elenca ciò che manca, compresa l'assenza di autenticazione |
-| Nessun segreto versionato | Nessun token, nessuna credenziale nella cronologia git |
+| Documentation in English | No document in `/docs` remains in Italian |
+| Licence declared | `LICENSE.md` present, note at the head of the source files |
+| Debts declared | The README lists what is missing, in the words of whoever will read it |
+| No secret versioned | No token and no credential in the git history |
+| Current Status true | The Current Status section of this document describes the state at publication, not the one before it |
 
-Il README dichiara esplicitamente che il progetto **non è pronto all'uso** e
-per quali ragioni.
+The last row exists because this document states that the repository is not
+public. That is true while it is written and false the moment it is
+published. A status field describes the present and has to be moved with it;
+left behind, the first thing a stranger would read is a document declaring
+itself private.
 
-Un progetto che si fonda sul dichiarare ciò che non sa può dichiarare anche
-ciò che non è ancora.
+The README states explicitly that the project is **not ready for use**, and
+for what reasons.
+
+A project founded on declaring what it does not know can also declare what it
+is not yet.
 
 ---
 
 ## Beta Release
 
-Il prodotto è installabile e utilizzabile da qualcuno che non lo ha scritto.
+The product can be installed and used by someone who did not write it.
 
-| Criterio | Verifica |
+| Criterion | Verification |
 | --- | --- |
-| Autenticazione | Nessun endpoint che restituisca dati sulla rete o sul sistema risponde senza credenziali valide. Fanno eccezione `setup` e `login`, che le stabiliscono e non restituiscono nulla sulla rete (Specification 18) |
-| Trasporto cifrato | L'interfaccia è raggiungibile in HTTPS |
-| Installazione | Una persona estranea al progetto installa seguendo la procedura documentata, su una macchina pulita |
-| Ritenzione | Il consolidamento a livelli previsto dalla Specification 16 è attivo |
-| Prove ai confini | Adapter, API e persistenza hanno ciascuno almeno una prova |
-| Nessun avviso di compilazione | Backend e Frontend compilano puliti |
-| Secondo ambiente | Il sistema è stato eseguito su Linux oltre che su Windows |
+| Authentication | No endpoint returning data about the network or the system answers without valid credentials. `setup` and `login` are the exception: they establish the credentials and return nothing about the network (Specification 18) |
+| Encrypted transport | The interface is reachable over HTTPS |
+| Installation | Someone outside the project installs it following the documented procedure, on a clean machine |
+| Retention | The tiered consolidation defined in Specification 16 is active |
+| Tests at the boundaries | The Adapter, the API and the persistence layer each have at least one test |
+| No build warning | Backend and Frontend compile clean |
+| Second environment | The system has been run on Linux as well as on Windows |
 
 ---
 
 ## Stable Release
 
-| Criterio | Verifica |
+| Criterion | Verification |
 | --- | --- |
-| Copertura del punteggio | Nessuna area del NPSS resta priva di definizioni calcolabili |
-| Sezioni dell'interfaccia | Ogni voce di navigazione prevista dalla Specification 09 esiste |
-| Esecuzione prolungata | Il sistema ha girato senza interruzioni per almeno trenta giorni |
-| Seconda versione della sorgente | Il Technitium Adapter è stato provato su due versioni differenti |
-| Avviso di licenza | L'interfaccia mostra copyright, assenza di garanzia e come consultare la licenza |
-| Nessun debito non dichiarato | Ogni lacuna nota compare nel README o nel CHANGELOG |
+| Score coverage | No area of the NPSS is left without computable definitions |
+| Interface sections | Every navigation entry defined in Specification 09 exists |
+| Prolonged run | The system has run without interruption for at least thirty days |
+| Second version of the source | The Technitium Adapter has been tested against two different versions |
+| Licence notice | The interface shows copyright, absence of warranty, and how to consult the licence |
+| No undeclared debt | Every known gap appears in the README or in the CHANGELOG |
 
 ---
 
 # Future Evolution
 
-Le evoluzioni future del progetto verranno pianificate attraverso nuove versioni della presente Roadmap Specification.
+Future evolutions of the project are planned through new versions of this
+Roadmap Specification.
 
 ---
 

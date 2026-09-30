@@ -14,47 +14,64 @@
 
 # Nature of This Document
 
-Questo documento **non è una Specification**.
+This document **is not a Specification**.
 
-È il risultato della ricognizione svolta nel milestone M3.1 sulle API pubbliche di Technitium DNS Server.
+It is the result of the reconnaissance carried out in milestone M3.1 on the
+public APIs of Technitium DNS Server.
 
-Non definisce architettura, non modifica il Unified Data Model e non introduce requisiti.
+It defines no architecture, modifies no part of the Unified Data Model and
+introduces no requirement.
 
-Il suo scopo è fornire la base fattuale necessaria per progettare il contratto Adapter e per aggiornare, dove necessario, la Technitium Integration Specification.
+Its purpose is to provide the factual basis needed to design the Adapter
+contract and to update, where necessary, the Technitium Integration
+Specification.
+
+**It is a record of what was observed on 2026-08-02, and it is kept as it was
+written.** The Open Points it raises were decided afterwards, in the
+Technitium Integration Specification and in the Data Model Specification;
+those documents, not this one, say what the project does today. Only the
+language of this document has been changed.
 
 ---
 
 # Verification Status
 
-Le informazioni sono classificate come segue.
+The information is classified as follows.
 
-| Livello       | Significato                                                            |
-| ------------- | ---------------------------------------------------------------------- |
-| **Confermato**| Verificato sulla documentazione ufficiale delle API                     |
-| **Da verificare** | Non recuperato o dedotto; richiede conferma su un'istanza reale     |
+| Level | Meaning |
+| --- | --- |
+| **Confirmed** | Verified against the official documentation of the APIs |
+| **To be verified** | Not retrieved, or inferred; requires confirmation on a real instance |
 
-Le fonti utilizzate sono due.
+Two sources were used.
 
-1. La documentazione ufficiale `APIDOCS.md` del repository del progetto. Il recupero si è interrotto prima delle sezioni Settings, Blocked Zones, Cache e Logs.
-2. **Un'istanza reale** di Technitium DNS Server **versione 15.4**, eseguita in container e interrogata direttamente. Questa verifica ha coperto proprio le aree mancanti dalla documentazione.
+1. The official documentation `APIDOCS.md` of the repository of the project.
+   Its retrieval stopped before the Settings, Blocked Zones, Cache and Logs
+   sections.
+2. **A real instance** of Technitium DNS Server **version 15.4**, running in a
+   container and questioned directly. This verification covered exactly the
+   areas missing from the documentation.
 
-Diciotto endpoint sono stati interrogati: diciassette hanno risposto, uno è fallito per una dipendenza di rete.
+Eighteen endpoints were questioned: seventeen answered, one failed through a
+network dependency.
 
-Le informazioni derivate dall'istanza reale sono le più affidabili, perché descrivono il comportamento effettivo del prodotto e non la sua descrizione.
+The information derived from the real instance is the most reliable, because
+it describes the actual behaviour of the product and not its description.
 
 ---
 
 # Authentication
 
-**Confermato.**
+**Confirmed.**
 
-A partire dalla versione 15.0 le API richiedono un bearer token.
+From version 15.0 the APIs require a bearer token.
 
 ```text
 Authorization: Bearer <token>
 ```
 
-Il passaggio del token come parametro `token` in query string o form data resta supportato per retrocompatibilità.
+Passing the token as a `token` parameter in the query string or in form data
+remains supported for backward compatibility.
 
 ---
 
@@ -64,9 +81,11 @@ Il passaggio del token come parametro `token` in query string o form data resta 
 GET /api/user/login?user=<user>&pass=<pass>&includeInfo=true
 ```
 
-Restituisce un token di sessione che **scade** dopo il timeout di inattività dell'utente, per impostazione predefinita 30 minuti.
+Returns a session token that **expires** after the inactivity timeout of the
+user, by default 30 minutes.
 
-Con `includeInfo=true` la risposta include anche versione del server, dominio e permessi dell'utente.
+With `includeInfo=true` the answer also includes the version of the server,
+the domain and the permissions of the user.
 
 ---
 
@@ -76,72 +95,83 @@ Con `includeInfo=true` la risposta include anche versione del server, dominio e 
 GET /api/user/createToken?user=<user>&pass=<pass>&tokenName=<name>
 ```
 
-Restituisce un token **non scadente**, pensato esattamente per l'automazione.
+Returns a **non-expiring** token, intended exactly for automation.
 
-Le sue caratteristiche sono rilevanti per PIE.
+Its characteristics are relevant to PIE.
 
-* Non richiede rinnovo periodico, quindi l'Acquisition Flow non deve gestire il ciclo di vita della sessione.
-* Eredita i permessi dell'utente che lo ha creato.
-* Non consente di modificare password o profilo dell'utente.
+* It requires no periodic renewal, so the Acquisition Flow does not have to
+  manage the life cycle of the session.
+* It inherits the permissions of the user who created it.
+* It does not allow the password or the profile of the user to be modified.
 
-La documentazione ufficiale raccomanda di creare un utente dedicato con permessi limitati.
+The official documentation recommends creating a dedicated user with limited
+permissions.
 
-Per PIE è sufficiente il permesso **Dashboard: View**.
+For PIE the **Dashboard: View** permission is enough.
 
-Questa raccomandazione soddisfa direttamente il vincolo della Specification 04 secondo cui le credenziali restano confinate nell'Adapter, e riduce l'impatto di un'eventuale compromissione.
+This recommendation directly satisfies the constraint of Specification 04 that
+credentials stay confined to the Adapter, and reduces the impact of any
+compromise.
 
 ---
 
 ## Response Format
 
-**Confermato.**
+**Confirmed.**
 
-Ogni risposta è JSON e contiene la proprietà `status`.
+Every answer is JSON and contains the `status` property.
 
-| Valore          | Significato                                    |
-| --------------- | ---------------------------------------------- |
-| `ok`            | Chiamata riuscita                              |
-| `error`         | Errore, con `errorMessage` e dettagli di debug |
-| `invalid-token` | Sessione scaduta o token non valido            |
-| `2fa-required`  | Autenticazione a due fattori richiesta         |
+| Value | Meaning |
+| --- | --- |
+| `ok` | Call succeeded |
+| `error` | Error, with `errorMessage` and debug detail |
+| `invalid-token` | Session expired or token not valid |
+| `2fa-required` | Two-factor authentication required |
 
-Nota rilevante per l'Adapter: **l'esito non è espresso dal codice di stato HTTP** ma dal corpo della risposta. Un errore applicativo può arrivare con HTTP 200.
+A note relevant to the Adapter: **the outcome is not expressed by the HTTP
+status code** but by the body of the answer. An application error can arrive
+with HTTP 200.
 
-Le risposte di errore includono `stackTrace` e `innerErrorMessage`, che non devono essere propagati oltre l'Adapter né finire nei log, in coerenza con le regole sulla registrazione di informazioni sensibili.
+Error answers include `stackTrace` and `innerErrorMessage`, which must not be
+propagated beyond the Adapter nor end up in the logs, consistently with the
+rules on recording sensitive information.
 
 ---
 
 # Server Information
 
-**Confermato.**
+**Confirmed.**
 
-La versione del server si ottiene dalla risposta di `login` con `includeInfo=true`, nel campo `info.version`.
+The version of the server is obtained from the answer of `login` with
+`includeInfo=true`, in the `info.version` field.
 
 ```text
 GET /api/dashboard/metrics/json
 ```
 
-Restituisce `uptimestamp`, `uptimeSeconds` e i contatori di vita del server.
+Returns `uptimestamp`, `uptimeSeconds` and the lifetime counters of the
+server.
 
-La documentazione ufficiale marca questa chiamata come **sperimentale e soggetta a modifica**. Non va usata come dipendenza primaria.
+The official documentation marks this call as **experimental and subject to
+change**. It is not to be used as a primary dependency.
 
 ---
 
 # Statistics
 
-**Confermato.**
+**Confirmed.**
 
 ```text
 GET /api/dashboard/stats/get?type=LastHour&utc=true
 ```
 
-Parametri principali.
+Main parameters.
 
 * `type`: `LastHour`, `LastDay`, `LastWeek`, `LastMonth`, `LastYear`, `Custom`
-* `start` e `end`: date ISO 8601, solo con `Custom`
-* `utc`: restituisce le etichette temporali in UTC
+* `start` and `end`: ISO 8601 dates, only with `Custom`
+* `utc`: returns the time labels in UTC
 
-Campi restituiti nell'oggetto `stats`.
+Fields returned in the `stats` object.
 
 ```text
 totalQueries, totalNoError, totalServerFailure, totalNxDomain,
@@ -151,23 +181,24 @@ zones, cachedEntries, allowedZones, blockedZones,
 allowListZones, blockListZones
 ```
 
-La risposta contiene inoltre `protocolTypeChartData`, `queryTypeChartData` e versioni ridotte di `topClients`, `topDomains` e `topBlockedDomains`.
+The answer also contains `protocolTypeChartData`, `queryTypeChartData` and
+reduced versions of `topClients`, `topDomains` and `topBlockedDomains`.
 
 ---
 
 # Top Statistics
 
-**Confermato.**
+**Confirmed.**
 
 ```text
 GET /api/dashboard/stats/getTop?type=LastHour&statsType=TopClients&limit=1000
 ```
 
 * `statsType`: `TopClients`, `TopDomains`, `TopBlockedDomains`
-* `limit`: predefinito 1000
-* `noReverseLookup`: disattiva la risoluzione inversa dei client
+* `limit`: default 1000
+* `noReverseLookup`: turns off the reverse resolution of the clients
 
-Struttura di un elemento `topClients`.
+Structure of a `topClients` element.
 
 ```json
 {
@@ -178,9 +209,10 @@ Struttura di un elemento `topClients`.
 }
 ```
 
-Il campo `domain` è il risultato di una risoluzione inversa e **può essere assente**.
+The `domain` field is the result of a reverse resolution and **may be
+absent**.
 
-Struttura di un elemento `topDomains` e `topBlockedDomains`.
+Structure of a `topDomains` and `topBlockedDomains` element.
 
 ```json
 {
@@ -193,37 +225,40 @@ Struttura di un elemento `topDomains` e `topBlockedDomains`.
 
 # Query Logs Application
 
-L'app **Query Logs (Sqlite)** versione 9.1.1 è stata installata sull'istanza di prova e verificata.
+The **Query Logs (Sqlite)** app version 9.1.1 was installed on the test
+instance and verified.
 
-Il suo `classPath` è `QueryLogsSqlite.App`.
+Its `classPath` is `QueryLogsSqlite.App`.
 
-Questa verifica era necessaria perché da essa dipende la possibilità di costruire `DomainActivity`.
+This verification was necessary because the possibility of building
+`DomainActivity` depends on it.
 
 ---
 
 ## Installation
 
-**Confermato.**
+**Confirmed.**
 
 ```text
-GET /api/apps/downloadAndInstall?name=<nome>&url=<url>
+GET /api/apps/downloadAndInstall?name=<name>&url=<url>
 ```
 
-L'installazione è completamente automatizzabile via API. L'URL del pacchetto proviene da `apps/listStoreApps`.
+The installation is entirely automatable through the API. The URL of the
+package comes from `apps/listStoreApps`.
 
-Il download è di circa 16 MB e richiede connettività verso l'esterno.
+The download is about 16 MB and requires connectivity towards the outside.
 
 ---
 
 ## Query API
 
-**Confermato.**
+**Confirmed.**
 
 ```text
-GET /api/logs/query?name=<nome app>&classPath=QueryLogsSqlite.App&...
+GET /api/logs/query?name=<app name>&classPath=QueryLogsSqlite.App&...
 ```
 
-La risposta ha la struttura seguente.
+The answer has the following structure.
 
 ```json
 {
@@ -238,7 +273,7 @@ La risposta ha la struttura seguente.
 
 ## Entry Structure
 
-**Confermato.**
+**Confirmed.**
 
 ```json
 {
@@ -255,50 +290,55 @@ La risposta ha la struttura seguente.
 }
 ```
 
-Ogni voce contiene contemporaneamente il client e il dominio: è la correlazione che le API del dashboard non forniscono.
+Every entry contains the client and the domain at the same time: it is the
+correlation the dashboard APIs do not supply.
 
 ---
 
 ## Supported Filters
 
-**Tutti verificati e funzionanti.**
+**Every one verified and working.**
 
-| Parametro         | Esito | Verifica                                          |
-| ----------------- | ----- | ------------------------------------------------- |
-| `pageNumber`      | ✔     | paginazione con `totalPages` e `totalEntries`      |
-| `entriesPerPage`  | ✔     | fino a 1000 voci in una sola risposta              |
-| `descendingOrder` | ✔     | ordinamento                                        |
-| `clientIpAddress` | ✔     | filtro per dispositivo                             |
-| `qname`           | ✔     | filtro per dominio, 6 voci su 90 per un dominio    |
-| `qtype`           | ✔     | filtro per tipo di record, 45 voci su 90 per `A`   |
-| `protocol`        | ✔     | filtro per protocollo di trasporto                 |
-| `start` e `end`   | ✔     | filtro per intervallo temporale in ISO 8601 UTC    |
+| Parameter | Outcome | Verification |
+| --- | --- | --- |
+| `pageNumber` | ✔ | pagination with `totalPages` and `totalEntries` |
+| `entriesPerPage` | ✔ | up to 1000 entries in a single answer |
+| `descendingOrder` | ✔ | ordering |
+| `clientIpAddress` | ✔ | filter by device |
+| `qname` | ✔ | filter by domain, 6 entries out of 90 for one domain |
+| `qtype` | ✔ | filter by record type, 45 entries out of 90 for `A` |
+| `protocol` | ✔ | filter by transport protocol |
+| `start` and `end` | ✔ | filter by time interval in ISO 8601 UTC |
 
-La presenza contemporanea del filtro temporale e del conteggio totale rende possibile l'**estrazione incrementale**: l'Adapter può richiedere soltanto le voci successive all'ultima acquisizione.
+The presence of the time filter together with the total count makes
+**incremental extraction** possible: the Adapter can ask only for the entries
+following the last acquisition.
 
 ---
 
 ## Observed Value Sets
 
-Valori osservati sul traffico di prova.
+Values observed on the test traffic.
 
-| Campo          | Valori osservati                     | Note                                                        |
-| -------------- | ------------------------------------ | ----------------------------------------------------------- |
-| `protocol`     | `Udp`                                | stesso vocabolario di `protocolTypeChartData`                |
-| `responseType` | `Blocked`, `Cached`, `Recursive`     | coincide con `queryResponseChartData.labels`, che comprende anche `Authoritative` e `Dropped` |
-| `rcode`        | `NoError`, `NxDomain`                | codici di risposta DNS                                       |
-| `qtype`        | `A`, `AAAA`                          | tipi di record DNS                                           |
-| `qclass`       | `IN`                                 |                                                              |
+| Field | Values observed | Notes |
+| --- | --- | --- |
+| `protocol` | `Udp` | same vocabulary as `protocolTypeChartData` |
+| `responseType` | `Blocked`, `Cached`, `Recursive` | coincides with `queryResponseChartData.labels`, which also comprises `Authoritative` and `Dropped` |
+| `rcode` | `NoError`, `NxDomain` | DNS response codes |
+| `qtype` | `A`, `AAAA` | DNS record types |
+| `qclass` | `IN` | |
 
-La coerenza fra `responseType` e le etichette del dashboard indica un vocabolario unico in tutto il prodotto.
+The consistency between `responseType` and the labels of the dashboard
+indicates a single vocabulary throughout the product.
 
-`responseType: Blocked` accompagnato da `rcode: NxDomain` riflette l'impostazione `blockingType: NxDomain`.
+`responseType: Blocked` accompanied by `rcode: NxDomain` reflects the
+`blockingType: NxDomain` setting.
 
 ---
 
 ## Application Configuration
 
-**Confermato.** Configurazione predefinita, leggibile e modificabile via API.
+**Confirmed.** Default configuration, readable and modifiable through the API.
 
 ```json
 {
@@ -312,327 +352,392 @@ La coerenza fra `responseType` e le etichette del dashboard indica un vocabolari
 }
 ```
 
-Tre elementi hanno conseguenze dirette sul disegno dell'Adapter.
+Three elements have direct consequences for the design of the Adapter.
 
-**`maxLogRecords: 10000`** — la ritenzione predefinita è di diecimila record complessivi, non di sette giorni di traffico. Su una rete domestica reale corrisponde a meno di un'ora di attività. Il limite temporale di sette giorni è quindi teorico: prevale quasi sempre il limite sul numero di record.
+**`maxLogRecords: 10000`** — the default retention is ten thousand records
+altogether, not seven days of traffic. On a real home network that corresponds
+to less than an hour of activity. The time limit of seven days is therefore
+theoretical: the limit on the number of records almost always prevails.
 
-**`maxQueueSize: 200000`** — la scrittura è bufferizzata in memoria e asincrona rispetto alla risoluzione. L'impatto sul throughput è quindi minore di quanto la sola avvertenza dell'app lasci supporre.
+**`maxQueueSize: 200000`** — writing is buffered in memory and asynchronous
+with respect to resolution. The impact on throughput is therefore smaller than
+the app's own warning would suggest.
 
-**`enableVacuum: false`** — il file SQLite non viene compattato automaticamente e può non ridursi dopo la cancellazione dei record.
+**`enableVacuum: false`** — the SQLite file is not compacted automatically and
+may not shrink after records are deleted.
 
-Conseguenze.
+Consequences.
 
-* La frequenza di acquisizione deve essere **inferiore al tempo di rotazione del log**, altrimenti si perdono dati in modo silenzioso.
-* L'Adapter dovrebbe leggere la configurazione dell'app e segnalare quando la ritenzione è insufficiente rispetto alla frequenza di acquisizione.
-* La configurazione è modificabile via API, quindi l'installazione guidata può proporre valori adeguati.
+* The frequency of acquisition must be **shorter than the rotation time of the
+  log**, otherwise data is lost silently.
+* The Adapter should read the configuration of the app and signal when the
+  retention is insufficient with respect to the frequency of acquisition.
+* The configuration is modifiable through the API, so the guided installation
+  can propose adequate values.
 
 ---
 
 # Mapping to the Unified Data Model
 
-Legenda: **✔** disponibile, **~** derivabile, **✘** non ottenibile.
+Key: **✔** available, **~** derivable, **✘** not obtainable.
 
 ## DataSource
 
-| Proprietà      |   | Origine                                            |
-| -------------- | - | -------------------------------------------------- |
-| `Version`      | ✔ | `login` → `info.version`                            |
-| `Provider`     | ✔ | costante dell'Adapter                               |
-| `Name`         | ~ | `login` → `info.dnsServerDomain`                    |
-| `LastUpdate`   | ~ | orologio dell'Adapter al termine dell'acquisizione  |
-| `Id`           | ~ | generato da PIE, non esiste lato Technitium         |
-| `Status`       | ✘ | nessuno stato esplicito esposto dall'API            |
-| `Capabilities` | — | vedi nota sotto                                     |
+| Property | | Origin |
+| --- | - | --- |
+| `Version` | ✔ | `login` → `info.version` |
+| `Provider` | ✔ | constant of the Adapter |
+| `Name` | ~ | `login` → `info.dnsServerDomain` |
+| `LastUpdate` | ~ | clock of the Adapter at the end of the acquisition |
+| `Id` | ~ | generated by PIE, does not exist on the Technitium side |
+| `Status` | ✘ | no explicit state exposed by the API |
+| `Capabilities` | — | see the note below |
 
 ## Statistics
 
-| Proprietà          |   | Origine                                              |
-| ------------------ | - | ---------------------------------------------------- |
-| `TotalQueries`     | ✔ | `stats.totalQueries`                                  |
-| `BlockedQueries`   | ✔ | `stats.totalBlocked`                                  |
-| `CachedQueries`    | ✔ | `stats.totalCached`                                   |
-| `ActiveDevices`    | ✔ | `stats.totalClients`                                  |
-| `FailedQueries`    | ~ | aggregazione ambigua, vedi Open Points                |
-| `EncryptedQueries` | ~ | somma dei protocolli cifrati in `protocolTypeChartData` |
-| `DnssecEnabled`    | ✔ | `settings/get` → `dnssecValidation`                   |
-| `UniqueDomains`    | ✘ | l'API espone solo i primi N domini, non il totale     |
+| Property | | Origin |
+| --- | - | --- |
+| `TotalQueries` | ✔ | `stats.totalQueries` |
+| `BlockedQueries` | ✔ | `stats.totalBlocked` |
+| `CachedQueries` | ✔ | `stats.totalCached` |
+| `ActiveDevices` | ✔ | `stats.totalClients` |
+| `FailedQueries` | ~ | ambiguous aggregation, see Open Points |
+| `EncryptedQueries` | ~ | sum of the encrypted protocols in `protocolTypeChartData` |
+| `DnssecEnabled` | ✔ | `settings/get` → `dnssecValidation` |
+| `UniqueDomains` | ✘ | the API exposes only the first N domains, not the total |
 
 ## Device
 
-| Proprietà         |   | Origine                                          |
-| ----------------- | - | ------------------------------------------------ |
-| `IpAddress`       | ✔ | `topClients[].name`                               |
-| `Hostname`        | ~ | `topClients[].domain`, spesso assente             |
-| `DeviceId`        | ~ | generato da PIE                                   |
-| `Status`          | ~ | derivabile dalla presenza nella finestra          |
-| `FirstSeen`       | ✘ | non esposto                                       |
-| `LastSeen`        | ✘ | non esposto                                       |
-| `MacAddress`      | ✘ | non nel dashboard, forse nelle API DHCP           |
-| `Vendor`          | ✘ | non esposto                                       |
-| `OperatingSystem` | ✘ | non esposto                                       |
+| Property | | Origin |
+| --- | - | --- |
+| `IpAddress` | ✔ | `topClients[].name` |
+| `Hostname` | ~ | `topClients[].domain`, often absent |
+| `DeviceId` | ~ | generated by PIE |
+| `Status` | ~ | derivable from presence in the window |
+| `FirstSeen` | ✘ | not exposed |
+| `LastSeen` | ✘ | not exposed |
+| `MacAddress` | ✘ | not in the dashboard, perhaps in the DHCP APIs |
+| `Vendor` | ✘ | not exposed |
+| `OperatingSystem` | ✘ | not exposed |
 
 ## Domain
 
-| Proprietà     |   | Origine                                        |
-| ------------- | - | ---------------------------------------------- |
-| `Name`        | ✔ | `topDomains[].name`                             |
-| `Occurrences` | ✔ | `topDomains[].hits`                             |
-| `Category`    | ✘ | competenza del Threat Engine, non della sorgente |
-| `Reputation`  | ✘ | competenza del Threat Engine, non della sorgente |
-| `FirstSeen`   | ✘ | non esposto                                     |
-| `LastSeen`    | ✘ | non esposto                                     |
+| Property | | Origin |
+| --- | - | --- |
+| `Name` | ✔ | `topDomains[].name` |
+| `Occurrences` | ✔ | `topDomains[].hits` |
+| `Category` | ✘ | the business of the Threat Engine, not of the source |
+| `Reputation` | ✘ | the business of the Threat Engine, not of the source |
+| `FirstSeen` | ✘ | not exposed |
+| `LastSeen` | ✘ | not exposed |
 
 ## DomainActivity
 
-Nessuna proprietà è ottenibile dalle API del dashboard.
+No property is obtainable from the dashboard APIs.
 
-**Tutte** sono ottenibili dall'app Query Logs, quando installata.
+**Every** one is obtainable from the Query Logs app, when installed.
 
-| Proprietà    |   | Origine con Query Logs                            |
-| ------------ | - | ------------------------------------------------- |
-| `DeviceId`   | ~ | risolto da `entries[].clientIpAddress`             |
-| `Domain`     | ✔ | `entries[].qname`                                  |
-| `QueryCount` | ~ | conteggio delle voci per coppia client e dominio   |
-| `Blocked`    | ✔ | `entries[].responseType` uguale a `Blocked`        |
-| `Protocol`   | ✔ | `entries[].protocol`                               |
-| `FirstSeen`  | ~ | `timestamp` minimo del gruppo                      |
-| `LastSeen`   | ~ | `timestamp` massimo del gruppo                     |
+| Property | | Origin with Query Logs |
+| --- | - | --- |
+| `DeviceId` | ~ | resolved from `entries[].clientIpAddress` |
+| `Domain` | ✔ | `entries[].qname` |
+| `QueryCount` | ~ | count of the entries per client and domain pair |
+| `Blocked` | ✔ | `entries[].responseType` equal to `Blocked` |
+| `Protocol` | ✔ | `entries[].protocol` |
+| `FirstSeen` | ~ | smallest `timestamp` of the group |
+| `LastSeen` | ~ | largest `timestamp` of the group |
 
-L'aggregazione avviene nell'Adapter: il Core riceve `DomainActivity` già consolidata e non vede mai la singola query.
+The aggregation happens in the Adapter: the Core receives `DomainActivity`
+already consolidated and never sees an individual query.
 
 ---
 
 # Open Points
 
-Elementi che richiedono una decisione o un aggiornamento della documentazione.
+Elements requiring a decision or an update to the documentation.
 
 ---
 
-## 1. DomainActivity non è costruibile
+## 1. DomainActivity Cannot Be Built
 
-Questo è il rilievo più significativo della ricognizione.
+This is the most significant finding of the reconnaissance.
 
-`DomainActivity` rappresenta la relazione fra un Device e un Domain. Le API del dashboard espongono però `topClients` e `topDomains` come **aggregati separati e indipendenti**: dicono quante query ha fatto ciascun client e quante volte è stato richiesto ciascun dominio, ma non quale client abbia contattato quale dominio.
+`DomainActivity` represents the relation between a Device and a Domain. The
+dashboard APIs, however, expose `topClients` and `topDomains` as **separate
+and independent aggregates**: they say how many queries each client made and
+how many times each domain was asked for, but not which client contacted which
+domain.
 
-La correlazione richiede i log delle query.
+The correlation requires the query logs.
 
-I log in Technitium non fanno parte del server: richiedono l'installazione di una DNS App opzionale, tipicamente **Query Logs (Sqlite)**. Senza quella app, il dato non esiste.
+The logs in Technitium are not part of the server: they require the
+installation of an optional DNS App, typically **Query Logs (Sqlite)**.
+Without that app, the datum does not exist.
 
-Con l'app installata il problema è risolto: la verifica ha dimostrato che tutte le proprietà di `DomainActivity` sono ottenibili e che l'estrazione incrementale è supportata.
+With the app installed the problem is solved: the verification showed that
+every property of `DomainActivity` is obtainable and that incremental
+extraction is supported.
 
-Conseguenze da valutare.
+Consequences to be evaluated.
 
-* La Specification 04 elenca i Logs fra i dati acquisiti con la formula "quando disponibili": la ricognizione conferma che quella cautela era fondata, ma la condizione va resa esplicita.
-* Il Glossary definisce Domain Activity come entità di primo livello. Poiché la sorgente primaria non la fornisce di serie, occorre stabilire se sia un dato opzionale o se il supporto ai Query Logs diventi un prerequisito dichiarato.
-* Altre Data Sources previste, fra cui Pi-hole e AdGuard Home, espongono i log per client in modo nativo. La limitazione è quindi specifica di Technitium e non del dominio applicativo: renderla un prerequisito generale contraddirebbe il principio di Backend Independence.
-
----
-
-## 2. Aggregati temporali, non eventi
-
-Technitium espone statistiche **per finestra temporale** — ultima ora, giorno, settimana, mese, anno — non un flusso di eventi.
-
-Il Unified Data Model usa invece `firstSeen`, `lastSeen` e `occurrences`, che presuppongono osservazione continua.
-
-Va documentato come l'Adapter debba interpretare la finestra: se `firstSeen` e `lastSeen` corrispondano ai limiti della finestra interrogata, oppure se sia PIE a mantenere lo storico accumulando snapshot successivi.
-
-La seconda ipotesi appare più coerente con il concetto di NetworkSnapshot, ma è una decisione architetturale che non spetta all'Adapter.
-
----
-
-## 3. Liste troncate
-
-`getTop` restituisce al massimo `limit` elementi, predefinito 1000.
-
-Non esiste una chiamata che restituisca l'elenco completo dei domini osservati.
-
-Ne consegue che `Statistics.UniqueDomains` non è calcolabile con esattezza e che l'insieme dei Domain è per costruzione parziale.
-
-Va deciso se il valore vada omesso, marcato come approssimato, o calcolato su base diversa.
+* Specification 04 lists the Logs among the data acquired with the phrase
+  "when available": the reconnaissance confirms that caution was well founded,
+  but the condition is to be made explicit.
+* The Glossary defines Domain Activity as a first-class entity. Since the
+  primary source does not supply it as standard, it must be established
+  whether it is an optional datum or whether support for Query Logs becomes a
+  declared prerequisite.
+* Other Data Sources provided for, among them Pi-hole and AdGuard Home, expose
+  the logs per client natively. The limitation is therefore specific to
+  Technitium and not to the application domain: making it a general
+  prerequisite would contradict the principle of Backend Independence.
 
 ---
 
-## 4. Definizione di FailedQueries
+## 2. Time Aggregates, Not Events
 
-Technitium distingue `totalServerFailure`, `totalNxDomain`, `totalRefused` e `totalDropped`.
+Technitium exposes statistics **per time window** — last hour, day, week,
+month, year — not a stream of events.
 
-Il Unified Data Model prevede un unico `FailedQueries`.
+The Unified Data Model instead uses `firstSeen`, `lastSeen` and `occurrences`,
+which presuppose continuous observation.
 
-L'aggregazione non è ovvia: un NXDOMAIN è una risposta legittima, non un errore del servizio. Sommarlo agli errori altererebbe la valutazione della Network Integrity nel calcolo del NPSS.
+How the Adapter is to interpret the window must be documented: whether
+`firstSeen` and `lastSeen` correspond to the bounds of the window questioned,
+or whether it is PIE that keeps the history by accumulating successive
+snapshots.
 
-Va definito quali contatori concorrano a `FailedQueries`.
-
----
-
-## 5. Campi non definiti, esito della ricognizione
-
-Stato dei quattro campi "esterni" rimasti aperti dopo M2.2.
-
-| Campo                     | Esito                                                                                                    |
-| ------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `DataSource.Capabilities` | **Risolto, con correzione.** Vedi la nota che segue. |
-| `DomainActivity.Protocol` | **Risolto.** `protocolTypeChartData.labels` restituisce etichette in PascalCase, valore osservato `Udp`. L'insieme completo deducibile dai flag di configurazione è `Udp`, `Tcp`, `Tls`, `Https`, `Quic`. |
-| `DataSource.Status`       | **Aperto.** Nessuno stato esposto dall'API. Deve essere prodotto dall'Adapter a partire dall'esito della comunicazione. |
-| `Device.Status`           | **Aperto.** Nessuno stato esposto. Derivabile dalla presenza del client nella finestra osservata.          |
-
-### Correzione sulla natura di Capabilities
-
-Una prima lettura di questa ricognizione aveva ipotizzato di valorizzare `DataSource.Capabilities` con i flag di configurazione di Technitium, quali `enableDnsOverTls` o `dnssecValidation`.
-
-L'ipotesi era **errata** e confondeva due concetti distinti.
-
-* Le funzionalità del prodotto esterno, come il supporto a DNSSEC o ai protocolli cifrati, sono **dati da analizzare**. Concorrono al calcolo del NPSS e trovano posto in `Statistics` e nella configurazione acquisita.
-* Una capability è invece un'informazione **strutturale**: dichiara quali entità del Unified Data Model quella sorgente è in grado di fornire, e serve al Core per sapere quali analisi può eseguire.
-
-Il vocabolario corretto è quindi costituito dai nomi delle entità del modello, come definito nella Data Model Specification.
-
-Per Technitium le capability sono `Statistics`, `Device` e `Domain` al livello base, con l'aggiunta di `DomainActivity` quando è attivo il componente di registrazione delle query.
+The second hypothesis appears more consistent with the concept of
+NetworkSnapshot, but it is an architectural decision that is not the Adapter's
+to take.
 
 ---
 
-La ricognizione ha chiuso due campi su quattro.
+## 3. Truncated Lists
 
-I due rimanenti sono passati da "non definiti" a "non ottenibili dalla sorgente", che è un'informazione diversa e più utile: indica che il vocabolario deve essere definito da PIE, non cercato altrove.
+`getTop` returns at most `limit` elements, by default 1000.
+
+There is no call returning the complete list of the domains observed.
+
+It follows that `Statistics.UniqueDomains` cannot be computed exactly and that
+the set of Domains is by construction partial.
+
+It is to be decided whether the value should be omitted, marked as
+approximate, or computed on a different basis.
 
 ---
 
-## 6. Scelta della finestra temporale
+## 4. Definition of FailedQueries
 
-Emerso dalle osservazioni sul traffico reale.
+Technitium distinguishes `totalServerFailure`, `totalNxDomain`,
+`totalRefused` and `totalDropped`.
 
-`LastDay` ha restituito `topDomains` vuoto in presenza di traffico, mentre `LastHour` conteneva il dettaglio corretto.
+The Unified Data Model provides for a single `FailedQueries`.
 
-L'Acquisition Flow deve quindi definire quale finestra interrogare per ciascun tipo di dato, e non può assumere che una finestra più ampia contenga tutto ciò che contiene una più stretta.
+The aggregation is not obvious: an NXDOMAIN is a legitimate answer, not an
+error of the service. Adding it to the errors would alter the evaluation of
+Network Integrity in the computation of the NPSS.
 
-Questo va confermato con osservazioni prolungate prima di diventare una regola documentata.
+Which counters contribute to `FailedQueries` is to be defined.
+
+---
+
+## 5. Undefined Fields, Outcome Of The Reconnaissance
+
+State of the four "external" fields left open after M2.2.
+
+| Field | Outcome |
+| --- | --- |
+| `DataSource.Capabilities` | **Resolved, with a correction.** See the note that follows. |
+| `DomainActivity.Protocol` | **Resolved.** `protocolTypeChartData.labels` returns labels in PascalCase, value observed `Udp`. The complete set deducible from the configuration flags is `Udp`, `Tcp`, `Tls`, `Https`, `Quic`. |
+| `DataSource.Status` | **Open.** No state exposed by the API. It must be produced by the Adapter from the outcome of the communication. |
+| `Device.Status` | **Open.** No state exposed. Derivable from the presence of the client in the window observed. |
+
+### Correction On The Nature Of Capabilities
+
+A first reading of this reconnaissance had supposed that
+`DataSource.Capabilities` would be filled with the configuration flags of
+Technitium, such as `enableDnsOverTls` or `dnssecValidation`.
+
+The supposition was **wrong** and confused two distinct concepts.
+
+* The features of the external product, such as support for DNSSEC or for
+  encrypted protocols, are **data to analyse**. They contribute to the
+  computation of the NPSS and find their place in `Statistics` and in the
+  configuration acquired.
+* A capability is instead **structural** information: it declares which
+  entities of the Unified Data Model that source is able to supply, and serves
+  the Core in knowing which analyses it can perform.
+
+The correct vocabulary is therefore made of the names of the entities of the
+model, as defined in the Data Model Specification.
+
+For Technitium the capabilities are `Statistics`, `Device` and `Domain` at the
+base level, with the addition of `DomainActivity` when the component recording
+queries is active.
+
+---
+
+The reconnaissance closed two fields out of four.
+
+The two remaining ones moved from "undefined" to "not obtainable from the
+source", which is different and more useful information: it indicates that the
+vocabulary must be defined by PIE, not sought elsewhere.
+
+---
+
+## 6. Choice Of The Time Window
+
+Emerged from the observations on real traffic.
+
+`LastDay` returned `topDomains` empty in the presence of traffic, while
+`LastHour` contained the correct detail.
+
+The Acquisition Flow must therefore define which window to question for each
+kind of datum, and cannot assume that a wider window contains everything a
+narrower one contains.
+
+This is to be confirmed with prolonged observations before becoming a
+documented rule.
 
 ---
 
 # Live Instance Findings
 
-Risultati ottenuti interrogando un'istanza reale di Technitium 15.4.
+Results obtained by questioning a real instance of Technitium 15.4.
 
 ---
 
 ## Settings
 
-**Confermato.**
+**Confirmed.**
 
 ```text
 GET /api/settings/get
 ```
 
-Restituisce oltre centoventi proprietà di configurazione. Le rilevanti per PIE sono le seguenti.
+Returns more than a hundred and twenty configuration properties. Those
+relevant to PIE are the following.
 
-| Proprietà                      | Valore predefinito osservato | Uso in PIE                          |
-| ------------------------------ | ---------------------------- | ----------------------------------- |
-| `version`                      | `15.4`                       | `DataSource.Version`                |
-| `dnsServerDomain`              | nome host del server         | `DataSource.Name`                   |
-| `dnssecValidation`             | `true`                       | `Statistics.DnssecEnabled`          |
-| `enableDnsOverTls`             | `false`                      | capability                          |
-| `enableDnsOverHttps`           | `false`                      | capability                          |
-| `enableDnsOverQuic`            | `false`                      | capability                          |
-| `enableDnsOverHttp`            | `false`                      | capability                          |
-| `enableDnsOverHttp3`           | `false`                      | capability                          |
-| `qnameMinimization`            | `true`                       | capability, indicatore di privacy   |
-| `eDnsClientSubnet`             | `false`                      | capability, indicatore di privacy   |
-| `enableBlocking`               | `true`                       | stato del filtraggio                |
-| `blockingType`                 | `NxDomain`                   | modalità di blocco                  |
-| `blockListUrls`                | **vuoto**                    | stato delle blocklist               |
-| `blockListUpdateIntervalHours` | `24`                         | frequenza di aggiornamento          |
-| `logQueries`                   | `false`                      | disponibilità dei log delle query   |
-| `enableInMemoryStats`          | `false`                      | le statistiche sono persistite      |
-| `maxStatFileDays`              | `365`                        | ritenzione delle statistiche        |
-| `recursion`                    | `AllowOnlyForPrivateNetworks`| configurazione del resolver         |
+| Property | Default value observed | Use in PIE |
+| --- | --- | --- |
+| `version` | `15.4` | `DataSource.Version` |
+| `dnsServerDomain` | host name of the server | `DataSource.Name` |
+| `dnssecValidation` | `true` | `Statistics.DnssecEnabled` |
+| `enableDnsOverTls` | `false` | capability |
+| `enableDnsOverHttps` | `false` | capability |
+| `enableDnsOverQuic` | `false` | capability |
+| `enableDnsOverHttp` | `false` | capability |
+| `enableDnsOverHttp3` | `false` | capability |
+| `qnameMinimization` | `true` | capability, privacy indicator |
+| `eDnsClientSubnet` | `false` | capability, privacy indicator |
+| `enableBlocking` | `true` | state of the filtering |
+| `blockingType` | `NxDomain` | mode of blocking |
+| `blockListUrls` | **empty** | state of the blocklists |
+| `blockListUpdateIntervalHours` | `24` | frequency of update |
+| `logQueries` | `false` | availability of the query logs |
+| `enableInMemoryStats` | `false` | the statistics are persisted |
+| `maxStatFileDays` | `365` | retention of the statistics |
+| `recursion` | `AllowOnlyForPrivateNetworks` | configuration of the resolver |
 
 ---
 
 ## DNS Apps
 
-**Confermato.**
+**Confirmed.**
 
 ```text
 GET /api/apps/list
 ```
 
-Su un'installazione appena creata restituisce un array **vuoto**.
+On a freshly created installation it returns an **empty** array.
 
-Nessuna DNS App è installata di serie.
+No DNS App is installed as standard.
 
-Insieme a `logQueries` impostato su `false`, questo conferma in modo definitivo che i Query Logs non sono disponibili su un'installazione standard.
+Together with `logQueries` set to `false`, this confirms definitively that the
+Query Logs are not available on a standard installation.
 
 ```text
 GET /api/apps/listStoreApps
 ```
 
-Restituisce **ventisette** app disponibili.
+Returns **twenty-seven** apps available.
 
-La chiamata **fallisce se il server non ha connettività verso l'esterno**: durante la prima raccolta ha restituito un errore di risoluzione per `go.technitium.com`, e ha funzionato solo dopo la configurazione di un forwarder.
+The call **fails if the server has no connectivity towards the outside**:
+during the first collection it returned a resolution error for
+`go.technitium.com`, and worked only after a forwarder was configured.
 
-L'Acquisition Flow non deve quindi dipendere da questa chiamata.
+The Acquisition Flow must therefore not depend on this call.
 
-Le app rilevanti per il progetto sono le seguenti.
+The apps relevant to the project are the following.
 
-| App                     | Rilevanza                                                   |
-| ----------------------- | ----------------------------------------------------------- |
-| `Query Logs (Sqlite)`   | Abilita i log delle query, prerequisito di Domain Activity   |
-| `Query Logs (MySQL)`    | Variante con database MySQL o MariaDB                        |
-| `Query Logs (PostgreSQL)` | Variante con database PostgreSQL                           |
-| `Query Logs (SQL Server)` | Variante con Microsoft SQL Server                          |
-| `Log Exporter`          | Esporta i log verso file, endpoint HTTP o Syslog             |
-| `Advanced Blocking`     | Regole di blocco per gruppi di client                        |
-| `DNS Block List (DNSBL)`| Blocco basato su liste DNSBL                                 |
+| App | Relevance |
+| --- | --- |
+| `Query Logs (Sqlite)` | Enables the query logs, prerequisite of Domain Activity |
+| `Query Logs (MySQL)` | Variant with a MySQL or MariaDB database |
+| `Query Logs (PostgreSQL)` | Variant with a PostgreSQL database |
+| `Query Logs (SQL Server)` | Variant with Microsoft SQL Server |
+| `Log Exporter` | Exports the logs towards a file, an HTTP endpoint or Syslog |
+| `Advanced Blocking` | Blocking rules for groups of clients |
+| `DNS Block List (DNSBL)` | Blocking based on DNSBL lists |
 
-La descrizione ufficiale di `Query Logs (Sqlite)` avverte che il logging delle query ha un impatto sul throughput.
+The official description of `Query Logs (Sqlite)` warns that logging queries
+has an impact on throughput.
 
-Questo conferma in modo definitivo che l'accesso a Domain Activity richiede l'installazione esplicita di una app e comporta un costo prestazionale che l'utente deve accettare consapevolmente.
+This confirms definitively that reaching Domain Activity requires the explicit
+installation of an app and carries a cost in performance the user must accept
+knowingly.
 
 ---
 
 ## Logs
 
-**Confermato.**
+**Confirmed.**
 
 ```text
 GET /api/logs/list
 ```
 
-Restituisce `logFiles`, con `fileName` e `size`.
+Returns `logFiles`, with `fileName` and `size`.
 
-Si tratta dei **log diagnostici del server**, non delle query. Le impostazioni indicano `loggingType: File` e `maxLogFileDays: 365`.
+These are the **diagnostic logs of the server**, not the queries. The settings
+indicate `loggingType: File` and `maxLogFileDays: 365`.
 
 ---
 
 ## Hierarchical Browsing
 
-**Confermato.**
+**Confirmed.**
 
 ```text
 GET /api/blocked/list?domain=&direction=down
 GET /api/cache/list?domain=&direction=down
 ```
 
-Entrambe restituiscono `{ domain, zones, records }`.
+Both return `{ domain, zones, records }`.
 
-Non sono elenchi piatti ma **navigatori gerarchici**: si scende un livello alla volta partendo dalla radice.
+They are not flat lists but **hierarchical browsers**: one descends a level at
+a time starting from the root.
 
-Enumerare i domini bloccati o l'intera cache richiede quindi di percorrere un albero con chiamate successive.
+Enumerating the blocked domains or the whole cache therefore requires walking
+a tree with successive calls.
 
-Questo ha un impatto diretto sul disegno dell'Adapter e sul costo dell'acquisizione.
+This has a direct impact on the design of the Adapter and on the cost of
+acquisition.
 
 ---
 
 ## Fixed Value Sets
 
-**Confermato.**
+**Confirmed.**
 
-`queryResponseChartData.labels` espone un insieme fisso.
+`queryResponseChartData.labels` exposes a fixed set.
 
 ```text
 Authoritative, Recursive, Cached, Blocked, Dropped
 ```
 
-`mainChartData.datasets` espone le serie temporali.
+`mainChartData.datasets` exposes the time series.
 
 ```text
 Total, No Error, Server Failure, NX Domain, Refused,
@@ -643,83 +748,93 @@ Authoritative, Recursive, Cached, Blocked, Dropped, Clients
 
 ## Response Envelope
 
-**Confermato.**
+**Confirmed.**
 
-Ogni risposta contiene, oltre a `status`, anche un campo `server` con il nome del server che ha risposto.
+Every answer contains, besides `status`, a `server` field with the name of the
+server that answered.
 
 ---
 
 ## DHCP
 
-**Confermato.**
+**Confirmed.**
 
 ```text
 GET /api/dhcp/leases/list
 ```
 
-Risponde correttamente e restituisce `leases`, vuoto in assenza di uno scope DHCP configurato.
+Answers correctly and returns `leases`, empty in the absence of a configured
+DHCP scope.
 
-Resta una possibile origine di `Device.MacAddress`, ma solo quando Technitium è utilizzato anche come server DHCP. Non è quindi una fonte su cui l'Adapter possa contare.
+It remains a possible origin of `Device.MacAddress`, but only when Technitium
+is also used as a DHCP server. It is therefore not a source the Adapter can
+count on.
 
 ---
 
 ## DNS Client
 
-**Confermato.**
+**Confirmed.**
 
 ```text
 GET /api/dnsClient/resolve?server=this-server&domain=<domain>&type=A&protocol=Udp
 ```
 
-Restituisce `{ result, rawResponses }`.
+Returns `{ result, rawResponses }`.
 
-Rilievo importante: le risoluzioni effettuate tramite questa API **non vengono conteggiate nelle statistiche del dashboard**. La cache si popola, ma `totalQueries` resta a zero.
+An important finding: the resolutions performed through this API **are not
+counted in the statistics of the dashboard**. The cache fills, but
+`totalQueries` stays at zero.
 
-Ne consegue che questa chiamata non è utilizzabile per generare traffico osservabile, né va considerata parte dell'attività di rete misurata.
+It follows that this call cannot be used to generate observable traffic, nor
+is it to be considered part of the network activity measured.
 
 ---
 
 ## Traffic Observations
 
-Osservazioni raccolte generando traffico DNS reale contro l'istanza.
+Observations collected by generating real DNS traffic against the instance.
 
 ---
 
 ### Protocol Labels
 
-**Confermato.**
+**Confirmed.**
 
-`protocolTypeChartData.labels` restituisce le etichette dei protocolli di trasporto in PascalCase.
+`protocolTypeChartData.labels` returns the labels of the transport protocols
+in PascalCase.
 
-Valore osservato con traffico UDP.
+Value observed with UDP traffic.
 
 ```json
 { "labels": ["Udp"], "datasets": [{ "data": [2] }] }
 ```
 
-Le etichette compaiono solo per i protocolli effettivamente utilizzati. L'insieme completo dei valori possibili si deduce dai flag di configurazione: `Udp`, `Tcp`, `Tls`, `Https`, `Quic`.
+The labels appear only for the protocols actually used. The complete set of
+possible values is deduced from the configuration flags: `Udp`, `Tcp`, `Tls`,
+`Https`, `Quic`.
 
-Questo chiude il formato di `DomainActivity.Protocol`.
+This closes the format of `DomainActivity.Protocol`.
 
 ---
 
 ### Query Types
 
-**Confermato.**
+**Confirmed.**
 
-`queryTypeChartData.labels` restituisce i tipi di record DNS interrogati.
+`queryTypeChartData.labels` returns the types of DNS record queried.
 
 ```json
 { "labels": ["A", "AAAA"], "datasets": [{ "data": [1, 1] }] }
 ```
 
-L'insieme non è fisso: dipende dal traffico osservato.
+The set is not fixed: it depends on the traffic observed.
 
 ---
 
 ### Top Clients
 
-**Confermato.** Struttura popolata.
+**Confirmed.** Structure populated.
 
 ```json
 {
@@ -730,69 +845,79 @@ L'insieme non è fisso: dipende dal traffico osservato.
 }
 ```
 
-Il campo `domain` proviene da una risoluzione inversa ed è assente quando non disponibile.
+The `domain` field comes from a reverse resolution and is absent when not
+available.
 
 ---
 
 ### Time Window Behaviour
 
-**Rilievo significativo, da approfondire.**
+**A significant finding, to be looked into further.**
 
-Con lo stesso stato del server e nello stesso istante, due finestre temporali hanno restituito dati diversi.
+With the same state of the server and at the same instant, two time windows
+returned different data.
 
-| Finestra   | `totalQueries` | `topClients` | `topDomains`         |
-| ---------- | -------------- | ------------ | -------------------- |
-| `LastHour` | 2              | 1 elemento   | `example.com`, 2 hit |
-| `LastDay`  | 7              | 1 elemento   | **vuoto**            |
+| Window | `totalQueries` | `topClients` | `topDomains` |
+| --- | --- | --- | --- |
+| `LastHour` | 2 | 1 element | `example.com`, 2 hits |
+| `LastDay` | 7 | 1 element | **empty** |
 
-La finestra più ampia riporta più query e mantiene le statistiche per client, ma **perde completamente il dettaglio per dominio**.
+The wider window reports more queries and keeps the statistics per client, but
+**loses the detail per domain entirely**.
 
-L'ipotesi più plausibile è che le statistiche aggregate su periodi lunghi siano costruite a partire da file consolidati periodicamente, e che il dettaglio per dominio dell'ora in corso non vi sia ancora confluito.
+The most plausible hypothesis is that the statistics aggregated over long
+periods are built from files consolidated periodically, and that the detail
+per domain of the current hour has not yet flowed into them.
 
-Le conseguenze per l'Adapter sono rilevanti.
+The consequences for the Adapter are relevant.
 
-* La scelta della finestra temporale **non è indifferente**: determina quali dati esistono davvero.
-* Interrogare `LastDay` può restituire zero domini pur in presenza di traffico.
-* L'acquisizione dei domini sembra affidabile solo su `LastHour`.
+* The choice of the time window **is not indifferent**: it determines which
+  data really exists.
+* Questioning `LastDay` may return zero domains even in the presence of
+  traffic.
+* The acquisition of the domains seems reliable only on `LastHour`.
 
-Questo comportamento va confermato con osservazioni su un periodo più lungo prima di essere assunto come regola.
+This behaviour is to be confirmed with observations over a longer period
+before being assumed as a rule.
 
 ---
 
 ### Custom Interval
 
-**Verificato in M3.4.**
+**Verified in M3.4.**
 
-L'interrogazione con intervallo personalizzato **conserva il dettaglio per dominio**.
+Questioning with a custom interval **preserves the detail per domain**.
 
-Il confronto fra le statistiche acquisite tramite intervallo personalizzato e quelle mostrate dalla console del server ha riscontrato corrispondenza esatta.
+The comparison between the statistics acquired through a custom interval and
+those shown by the console of the server found exact correspondence.
 
-| Grandezza        | Acquisita | Console | Nota                                         |
-| ---------------- | --------- | ------- | -------------------------------------------- |
-| Query totali     | 30        | 32      | differenza dovuta a due query successive      |
-| Query dalla cache| 20        | 22      | stesse due query                              |
-| Domini distinti  | 5         | 5       | corrispondenza                                |
-| Client attivi    | 1         | 1       | corrispondenza                                |
+| Quantity | Acquired | Console | Note |
+| --- | --- | --- | --- |
+| Total queries | 30 | 32 | difference caused by two later queries |
+| Queries from the cache | 20 | 22 | the same two queries |
+| Distinct domains | 5 | 5 | correspondence |
+| Active clients | 1 | 1 | correspondence |
 
-La perdita del dettaglio per dominio riguarda quindi la finestra predefinita relativa all'ultimo giorno, non l'intervallo personalizzato.
+The loss of the detail per domain therefore concerns the predefined window
+relating to the last day, not the custom interval.
 
-La strategia di acquisizione incrementale resta praticabile.
+The strategy of incremental acquisition remains practicable.
 
 ---
 
 # Impact on Existing Specifications
 
-Nessuna Specification è stata modificata da questo documento.
+No Specification was modified by this document.
 
-Le modifiche che la ricognizione suggerisce sono le seguenti, tutte da approvare.
+The changes the reconnaissance suggests are the following, all to be approved.
 
-| Specification              | Modifica suggerita                                                            |
-| -------------------------- | ------------------------------------------------------------------------------ |
-| 04 - Technitium Integration | Dichiarare la dipendenza dei Logs da una DNS App opzionale                       |
-| 04 - Technitium Integration | Documentare autenticazione tramite API Token e permesso Dashboard View           |
-| 05 - Data Model            | Chiarire la semantica di `firstSeen`, `lastSeen` e `occurrences` su finestre     |
-| 05 - Data Model            | Definire quali contatori concorrano a `FailedQueries`                            |
-| 09 - Network Privacy       | Valutare la disponibilità condizionata di Domain Activity                        |
+| Specification | Change suggested |
+| --- | --- |
+| 04 - Technitium Integration | Declare the dependency of the Logs on an optional DNS App |
+| 04 - Technitium Integration | Document authentication through an API Token and the Dashboard View permission |
+| 05 - Data Model | Clarify the semantics of `firstSeen`, `lastSeen` and `occurrences` over windows |
+| 05 - Data Model | Define which counters contribute to `FailedQueries` |
+| 09 - Network Privacy | Evaluate the conditional availability of Domain Activity |
 
 ---
 
@@ -807,5 +932,6 @@ Le modifiche che la ricognizione suggerisce sono le seguenti, tutte da approvare
 
 # Sources
 
-* Technitium DNS Server API Documentation, repository ufficiale `TechnitiumSoftware/DnsServer`, file `APIDOCS.md`
-* Technitium DNS Server, sito ufficiale e sezione Help
+* Technitium DNS Server API Documentation, official repository
+  `TechnitiumSoftware/DnsServer`, file `APIDOCS.md`
+* Technitium DNS Server, official site and Help section

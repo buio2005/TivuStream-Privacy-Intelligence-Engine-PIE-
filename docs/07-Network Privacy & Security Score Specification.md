@@ -8,34 +8,36 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-26
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce il **Network Privacy & Security Score (NPSS)**, il principale indicatore prodotto dal Privacy Intelligence Engine.
+This specification defines the **Network Privacy & Security Score (NPSS)**,
+the principal indicator produced by the Privacy Intelligence Engine.
 
-Il NPSS sintetizza lo stato complessivo della rete attraverso un unico valore numerico ottenuto dall'analisi dei dati elaborati dal Core.
+The NPSS summarises the overall state of the network in a single number
+obtained from the analysis of the data processed by the Core.
 
 ---
 
 # Objectives
 
-Il NPSS deve essere:
+The NPSS must be:
 
-* semplice da comprendere;
-* coerente;
-* riproducibile;
-* trasparente;
-* indipendente dal backend;
-* aggiornato automaticamente.
+* simple to understand;
+* coherent;
+* reproducible;
+* transparent;
+* independent of the backend;
+* updated automatically.
 
 ---
 
 # Score Range
 
-Il punteggio utilizza una scala da **0** a **100**.
+The score uses a scale from **0** to **100**.
 
 | Score    | Status    |
 | -------- | --------- |
@@ -49,7 +51,7 @@ Il punteggio utilizza una scala da **0** a **100**.
 
 # Score Components
 
-Il punteggio è composto da differenti aree di valutazione.
+The score is made up of different areas of evaluation.
 
 ```text id="fvc3pk"
 Network Privacy & Security Score
@@ -66,47 +68,70 @@ Network Privacy & Security Score
 
 # Measurement and Judgement
 
-Il NPSS è composto da due elementi di natura differente, e la distinzione non è formale.
+The NPSS is made of two elements of different nature, and the distinction is
+not formal.
 
-**Il breakdown è misura.** Ogni area riporta ciò che è stato osservato, con i fattori che lo hanno determinato. È verificabile: chiunque disponga degli stessi dati ottiene gli stessi valori.
+**The breakdown is measurement.** Every area reports what was observed, with
+the factors that determined it. It is verifiable: anyone holding the same data
+obtains the same values.
 
-**Il punteggio complessivo è giudizio.** Aggregare aree diverse in un unico numero richiede di stabilire quanto ciascuna conti, e quella scelta non discende dai dati.
+**The overall score is judgement.** Aggregating different areas into a single
+number requires establishing how much each counts, and that choice does not
+follow from the data.
 
-I pesi definiti in questa specifica costituiscono una **posizione editoriale dichiarata del progetto**, non una verità misurata.
+The weights defined in this specification are a **declared editorial position
+of the project**, not a measured truth.
 
-Sono motivati, versionati insieme all'algoritmo e rivedibili. Non derivano da uno standard di settore, perché non ne esiste uno per questo tipo di valutazione.
+They are motivated, versioned along with the algorithm, and open to revision.
+They do not derive from an industry standard, because none exists for this
+kind of evaluation.
 
-Dichiararlo è parte del principio di Transparency: un giudizio presentato come misura è una misura falsa.
+Declaring it is part of the Transparency principle: a judgement presented as a
+measurement is a false measurement.
 
 ---
 
 # Evaluation Window
 
-Il punteggio valuta la rete sulle **ultime ventiquattro ore**, la stessa finestra di domini, dispositivi e statistiche (API Specification, Observed Period).
+The score judges the network over the **last twenty-four hours**, the same
+window as domains, devices and statistics (API Specification, Observed
+Period).
 
-Fino alla versione 3 valutava la sola ora in corso. Il risultato si svuotava a ogni cambio d'ora: alle 3:05 di notte, con la rete ferma, privacy e minacce diventavano non misurabili, la copertura scendeva sotto il minimo e il punteggio spariva fino al mattino. Una pagina diceva «ecco i domini delle ultime ventiquattro ore», l'altra «non ho dati sufficienti».
+Up to version 3 it judged the current hour alone. The result emptied at every
+turn of the clock: at five past three in the morning, with the network idle,
+privacy and threats became not measurable, coverage fell below the minimum and
+the score disappeared until morning. One page said "here are the domains of
+the last twenty-four hours", the other "I do not have enough data".
 
-| Dato | Da dove viene |
+| Data | Where it comes from |
 | --- | --- |
-| Traffico: interrogazioni totali, fallite, cifrate | Somma dei periodi della finestra |
-| Domini e loro classificazione | I domini della finestra, aggregati come in `/domains`: occorrenze sommate, classificazione del periodo più recente |
-| Attività per dispositivo, per il blocco dei domini a rischio | L'attività della finestra, sommata per dispositivo, dominio, esito e trasporto |
-| Configurazione del servizio | L'acquisizione più recente: è lo stato attuale, non traffico |
-| Continuità dell'osservazione | Invariata: periodi osservati su quelli attesi nelle ventiquattro ore |
+| Traffic: total, failed and encrypted queries | Sum of the periods in the window |
+| Domains and their classification | The domains of the window, aggregated as in `/domains`: occurrences summed, classification from the most recent period |
+| Activity per device, for the blocking of risky domains | The activity of the window, summed per device, domain, outcome and transport |
+| Configuration of the service | The most recent acquisition: it is the present state, not traffic |
+| Continuity of observation | Unchanged: periods observed against those expected in the twenty-four hours |
 
-La soglia di Minimum Observation, cento interrogazioni, vale ora per la finestra e non per l'ora. Una casa che usa la rete poche volte al giorno raggiunge la soglia; una rete osservata da pochi minuti ancora no.
+The Minimum Observation threshold, one hundred queries, now applies to the
+window and not to the hour. A household that uses the network a few times a
+day reaches the threshold; a network observed for a few minutes still does
+not.
 
-Il punteggio si ricalcola a ogni acquisizione, come prima. Ogni valore conservato nello storico descrive le ventiquattro ore che terminano con il periodo in cui è stato prodotto.
+The score is recomputed at every acquisition, as before. Every value kept in
+the history describes the twenty-four hours ending with the period in which it
+was produced.
 
-**Trend.** Si confronta solo con un punteggio prodotto dalla stessa versione dell'algoritmo, oltre che con la stessa copertura. Un punteggio della versione 3, calcolato su un'ora, non è confrontabile con uno della versione 4, calcolato su un giorno.
+**Trend.** It is compared only with a score produced by the same version of
+the algorithm, as well as with the same coverage. A score from version 3,
+computed over an hour, is not comparable with one from version 4, computed
+over a day.
 
 ---
 
 # Score Weights
 
-Ogni area contribuisce al punteggio complessivo con un peso definito.
+Every area contributes to the overall score with a defined weight.
 
-La somma dei pesi è sempre pari a **100**.
+The weights always sum to **100**.
 
 | Component          | Weight |
 | ------------------ | ------ |
@@ -118,491 +143,560 @@ La somma dei pesi è sempre pari a **100**.
 | Network Integrity  | 10     |
 | **Total**          | **100**|
 
-Motivazione di ciascun peso.
+The reason for each weight.
 
-| Area                | Motivazione della posizione adottata                                                                 |
-| ------------------- | ----------------------------------------------------------------------------------------------------- |
-| Threat Protection   | Una minaccia attiva produce un danno immediato e concreto, superiore a qualunque difetto di configurazione |
-| DNS Security        | Determina la qualità di tutto ciò che transita, indipendentemente da quali minacce siano presenti      |
-| Privacy Protection  | Oggetto dichiarato del progetto, ma di impatto graduale anziché immediato                               |
-| Device Health       | Attribuisce i problemi ai dispositivi, informazione preziosa ma successiva alla loro rilevazione        |
-| Configuration       | Presupposto delle altre aree più che valore autonomo                                                    |
-| Network Integrity   | Riguarda l'affidabilità dell'osservazione, non lo stato della rete osservata                            |
+| Area                | Reason for the position adopted                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------ |
+| Threat Protection   | An active threat does immediate and concrete harm, greater than any defect of configuration             |
+| DNS Security        | It determines the quality of everything that passes through, whatever threats are present               |
+| Privacy Protection  | The declared subject of the project, but of gradual rather than immediate impact                        |
+| Device Health       | It attributes problems to devices, valuable information but subsequent to their detection               |
+| Configuration       | A precondition of the other areas more than a value of its own                                          |
+| Network Integrity   | It concerns the reliability of the observation, not the state of the network observed                   |
 
-I pesi appartengono all'algoritmo NPSS e seguono il versionamento dell'algoritmo.
+The weights belong to the NPSS algorithm and follow its versioning.
 
-Una loro modifica costituisce un cambiamento sostanziale e incrementa la Major Version dell'algoritmo, poiché rende i punteggi precedenti non confrontabili.
+Changing them is a substantial change and increments the Major Version of the
+algorithm, because it makes earlier scores non-comparable.
 
 ---
 
 # Factor Codes
 
-Ogni area riporta i fattori che ne hanno determinato il punteggio.
+Every area reports the factors that determined its score.
 
-Un fattore è un **codice con i suoi valori**, non una frase.
+A factor is a **code with its values**, not a sentence.
 
-Il Core produce risultati, non prosa. La formulazione appartiene all'interfaccia, che la rende nella lingua scelta dall'utente secondo i vincoli della Network Privacy Specification.
+The Core produces results, not prose. The wording belongs to the interface,
+which renders it in the language the person chose, under the constraints of
+the Network Privacy Specification.
 
 ---
 
 ## DNS Security
 
-| Codice                          | Valori                | Significato                                              |
+| Code                            | Values                | Meaning                                                  |
 | ------------------------------- | --------------------- | -------------------------------------------------------- |
-| `ConfigurationUnavailable`      | —                     | La sorgente non fornisce la propria configurazione        |
-| `DnssecValidationEnabled`       | —                     | Validazione DNSSEC attiva                                 |
-| `DnssecValidationDisabled`      | —                     | Validazione DNSSEC non attiva                             |
-| `EncryptedTransportsAvailable`  | `transports`          | Trasporti cifrati abilitati                               |
-| `EncryptedTransportsAbsent`     | —                     | Nessun trasporto cifrato abilitato                        |
-| `QueryMinimisationEnabled`      | —                     | Minimizzazione del nome interrogato attiva                |
-| `QueryMinimisationDisabled`     | —                     | Minimizzazione non attiva                                 |
-| `ClientSubnetForwardingEnabled` | —                     | Inoltro della sottorete del client attivo                 |
-| `ClientSubnetForwardingDisabled`| —                     | Inoltro della sottorete del client disattivato            |
-| `EncryptedQueryShare`           | `share`               | Quota di interrogazioni ricevute su trasporto cifrato     |
-| `FailedQueryShare`              | `share`               | Quota di interrogazioni non soddisfatte                   |
-| `NoTrafficObserved`             | —                     | Nessun traffico nel periodo                               |
+| `ConfigurationUnavailable`      | —                     | The source does not provide its configuration             |
+| `DnssecValidationEnabled`       | —                     | DNSSEC validation is on                                   |
+| `DnssecValidationDisabled`      | —                     | DNSSEC validation is off                                  |
+| `EncryptedTransportsAvailable`  | `transports`          | Encrypted transports enabled                              |
+| `EncryptedTransportsAbsent`     | —                     | No encrypted transport enabled                            |
+| `QueryMinimisationEnabled`      | —                     | Query name minimisation is on                             |
+| `QueryMinimisationDisabled`     | —                     | Minimisation is off                                       |
+| `ClientSubnetForwardingEnabled` | —                     | Client subnet forwarding is on                            |
+| `ClientSubnetForwardingDisabled`| —                     | Client subnet forwarding is off                           |
+| `EncryptedQueryShare`           | `share`               | Share of queries received over an encrypted transport     |
+| `FailedQueryShare`              | `share`               | Share of queries not satisfied                            |
+| `NoTrafficObserved`             | —                     | No traffic in the period                                  |
 
 ---
 
 ## Privacy Protection
 
-| Codice                            | Valori               | Significato                                        |
-| --------------------------------- | -------------------- | --------------------------------------------------- |
-| `ClassificationUnavailable`       | —                    | Nessuna lista disponibile                           |
-| `ObservationInsufficient`         | `queries`, `minimum` | Interrogazioni sotto la soglia minima               |
-| `TrackingExposureNone`            | —                    | Nessun tracciamento **noto** osservato              |
-| `TrackingExposureMeasured`        | `share`              | Quota di interrogazioni verso domini di privacy     |
-| `TrackingBlockingMeasured`        | `share`, `queries`   | Quota bloccata di quelle interrogazioni             |
-| `TrackingBlockingUntested`        | —                    | Nessuna interrogazione da bloccare                  |
-| `DomainActivityUnavailable`       | —                    | La sorgente non riporta l'attività per dominio      |
+| Code                              | Values               | Meaning                                             |
+| --------------------------------- | -------------------- | ---------------------------------------------------- |
+| `ClassificationUnavailable`       | —                    | No list available                                    |
+| `ObservationInsufficient`         | `queries`, `minimum` | Queries below the minimum threshold                  |
+| `TrackingExposureNone`            | —                    | No **known** tracking observed                       |
+| `TrackingExposureMeasured`        | `share`              | Share of queries towards privacy domains             |
+| `TrackingBlockingMeasured`        | `share`, `queries`   | Blocked share of those queries                       |
+| `TrackingBlockingUntested`        | —                    | No query to block                                    |
+| `DomainActivityUnavailable`       | —                    | The source does not report activity per domain       |
 
 ---
 
 ## Threat Protection
 
-| Codice                         | Valori                    | Significato                                  |
-| ------------------------------ | ------------------------- | --------------------------------------------- |
-| `ClassificationUnavailable`    | —                         | Nessuna lista disponibile                     |
-| `ObservationInsufficient`      | `queries`, `minimum`      | Interrogazioni sotto la soglia minima         |
-| `ThreatExposureNone`           | —                         | Nessuna minaccia **nota** e nessun sospetto   |
-| `ThreatExposureSuspiciousOnly` | `suspicious`              | Solo domini sospetti, nessuna conferma        |
-| `ThreatExposureMeasured`       | `confirmed`, `suspicious` | Minacce confermate e sospette osservate       |
-| `ThreatBlockingMeasured`       | `share`, `queries`        | Quota bloccata delle interrogazioni a rischio |
-| `ThreatBlockingUntested`       | —                         | Nessuna interrogazione da bloccare            |
-| `DomainActivityUnavailable`    | —                         | La sorgente non riporta l'attività per dominio |
+| Code                           | Values                    | Meaning                                       |
+| ------------------------------ | ------------------------- | ---------------------------------------------- |
+| `ClassificationUnavailable`    | —                         | No list available                              |
+| `ObservationInsufficient`      | `queries`, `minimum`      | Queries below the minimum threshold            |
+| `ThreatExposureNone`           | —                         | No **known** threat and nothing suspicious     |
+| `ThreatExposureSuspiciousOnly` | `suspicious`              | Only suspicious domains, nothing confirmed     |
+| `ThreatExposureMeasured`       | `confirmed`, `suspicious` | Confirmed and suspicious threats observed      |
+| `ThreatBlockingMeasured`       | `share`, `queries`        | Blocked share of the queries at risk           |
+| `ThreatBlockingUntested`       | —                         | No query to block                              |
+| `DomainActivityUnavailable`    | —                         | The source does not report activity per domain |
 
 ---
 
 ## Device Health
 
-| Codice                  | Valori | Significato                               |
-| ----------------------- | ------ | ----------------------------------------- |
-| `EnginesNotImplemented` | —      | Device Engine e Alert Engine non esistono |
+| Code                    | Values | Meaning                                       |
+| ----------------------- | ------ | --------------------------------------------- |
+| `EnginesNotImplemented` | —      | The Device Engine and Alert Engine do not exist |
 
 ---
 
 ## Configuration
 
-| Codice                       | Valori  | Significato                                        |
-| ---------------------------- | ------- | --------------------------------------------------- |
-| `SourceReachable`            | —       | La sorgente ha risposto                             |
-| `SourceUnreachable`          | —       | La sorgente non è raggiungibile                     |
-| `ConfigurationUnavailable`   | —       | La sorgente non fornisce la propria configurazione  |
-| `FilteringEnabled`           | —       | Filtraggio dei domini attivo                        |
-| `FilteringDisabled`          | —       | Filtraggio dei domini non attivo                    |
-| `FilterListsConfigured`      | `count` | Liste di filtro configurate                         |
-| `FilterListsAbsent`          | —       | Nessuna lista: il filtraggio non ha effetto         |
+| Code                         | Values  | Meaning                                             |
+| ---------------------------- | ------- | ---------------------------------------------------- |
+| `SourceReachable`            | —       | The source answered                                  |
+| `SourceUnreachable`          | —       | The source cannot be reached                         |
+| `ConfigurationUnavailable`   | —       | The source does not provide its configuration        |
+| `FilteringEnabled`           | —       | Domain filtering is on                               |
+| `FilteringDisabled`          | —       | Domain filtering is off                              |
+| `FilterListsConfigured`      | `count` | Filter lists configured                              |
+| `FilterListsAbsent`          | —       | No list: filtering has no effect                     |
 
 ---
 
 ## Network Integrity
 
-| Codice                          | Valori                  | Significato                                        |
-| ------------------------------- | ----------------------- | --------------------------------------------------- |
-| `ObservationContinuity`         | `observed`, `expected`  | Periodi osservati rispetto a quelli attesi          |
-| `ObservationContinuityUnknown`  | —                       | Nessun periodo atteso su cui giudicare              |
-| `AcquisitionReliabilityUnknown` | —                       | I tentativi di acquisizione non vengono registrati  |
+| Code                            | Values                  | Meaning                                             |
+| ------------------------------- | ----------------------- | ---------------------------------------------------- |
+| `ObservationContinuity`         | `observed`, `expected`  | Periods observed against those expected              |
+| `ObservationContinuityUnknown`  | —                       | No period was expected, so nothing can be judged     |
+| `AcquisitionReliabilityUnknown` | —                       | Acquisition attempts are not recorded                |
 
 ---
 
 ## Stability
 
-Un codice, una volta pubblicato, **non cambia significato**.
+A code, once published, **does not change meaning**.
 
-Modificare il senso di un codice esistente altererebbe le frasi mostrate dalle interfacce già scritte, senza che nulla lo segnali.
+Altering the sense of an existing code would change the sentences shown by
+interfaces already written, with nothing to signal it.
 
-Un fattore che cambia significato riceve un codice nuovo.
+A factor whose meaning changes receives a new code.
 
 ---
 
 # Indicator Definitions
 
-Gli indicatori di ciascuna area sono definiti in modo **calcolabile e verificabile**.
+The indicators of each area are defined in a way that is **computable and
+verifiable**.
 
-Un indicatore descritto soltanto da un titolo non è utilizzabile: renderebbe il punteggio dipendente dall'interpretazione di chi scrive il codice, in contrasto con il principio di Transparency, che richiede che ogni valutazione sia spiegabile.
+An indicator described by a title alone is unusable: it would make the score
+depend on the interpretation of whoever writes the code, contrary to the
+Transparency principle, which requires every judgement to be explainable.
 
-Ogni indicatore dichiara il dato da cui deriva. Un indicatore il cui dato non è disponibile è **non misurabile**, e la sua quota di peso viene esclusa dal calcolo.
+Every indicator declares the data it derives from. An indicator whose data is
+not available is **not measurable**, and its share of the weight is excluded
+from the calculation.
 
 ---
 
 # DNS Security
 
-Valuta la configurazione del servizio DNS.
+Assesses the configuration of the DNS service.
 
-Peso complessivo **20**, distribuito su quattro indicatori da **5** punti.
+Total weight **20**, distributed over four indicators of **5** points each.
 
 ---
 
 ## DNSSEC Validation
 
-La validazione DNSSEC protegge dalla manomissione delle risposte.
+DNSSEC validation protects against tampering with the answers.
 
-| Condizione             | Punti |
-| ---------------------- | ----- |
-| Validazione attiva     | 5     |
-| Validazione non attiva | 0     |
+| Condition              | Points |
+| ---------------------- | ------ |
+| Validation on          | 5      |
+| Validation off         | 0      |
 
-Dato: configurazione della Data Source.
+Data: configuration of the Data Source.
 
 ---
 
 ## Transport Encryption
 
-Valuta sia la disponibilità di trasporti cifrati sia il loro utilizzo effettivo.
+Assesses both the availability of encrypted transports and their actual use.
 
-| Componente                                            | Punti |
-| ----------------------------------------------------- | ----- |
-| Almeno un trasporto cifrato abilitato                  | 2     |
-| Quota di interrogazioni ricevute su trasporto cifrato  | 3     |
+| Component                                              | Points |
+| ------------------------------------------------------ | ------ |
+| At least one encrypted transport enabled                | 2      |
+| Share of queries received over an encrypted transport   | 3      |
 
-La seconda componente è proporzionale alla quota osservata.
+The second component is proportional to the share observed.
 
-La distinzione è voluta: un servizio può offrire trasporti cifrati senza che alcun dispositivo li utilizzi. Misurare solo la disponibilità premierebbe un'intenzione, misurare solo l'utilizzo ignorerebbe una configurazione corretta.
+The distinction is deliberate: a service may offer encrypted transports
+without any device using them. Measuring availability alone would reward an
+intention; measuring use alone would ignore a correct configuration.
 
-Dato: configurazione della Data Source e statistiche per protocollo.
+Data: configuration of the Data Source and statistics per protocol.
 
-**Limite dichiarato.** L'indicatore misura il trasporto fra i dispositivi e il server DNS locale, non fra il server e i resolver esterni.
+**Declared limit.** The indicator measures the transport between the devices
+and the local DNS server, not between the server and external resolvers.
 
 ---
 
 ## Resolver Configuration
 
-Valuta le impostazioni del resolver che incidono sulla privacy.
+Assesses the resolver settings that bear on privacy.
 
-| Componente                                     | Punti |
-| ---------------------------------------------- | ----- |
-| Minimizzazione del nome interrogato attiva      | 2,5   |
-| Inoltro della sottorete del client disattivato  | 2,5   |
+| Component                                      | Points |
+| ---------------------------------------------- | ------ |
+| Query name minimisation on                      | 2.5    |
+| Client subnet forwarding off                    | 2.5    |
 
-La minimizzazione riduce le informazioni trasmesse ai server autoritativi.
+Minimisation reduces the information sent to authoritative servers.
 
-L'inoltro della sottorete del client comunica ai server esterni la porzione di rete da cui proviene l'interrogazione: è una funzione di ottimizzazione che riduce la privacy, quindi il punteggio premia la sua **assenza**.
+Client subnet forwarding tells external servers which part of the network a
+query came from: it is an optimisation feature that reduces privacy, so the
+score rewards its **absence**.
 
-Dato: configurazione della Data Source.
+Data: configuration of the Data Source.
 
 ---
 
 ## DNS Errors
 
-Valuta la quota di interrogazioni che il servizio non è riuscito a soddisfare.
+Assesses the share of queries the service could not satisfy.
 
 ```text
-punti = 5 × ( 1 − interrogazioni fallite / interrogazioni totali )
+points = 5 × ( 1 − failed queries / total queries )
 ```
 
-Le risposte di dominio inesistente non concorrono al conteggio delle interrogazioni fallite, trattandosi di risposte corrette.
+Answers of non-existent domain do not count towards failed queries, being
+correct answers.
 
-In assenza di traffico l'indicatore è **non misurabile**: non esiste nulla su cui esprimere un giudizio.
+With no traffic the indicator is **not measurable**: there is nothing to pass
+judgement on.
 
-Dato: statistiche.
+Data: statistics.
 
 ---
 
 ## Removed Indicator
 
-La versione precedente elencava un indicatore denominato **Query Validation**, privo di una definizione distinta da DNSSEC Validation.
+The previous version listed an indicator named **Query Validation**, with no
+definition distinct from DNSSEC Validation.
 
-È stato rimosso anziché reinterpretato. Un indicatore senza significato proprio avrebbe prodotto punti arbitrari.
+It was removed rather than reinterpreted. An indicator without a meaning of
+its own would have produced arbitrary points.
 
 ---
 
 # Classification-Based Areas
 
-Privacy Protection e Threat Protection derivano entrambe dalla classificazione dei domini.
+Privacy Protection and Threat Protection both derive from the classification
+of domains.
 
-Ne condividono due condizioni.
+They share two conditions.
 
 ---
 
 ## Minimum Observation
 
-Sotto **cento interrogazioni** nella finestra di valutazione (vedi Evaluation Window), gli indicatori di queste due aree sono **non misurabili**.
+Below **one hundred queries** in the evaluation window (see Evaluation
+Window), the indicators of these two areas are **not measurable**.
 
-Una rete che non ha contattato alcun dominio di tracciamento in tre interrogazioni non è una rete protetta: è una rete che non è stata osservata abbastanza.
+A network that contacted no tracking domain in three queries is not a
+protected network: it is a network that was not observed enough.
 
-Senza questa condizione la rete meno usata otterrebbe il punteggio migliore, e il punteggio misurerebbe il silenzio anziché la protezione.
+Without this condition the least used network would obtain the best score, and
+the score would be measuring silence rather than protection.
 
 ---
 
 ## What Classification Can And Cannot Assert
 
-Le liste affermano soltanto in positivo: dicono che un dominio traccia, non che non traccia.
+Lists assert only in the positive: they say that a domain tracks, not that it
+does not.
 
-Un dominio assente da ogni lista è `Unknown`, e `Unknown` comprende sia i domini innocui sia i tracciatori che nessuna lista conosce.
+A domain absent from every list is `Unknown`, and `Unknown` covers both
+harmless domains and trackers no list knows about.
 
-Ne discende un'asimmetria che governa la formulazione di questi indicatori.
+An asymmetry follows, and it governs the wording of these indicators.
 
-| Osservazione | Affidabilità |
-| ------------ | ------------- |
-| Esposizione elevata | **Attendibile**: quei domini sono noti per tracciare |
-| Esposizione nulla   | **Non attendibile come assoluzione**: può significare rete pulita oppure tracciatori sconosciuti |
+| Observation | Reliability |
+| ----------- | ------------ |
+| High exposure | **Reliable**: those domains are known to track |
+| No exposure   | **Not reliable as an acquittal**: it may mean a clean network or unknown trackers |
 
-Il calcolo è simmetrico, la formulazione no. Il punteggio pieno significa **nessun tracciamento noto**, mai *nessun tracciamento*, e la Network Privacy Specification vincola l'interfaccia a dirlo così.
+The calculation is symmetric, the wording is not. Full marks mean **no known
+tracking**, never *no tracking*, and the Network Privacy Specification binds
+the interface to say it that way.
 
-Il valore dell'esposizione è sempre dichiarato come **limite inferiore**.
+The value of the exposure is always declared as a **lower bound**.
 
 ---
 
 # Privacy Protection
 
-Peso complessivo **20**, distribuito su due indicatori da **10** punti.
+Total weight **20**, distributed over two indicators of **10** points each.
 
-Le categorie considerate sono `Tracking`, `Analytics` e `Advertising`.
+The categories considered are `Tracking`, `Analytics` and `Advertising`.
 
-I due indicatori rispondono a domande diverse che l'utente si pone entrambe: *quanto mi tracciano* e *quanto me lo impediscono*. Il secondo da solo premierebbe un filtro efficace su una rete assediata; il primo da solo ignorerebbe il lavoro del filtro.
+The two indicators answer two different questions the person asks equally:
+*how much am I tracked* and *how much is it prevented*. The second alone would
+reward an effective filter on a besieged network; the first alone would ignore
+the work the filter does.
 
 ---
 
 ## Known Tracking Exposure
 
-Quota di interrogazioni dirette a domini classificati in una categoria di privacy, sul totale delle interrogazioni.
+The share of queries directed at domains classified in a privacy category, out
+of the total number of queries.
 
-Il conteggio è **per interrogazione, non per dominio**. Dieci domini di tracciamento contattati una volta ciascuno e un solo dominio contattato quattrocento volte descrivono reti diverse, e contare i domini le farebbe apparire uguali.
+The count is **per query, not per domain**. Ten tracking domains contacted once
+each and a single domain contacted four hundred times describe different
+networks, and counting domains would make them look alike.
 
-| Quota osservata | Punti |
-| --------------- | ----- |
-| Nessuna          | 10    |
-| Fino al 2%       | 8     |
-| Fino al 5%       | 6     |
-| Fino al 10%      | 4     |
-| Fino al 20%      | 2     |
-| Oltre il 20%     | 0     |
+| Share observed  | Points |
+| --------------- | ------ |
+| None            | 10     |
+| Up to 2%        | 8      |
+| Up to 5%        | 6      |
+| Up to 10%       | 4      |
+| Up to 20%       | 2      |
+| Above 20%       | 0      |
 
-Qualità della misura: **limite inferiore**.
+Quality of the measurement: **lower bound**.
 
-Non misurabile quando le interrogazioni sono meno di cento, o quando nessuna lista è disponibile.
+Not measurable when there are fewer than one hundred queries, or when no list
+is available.
 
-Dato: categoria e occorrenze dei domini, statistiche.
+Data: category and occurrences of the domains, statistics.
 
 ---
 
 ## Tracking Blocking
 
-Quota di interrogazioni dirette a quei domini che sono state bloccate.
+The share of queries directed at those domains that were blocked.
 
-| Quota bloccata | Punti |
-| -------------- | ----- |
-| Almeno il 99%   | 10    |
-| Almeno il 90%   | 8     |
-| Almeno il 75%   | 6     |
-| Almeno il 50%   | 4     |
-| Almeno il 25%   | 2     |
-| Inferiore       | 0     |
+| Share blocked   | Points |
+| --------------- | ------ |
+| At least 99%    | 10     |
+| At least 90%    | 8      |
+| At least 75%    | 6      |
+| At least 50%    | 4      |
+| At least 25%    | 2      |
+| Below           | 0      |
 
-Non misurabile quando nessuna interrogazione è diretta a quei domini, e quando la Data Source non fornisce l'attività per dominio.
+Not measurable when no query is directed at those domains, and when the Data
+Source does not provide activity per domain.
 
-**L'assenza di tracciamento non produce un doppio giudizio.** Se non c'è nulla da bloccare, l'indicatore è escluso e il punteggio pieno arriva dall'esposizione. La copertura risulta inferiore a 100, ed è corretto: quel filtro non è stato messo alla prova.
+**The absence of tracking does not produce a double judgement.** If there is
+nothing to block, the indicator is excluded and the full marks come from the
+exposure. Coverage falls below 100, and rightly: that filter was not put to
+the test.
 
-Dato: attività per dominio, categoria dei domini.
+Data: activity per domain, category of the domains.
 
 ---
 
 ## Removed Indicators
 
-La versione precedente elencava **Tracker Blocking**, **Analytics Detection**, **Advertising Domains**, **Telemetry Detection** e **Privacy Configuration** come soli titoli.
+The previous version listed **Tracker Blocking**, **Analytics Detection**,
+**Advertising Domains**, **Telemetry Detection** and **Privacy Configuration**
+as titles alone.
 
-I primi quattro descrivevano la stessa misura suddivisa per categoria, senza che le categorie avessero pesi distinti motivati. Sono confluiti nei due indicatori sopra.
+The first four described the same measurement split by category, without the
+categories carrying distinct, motivated weights. They have merged into the two
+indicators above.
 
-**Privacy Configuration** è stato rimosso perché ogni impostazione che avrebbe potuto misurare è già valutata da Resolver Configuration e da Filtering Configuration. Contarla di nuovo avrebbe gonfiato il punteggio due volte per lo stesso fatto.
+**Privacy Configuration** was removed because every setting it might have
+measured is already assessed by Resolver Configuration and by Filtering
+Configuration. Counting it again would have inflated the score twice for the
+same fact.
 
-**Nota sulla categoria `Analytics`.** Nessuna lista predefinita la fornisce: i domini di analisi ricevono in pratica la categoria `Tracking`, secondo quanto dichiarato dalla fonte adottata. La categoria resta nel modello e non viene attribuita per convenienza.
+**A note on the `Analytics` category.** No default list provides it: analytics
+domains receive in practice the category `Tracking`, according to what the
+adopted source declares. The category stays in the model and is not attributed
+for convenience.
 
 ---
 
 # Threat Protection
 
-Peso complessivo **25**, distribuito su due indicatori.
+Total weight **25**, distributed over two indicators.
 
-Le categorie considerate sono `Malware`, `Phishing` e `Cryptomining`, che costituiscono minacce **confermate** da una lista, e `Suspicious`, che costituisce una segnalazione **non confermata**.
+The categories considered are `Malware`, `Phishing` and `Cryptomining`, which
+are threats **confirmed** by a list, and `Suspicious`, which is an
+**unconfirmed** report.
 
-La struttura ricalca quella di Privacy Protection, con due differenze motivate.
+The structure mirrors that of Privacy Protection, with two motivated
+differences.
 
-**L'esposizione si conta per dominio, non per quota.** Un dominio di malware contattato una sola volta è un fatto rilevante; diluirlo sul totale delle interrogazioni lo farebbe sparire. Per il tracciamento la proporzione è informativa, per una minaccia il numero assoluto lo è di più.
+**Exposure is counted per domain, not as a share.** A malware domain contacted
+once is a relevant fact; diluting it over the total number of queries would
+make it disappear. For tracking the proportion is informative, for a threat
+the absolute number is more so.
 
-**La soglia del blocco è più alta.** Un tracciatore che passa costa privacy, un dominio di malware che passa può costare la macchina.
+**The bar for blocking is higher.** A tracker that gets through costs privacy;
+a malware domain that gets through can cost the machine.
 
 ---
 
 ## Known Threat Exposure
 
-Peso **12**.
+Weight **12**.
 
-| Condizione osservata                                          | Punti |
-| ------------------------------------------------------------- | ----- |
-| Nessun dominio di minaccia, nessun dominio sospetto             | 12    |
-| Nessuna minaccia confermata, almeno un dominio sospetto         | 9     |
-| Un dominio di minaccia confermata                               | 6     |
-| Da due a cinque domini di minaccia confermata                   | 3     |
-| Più di cinque                                                   | 0     |
+| Condition observed                                        | Points |
+| --------------------------------------------------------- | ------ |
+| No threat domain, no suspicious domain                     | 12     |
+| No confirmed threat, at least one suspicious domain        | 9      |
+| One confirmed threat domain                                | 6      |
+| Two to five confirmed threat domains                       | 3      |
+| More than five                                             | 0      |
 
-Un dominio sospetto riduce il punteggio senza azzerarlo: la segnalazione non è confermata, e trattarla come una minaccia accertata attribuirebbe alla rete un problema che non è stato dimostrato.
+A suspicious domain lowers the score without emptying it: the report is not
+confirmed, and treating it as an established threat would attribute to the
+network a problem that has not been shown.
 
-Qualità della misura: **limite inferiore**.
+Quality of the measurement: **lower bound**.
 
-Non misurabile quando le interrogazioni sono meno di cento, o quando nessuna lista è disponibile.
+Not measurable when there are fewer than one hundred queries, or when no list
+is available.
 
-Dato: categoria dei domini, statistiche.
+Data: category of the domains, statistics.
 
 ---
 
 ## Threat Blocking
 
-Peso **13**.
+Weight **13**.
 
-Quota di interrogazioni dirette a domini di minaccia, confermata o sospetta, che sono state bloccate.
+The share of queries directed at threat domains, confirmed or suspicious, that
+were blocked.
 
-| Quota bloccata | Punti |
-| -------------- | ----- |
-| Totalità        | 13    |
-| Almeno il 95%   | 10    |
-| Almeno l'80%    | 6     |
-| Almeno il 50%   | 3     |
-| Inferiore       | 0     |
+| Share blocked   | Points |
+| --------------- | ------ |
+| All of them     | 13     |
+| At least 95%    | 10     |
+| At least 80%    | 6      |
+| At least 50%    | 3      |
+| Below           | 0      |
 
-Non misurabile quando nessuna interrogazione è diretta a quei domini, e quando la Data Source non fornisce l'attività per dominio.
+Not measurable when no query is directed at those domains, and when the Data
+Source does not provide activity per domain.
 
-Dato: attività per dominio, categoria dei domini.
+Data: activity per domain, category of the domains.
 
 ---
 
 ## Removed Indicator
 
-La versione precedente elencava **Threat Intelligence** fra gli indicatori.
+The previous version listed **Threat Intelligence** among the indicators.
 
-Non è un indicatore: è il nome del sottosistema che produce la classificazione da cui tutti gli altri derivano.
+It is not an indicator: it is the name of the subsystem that produces the
+classification every other indicator derives from.
 
-È stato rimosso anziché reinterpretato.
+It was removed rather than reinterpreted.
 
 ---
 
 # Device Health
 
-Analizza il comportamento dei dispositivi.
+Analyses the behaviour of devices.
 
-Indicatori.
+Indicators.
 
-* attività anomala;
-* numero di Alert;
-* traffico DNS;
-* comportamento generale.
+* anomalous activity;
+* number of Alerts;
+* DNS traffic;
+* general behaviour.
 
 ---
 
 # Configuration
 
-Valuta la qualità della configurazione complessiva.
+Assesses the quality of the overall configuration.
 
-Peso complessivo **10**, distribuito su due indicatori da **5** punti.
+Total weight **10**, distributed over two indicators of **5** points each.
 
 ---
 
 ## Source Availability
 
-| Condizione                              | Punti |
-| --------------------------------------- | ----- |
-| La Data Source ha risposto correttamente | 5     |
-| La Data Source non è raggiungibile       | 0     |
+| Condition                               | Points |
+| --------------------------------------- | ------ |
+| The Data Source answered correctly       | 5      |
+| The Data Source cannot be reached        | 0      |
 
-Dato: stato della Data Source.
+Data: state of the Data Source.
 
 ---
 
 ## Filtering Configuration
 
-| Componente                          | Punti |
-| ----------------------------------- | ----- |
-| Filtraggio attivo                    | 2,5   |
-| Almeno una lista di filtro configurata | 2,5  |
+| Component                             | Points |
+| ------------------------------------- | ------ |
+| Filtering on                           | 2.5    |
+| At least one filter list configured    | 2.5    |
 
-Il filtraggio attivo senza alcuna lista configurata non produce alcun effetto: le due componenti sono distinte perché descrivono condizioni diverse.
+Filtering on with no list configured has no effect: the two components are
+kept distinct because they describe different conditions.
 
-Dato: configurazione della Data Source.
+Data: configuration of the Data Source.
 
 ---
 
 ## Redefined Indicators
 
-La versione precedente elencava quattro indicatori: configurazione valida, servizi disponibili, sincronizzazione, stato operativo.
+The previous version listed four indicators: valid configuration, services
+available, synchronisation, operational state.
 
-Erano sovrapposti fra loro e privi di criterio. Sono stati sostituiti da due indicatori definiti in modo verificabile.
+They overlapped with one another and had no criterion. They were replaced by
+two indicators defined in a verifiable way.
 
 ---
 
 # Network Integrity
 
-Valuta la continuità e l'affidabilità dell'osservazione della rete.
+Assesses the continuity and the reliability of the observation of the network.
 
-Peso complessivo **10**, distribuito su due indicatori da **5** punti.
+Total weight **10**, distributed over two indicators of **5** points each.
 
 ---
 
 ## Observation Continuity
 
-Valuta quanti dei periodi di osservazione attesi sono stati effettivamente osservati.
+Assesses how many of the expected observation periods were actually observed.
 
 ```text
-punti = 5 × ( periodi osservati / periodi attesi )
+points = 5 × ( periods observed / periods expected )
 ```
 
-L'intervallo di riferimento predefinito è di ventiquattro ore.
+The default reference interval is twenty-four hours.
 
-Un periodo mancante indica che il sistema non ha potuto osservare la rete in quel lasso di tempo, e quindi che l'analisi presenta una lacuna.
+A missing period indicates that the system could not observe the network in
+that span of time, and therefore that the analysis has a gap.
 
-**Nulla viene atteso prima della prima osservazione.** I periodi attesi decorrono dalla prima osservazione registrata, mai da prima.
+**Nothing is expected before the first observation.** Expected periods run
+from the first observation recorded, never from before it.
 
-Un'installazione recente verrebbe altrimenti penalizzata per non avere osservato la rete prima di esistere, il che non dice nulla sulla rete e attribuirebbe all'utente una lacuna che non gli appartiene.
+A recent installation would otherwise be penalised for not having observed the
+network before it existed, which says nothing about the network and would
+attribute to the person a gap that is not theirs.
 
-Dato: periodi conservati.
+Data: periods kept.
 
 ---
 
 ## Acquisition Reliability
 
-Valuta la quota di tentativi di acquisizione andati a buon fine.
+Assesses the share of acquisition attempts that succeeded.
 
-Richiede la registrazione dei tentativi, compresi quelli falliti.
+It requires attempts to be recorded, including the failed ones.
 
-Finché tale registrazione non esiste, l'indicatore è **non misurabile**.
+Until that recording exists, the indicator is **not measurable**.
 
 ---
 
 ## Redefined Indicators
 
-La versione precedente elencava errori, disponibilità, consistenza e stabilità.
+The previous version listed errors, availability, consistency and stability.
 
-Il primo duplicava l'indicatore DNS Errors, gli altri erano privi di definizione. Sono stati sostituiti da due indicatori riferiti alla continuità dell'osservazione, che è ciò che questa area può realmente misurare.
+The first duplicated the DNS Errors indicator; the others had no definition.
+They were replaced by two indicators referring to the continuity of the
+observation, which is what this area can actually measure.
 
 ---
 
 # Score Breakdown
 
-Il sistema conserva il dettaglio del punteggio.
+The system keeps the detail of the score.
 
-Ogni componente contribuisce al risultato finale in base al proprio peso.
+Every component contributes to the final result according to its weight.
 
-Il breakdown comprende tutte e sei le aree di valutazione.
+The breakdown covers all six areas of evaluation.
 
-Esempio.
+Example.
 
 ```text id="c8qqdc"
 Overall Score
@@ -634,91 +728,107 @@ Network Integrity
 9 /10
 ```
 
-Per ogni area il sistema conserva inoltre l'elenco dei fattori che hanno determinato il punteggio.
+For every area the system also keeps the list of the factors that determined
+the score.
 
-Questo dettaglio costituisce il requisito minimo per soddisfare il principio di Transparency.
+This detail is the minimum requirement for satisfying the Transparency
+principle.
 
 ---
 
 # Measurement States
 
-Non tutte le Data Sources forniscono i dati necessari a valutare ogni indicatore.
+Not every Data Source provides the data needed to assess every indicator.
 
-Ogni area di valutazione si trova quindi in uno di tre stati.
+Every area of evaluation is therefore in one of three states.
 
-| Stato               | Condizione                                        |
-| ------------------- | -------------------------------------------------- |
-| `Measured`          | Tutti gli indicatori dell'area sono valutabili      |
-| `PartiallyMeasured` | Solo una parte degli indicatori è valutabile        |
-| `NotMeasurable`     | Nessun indicatore dell'area è valutabile            |
+| State               | Condition                                          |
+| ------------------- | ---------------------------------------------------- |
+| `Measured`          | Every indicator of the area can be assessed           |
+| `PartiallyMeasured` | Only some of the indicators can be assessed           |
+| `NotMeasurable`     | No indicator of the area can be assessed              |
 
 ---
 
 ## Principle
 
-Ciò che non è stato osservato viene **escluso** dal calcolo.
+What was not observed is **excluded** from the calculation.
 
-Non riceve punteggio zero, perché zero è un'affermazione sullo stato della rete: dichiarerebbe una condizione critica che il sistema non ha verificato.
+It does not receive a score of zero, because zero is a statement about the
+state of the network: it would declare a critical condition the system has not
+verified.
 
-Non riceve nemmeno un valore stimato o presunto favorevole, perché sarebbe un'affermazione altrettanto infondata.
+Neither does it receive an estimated or presumed favourable value, because
+that would be an equally unfounded statement.
 
-La porzione non osservata semplicemente non entra nel conteggio, né al numeratore né al denominatore.
+The unobserved portion simply does not enter the count, neither in the
+numerator nor in the denominator.
 
-Ne consegue che **l'assenza di dati non può in alcun caso migliorare il punteggio**.
+It follows that **the absence of data can in no case improve the score**.
 
 ---
 
 ## Partial Measurement
 
-Quando un'area è parzialmente misurabile, il punteggio ottenibile è proporzionale alla quota di indicatori valutati.
+When an area is partly measurable, the obtainable score is proportional to the
+share of indicators assessed.
 
 ```text
-maxScore = weight × ( indicatori valutati / indicatori totali dell'area )
+maxScore = weight × ( indicators assessed / total indicators of the area )
 ```
 
-Gli indicatori di una stessa area hanno peso uguale fra loro, salvo diversa indicazione esplicita nella presente specifica.
+The indicators of one area carry equal weight among themselves, unless this
+specification states otherwise explicitly.
 
-Questa convenzione rende il calcolo deterministico e verificabile, ed è estendibile assegnando in futuro pesi specifici ai singoli indicatori.
+This convention makes the calculation deterministic and verifiable, and can be
+extended by assigning specific weights to individual indicators in future.
 
 ---
 
 ## Calculation
 
 ```text
-overallScore = ( somma dei punteggi ottenuti
-                 / somma dei maxScore ) × 100
+overallScore = ( sum of the points obtained
+                 / sum of the maxScore ) × 100
 ```
 
-Il valore risultante mantiene la scala da 0 a 100 e la corrispondenza con la tabella Score Range.
+The resulting value keeps the scale from 0 to 100 and its correspondence with
+the Score Range table.
 
 ---
 
 ## Minimum Coverage
 
-Il punteggio complessivo **non viene prodotto** quando la copertura è inferiore a **60**.
+The overall score **is not produced** when coverage is below **60**.
 
-Al di sotto di quel livello il giudizio sintetico poggerebbe su meno di tre quinti del sistema di valutazione, e un numero unico comunicherebbe una completezza che non esiste.
+Below that level the summary judgement would rest on less than three fifths of
+the evaluation system, and a single number would communicate a completeness
+that does not exist.
 
-In tale condizione il sistema presenta il **solo breakdown**, con le aree misurate, quelle parziali e quelle non misurabili con il relativo motivo.
+In that condition the system presents the **breakdown alone**, with the areas
+measured, those partial and those not measurable, each with its reason.
 
-Non si tratta di un malfunzionamento e non va presentato come tale: il sistema sta dichiarando di non disporre di elementi sufficienti per un giudizio complessivo, pur avendo misure valide da mostrare.
+It is not a malfunction and is not to be presented as one: the system is
+declaring that it does not hold enough to support an overall judgement, while
+still having valid measurements to show.
 
-La soglia appartiene all'algoritmo e ne segue il versionamento.
+The threshold belongs to the algorithm and follows its versioning.
 
 ---
 
 ## Coverage
 
-La copertura è la somma dei `maxScore` di tutte le aree, su un massimo di 100.
+Coverage is the sum of the `maxScore` of every area, out of a maximum of 100.
 
-Rappresenta la porzione del sistema di valutazione effettivamente osservata.
+It represents the portion of the evaluation system actually observed.
 
-Esempio, riferito a una Data Source che non fornisce Domain Activity.
+An example, for a Data Source that does not provide Domain Activity.
 
-L'area Device Health prevede quattro indicatori. Uno soltanto, il volume di traffico DNS, è valutabile senza Domain Activity.
+The Device Health area has four indicators. Only one, the volume of DNS
+traffic, can be assessed without Domain Activity.
 
 ```text
-maxScore di Device Health = 15 × ( 1 / 4 ) = 3,75
+maxScore of Device Health = 15 × ( 1 / 4 ) = 3.75
 ```
 
 ```text
@@ -726,11 +836,11 @@ Overall Score
 
 90 /100
 
-Copertura
+Coverage
 
-88,75 /100
+88.75 /100
 
-Aree misurate
+Areas measured
 
 DNS Security          19    /20
 Privacy Protection    18    /20
@@ -738,68 +848,79 @@ Threat Protection     22    /25
 Configuration          9    /10
 Network Integrity      9    /10
 
-Area parzialmente misurata
+Area partly measured
 
-Device Health          3    /3,75
-   Valutato      : volume di traffico DNS
-   Non valutato  : attività anomala, numero di Alert, comportamento generale
-   Motivo        : la Data Source non fornisce Domain Activity
+Device Health          3    /3.75
+   Assessed     : volume of DNS traffic
+   Not assessed : anomalous activity, number of Alerts, general behaviour
+   Reason       : the Data Source does not provide Domain Activity
 ```
 
-Il punteggio deriva da 80 punti ottenuti su 88,75 punti osservabili.
+The score derives from 80 points obtained out of 88.75 observable points.
 
-Rispetto a una valutazione che avesse dichiarato l'intera area non misurabile, la copertura sale da 85 a 88,75: il sistema riconosce il dato che possiede realmente, senza attribuirsi quello che non ha.
+Compared with an evaluation that had declared the whole area not measurable,
+coverage rises from 85 to 88.75: the system acknowledges the data it actually
+holds, without claiming what it does not.
 
-Si noti che riconoscere la misurazione parziale **non ha migliorato il punteggio**, sceso da 91 a 90. Il dato aggiuntivo ha aumentato la porzione osservata e vi ha contribuito con il proprio valore effettivo, che era inferiore alla media delle altre aree.
+Note that acknowledging the partial measurement **did not improve the score**,
+which fell from 91 to 90. The additional data increased the portion observed
+and contributed its own actual value, which was below the average of the other
+areas.
 
-Questo è il comportamento atteso: la misurazione parziale aumenta la conoscenza, non il risultato.
+This is the expected behaviour: partial measurement increases knowledge, not
+the result.
 
 ---
 
 ## Comparability
 
-Due punteggi con copertura differente **non sono confrontabili**.
+Two scores with different coverage **are not comparable**.
 
-Il sistema deve sempre presentare la copertura accanto al punteggio quando questa è inferiore a 100.
+The system must always present the coverage beside the score whenever it is
+below 100.
 
-Il confronto storico del trend è ammesso soltanto fra rilevazioni con la stessa copertura. Un cambiamento di copertura interrompe la serie e deve essere segnalato.
+Historical comparison of the trend is admitted only between readings with the
+same coverage. A change of coverage breaks the series and must be signalled.
 
 ---
 
 ## Recommendation
 
-Ogni area non misurabile o parzialmente misurata produce una Recommendation.
+Every area that is not measurable, or measured only in part, produces a
+Recommendation.
 
-La Recommendation indica:
+The Recommendation states:
 
-* quale area non è valutabile;
-* quale dato manca;
-* quale intervento renderebbe il dato disponibile;
-* quali conseguenze comporta tale intervento.
+* which area cannot be assessed;
+* which data is missing;
+* what would make the data available;
+* what consequences that would entail.
 
-L'ultimo punto è vincolante: se rendere disponibile un dato comporta un costo, quel costo va dichiarato insieme al beneficio.
+The last point is binding: if making a piece of data available carries a cost,
+that cost is declared alongside the benefit.
 
-Il sistema non propone all'utente configurazioni presentandone soltanto i vantaggi.
+The system does not propose configurations to the person by listing only their
+advantages.
 
 ---
 
 # Score History
 
-Ogni aggiornamento del NPSS viene memorizzato.
+Every update of the NPSS is stored.
 
-Lo storico consente:
+The history allows:
 
-* confronti temporali;
-* analisi dei trend;
-* report periodici.
+* comparisons over time;
+* trend analysis;
+* periodic reports.
 
 ---
 
 # Score Trend
 
-Il sistema calcola automaticamente la variazione del punteggio.
+The system computes the change in the score automatically.
 
-Stati previsti.
+States provided.
 
 * Improving
 * Stable
@@ -809,79 +930,79 @@ Stati previsti.
 
 # Positive Factors
 
-Il punteggio aumenta quando vengono rilevate configurazioni corrette.
+The score rises when correct configurations are detected.
 
-Esempi.
+Examples.
 
-* DNSSEC attivo;
-* DNS cifrato;
-* assenza di malware;
-* blocklist aggiornate;
-* configurazione valida.
+* DNSSEC on;
+* encrypted DNS;
+* absence of malware;
+* blocklists up to date;
+* valid configuration.
 
 ---
 
 # Negative Factors
 
-Il punteggio diminuisce quando vengono rilevate condizioni critiche.
+The score falls when critical conditions are detected.
 
-Esempi.
+Examples.
 
 * malware;
 * phishing;
-* DNSSEC disattivato;
-* configurazioni errate;
-* Alert critici.
+* DNSSEC off;
+* incorrect configurations;
+* critical Alerts.
 
 ---
 
 # Transparency
 
-Ogni variazione del punteggio deve essere spiegabile.
+Every change in the score must be explainable.
 
-Il sistema conserva il dettaglio degli indicatori che hanno contribuito al risultato.
+The system keeps the detail of the indicators that contributed to the result.
 
 ---
 
 # Backend Independence
 
-L'algoritmo NPSS utilizza esclusivamente il Unified Data Model.
+The NPSS algorithm uses only the Unified Data Model.
 
-Non contiene dipendenze dirette dai backend.
+It holds no direct dependency on any backend.
 
 ---
 
 # Versioning
 
-L'algoritmo possiede una propria versione indipendente.
+The algorithm carries a version of its own, independent of others.
 
-Le modifiche sostanziali incrementano la Major Version.
+Substantial changes increment the Major Version.
 
 ---
 
 # Design Principles
 
-Il NPSS segue i seguenti principi.
+The NPSS follows these principles.
 
-* semplicità;
-* trasparenza;
-* uniformità;
-* riproducibilità;
-* indipendenza;
-* aggiornamento continuo.
+* simplicity;
+* transparency;
+* uniformity;
+* reproducibility;
+* independence;
+* continuous updating.
 
 ---
 
 # Constraints
 
-Il NPSS:
+The NPSS:
 
-* non rappresenta una certificazione di sicurezza;
-* non misura esclusivamente la privacy;
-* non dipende da una specifica tecnologia;
-* non assegna punteggio zero a ciò che non è stato misurato;
-* non è confrontabile fra rilevazioni con copertura differente;
-* rappresenta un indicatore sintetico prodotto dal Core.
+* is not a security certification;
+* does not measure privacy alone;
+* does not depend on any specific technology;
+* does not assign a score of zero to what was not measured;
+* is not comparable between readings with different coverage;
+* is a summary indicator produced by the Core.
 
 ---
 

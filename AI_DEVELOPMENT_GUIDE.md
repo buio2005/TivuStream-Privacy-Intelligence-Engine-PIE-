@@ -8,95 +8,105 @@
 
 **Status:** Official
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questo documento definisce le regole operative che ogni AI Assistant deve seguire durante lo sviluppo del progetto.
+This document defines the operating rules every AI assistant is to follow
+while developing the project.
 
-L'obiettivo è garantire che tutto il codice prodotto sia coerente con l'architettura, la documentazione e gli standard del Privacy Intelligence Engine.
+The objective is to ensure that all the code produced is consistent with the
+architecture, the documentation and the standards of the Privacy Intelligence
+Engine.
 
-Le istruzioni contenute in questo documento hanno priorità sulle preferenze predefinite dell'assistente.
+The instructions in this document take priority over the default preferences
+of the assistant.
+
+**`MASTER_PROMPT.md` governs.** It holds the working method of the repository
+and decides, among other things, which changes need a Specification and an
+approval before code and which are recorded in `CHANGELOG.md` afterwards. What
+follows here is consistent with it and more detailed on the architecture;
+where the two differ, the MASTER_PROMPT wins.
 
 ---
 
 # Development Philosophy
 
-Il progetto viene sviluppato seguendo un approccio **Documentation First**.
+The project is developed following a **Documentation First** approach.
 
-La documentazione rappresenta la fonte ufficiale del progetto.
+The documentation is the official source of the project.
 
-Il codice implementa quanto definito nelle Specification.
+The code implements what the Specifications define.
 
-Il codice non definisce l'architettura.
+The code does not define the architecture.
 
 ---
 
 # Development Workflow
 
-Ogni sessione di sviluppo segue il seguente ordine.
+Every development session follows this order.
 
-1. Leggere README.md
+1. Read README.md
 
-2. Leggere AI_DEVELOPMENT_GUIDE.md
+2. Read AI_DEVELOPMENT_GUIDE.md
 
-3. Leggere le Specification interessate
+3. Read the Specifications concerned
 
-4. Analizzare il task richiesto
+4. Analyse the task asked for
 
-5. Implementare esclusivamente quanto documentato
+5. Implement only what is documented
 
-6. Aggiornare la documentazione se necessario
+6. Update the documentation if necessary
 
 ---
 
 # Documentation Priority
 
-In caso di conflitto valgono le seguenti priorità.
+In case of conflict the following priorities hold.
 
 1. AI_DEVELOPMENT_GUIDE.md
 
-2. Specification presenti nella cartella docs
+2. The Specifications in the docs folder
 
 3. README.md
 
-4. Codice esistente
+4. The existing code
 
-Il codice non modifica la documentazione.
+The code does not modify the documentation.
 
-È la documentazione che guida il codice.
+It is the documentation that guides the code.
 
 ---
 
 # AI Responsibilities
 
-L'AI è responsabile di:
+The AI is responsible for:
 
-- scrivere codice pulito;
-- rispettare l'architettura;
-- mantenere la modularità;
-- evitare duplicazioni;
-- proporre miglioramenti motivati.
+- writing clean code;
+- respecting the architecture;
+- keeping modularity;
+- avoiding duplication;
+- proposing improvements with reasons.
 
 ---
 
 # AI Restrictions
 
-L'AI non deve:
+The AI must not:
 
-- modificare autonomamente l'architettura;
-- rinominare componenti ufficiali;
-- introdurre dipendenze non richieste;
-- creare nuove cartelle senza autorizzazione;
-- modificare le Specification senza richiesta esplicita.
+- modify the architecture on its own;
+- rename official components;
+- introduce dependencies that were not asked for;
+- create new folders without authorisation;
+- modify the Specifications without an explicit request.
 
 ---
 
 # Coding Principles
 
-Ogni implementazione deve rispettare i seguenti principi.
+Every implementation must respect the following principles.
 
 - Single Responsibility
 - Separation of Concerns
@@ -109,9 +119,9 @@ Ogni implementazione deve rispettare i seguenti principi.
 
 # Architecture Rules
 
-Il progetto utilizza un'architettura a livelli.
+The project uses a layered architecture.
 
-Ogni livello possiede responsabilità specifiche.
+Every layer has its own responsibilities.
 
 Frontend
 
@@ -131,190 +141,192 @@ Adapter
 
 Data Source
 
-La comunicazione deve sempre rispettare questo flusso.
+Communication must always respect this flow.
 
 ---
 
 # Backend Rules
 
-Il Backend:
+The Backend:
 
-- implementa la logica di business;
-- gestisce gli Adapter;
-- espone le REST API;
-- utilizza il Unified Data Model.
+- implements the business logic;
+- manages the Adapters;
+- exposes the REST APIs;
+- uses the Unified Data Model.
 
 ---
 
 # Frontend Rules
 
-Il Frontend:
+The Frontend:
 
-- visualizza informazioni;
-- non contiene logica di business;
-- utilizza esclusivamente le REST API.
+- shows information;
+- contains no business logic;
+- uses the REST APIs alone.
 
 ---
 
 # Core Rules
 
-Il Core:
+The Core:
 
-- analizza;
-- classifica;
-- correla;
-- valuta;
-- produce risultati.
+- analyses;
+- classifies;
+- correlates;
+- evaluates;
+- produces results.
 
-Il Core non conosce le Data Sources.
+The Core does not know the Data Sources.
 
 ---
 
 # Adapter Rules
 
-Ogni Adapter:
+Every Adapter:
 
-- comunica con una sola Data Source;
-- converte i dati;
-- non esegue analisi.
+- communicates with a single Data Source;
+- converts the data;
+- performs no analysis.
 
 ---
 
 # Data Model
 
-Ogni componente utilizza esclusivamente il Unified Data Model.
+Every component uses the Unified Data Model alone.
 
-È vietato creare modelli dati paralleli.
+Creating parallel data models is forbidden.
 
 ---
 
 # API Rules
 
-Le API rappresentano il contratto pubblico del sistema.
+The APIs are the public contract of the system.
 
-Ogni modifica alle API deve mantenere la retrocompatibilità.
+Every change to the APIs must preserve backward compatibility.
 
 ---
 
 # Naming Convention
 
-Utilizzare esclusivamente la terminologia definita nel Glossary.
+Use only the terminology defined in the Glossary.
 
-Non introdurre sinonimi.
+Do not introduce synonyms.
 
 ---
 
 # Dependencies
 
-Prima di introdurre una nuova libreria verificare.
+Before introducing a new library, check.
 
-- reale necessità;
-- qualità;
-- manutenzione;
-- compatibilità della licenza.
+- that it is really needed;
+- its quality;
+- its maintenance;
+- the compatibility of its licence.
 
-Preferire sempre le librerie già presenti nel framework.
+Always prefer the libraries already present in the framework.
 
 ---
 
 # Error Handling
 
-Ogni errore deve essere.
+Every error must be.
 
-- gestito;
-- registrato;
-- comprensibile.
+- handled;
+- recorded;
+- understandable.
 
 ---
 
 # Logging
 
-Ogni operazione significativa deve poter essere registrata.
+Every significant operation must be capable of being recorded.
 
-I log non devono contenere informazioni sensibili.
+The logs must contain no sensitive information.
 
 ---
 
 # Security
 
-Ogni implementazione deve considerare.
+Every implementation must take into account.
 
-- validazione input;
-- autenticazione;
-- autorizzazione;
-- protezione delle credenziali;
+- input validation;
+- authentication;
+- authorisation;
+- protection of credentials;
 - HTTPS.
 
 ---
 
 # Performance
 
-Ottimizzare il codice solo quando necessario.
+Optimise the code only when necessary.
 
-Privilegiare sempre.
+Always favour.
 
-- chiarezza;
-- semplicità;
-- manutenibilità.
+- clarity;
+- simplicity;
+- maintainability.
 
 ---
 
 # Code Quality
 
-Il codice prodotto deve essere.
+The code produced must be.
 
-- leggibile;
-- commentato solo quando necessario;
-- facilmente testabile;
-- coerente con il resto del progetto.
+- readable;
+- commented only where necessary;
+- easy to test;
+- consistent with the rest of the project.
 
 ---
 
 # Git Workflow
 
-Ogni modifica dovrebbe interessare esclusivamente il task corrente.
+Every change should concern the current task alone.
 
-Evitare modifiche non correlate.
+Avoid unrelated changes.
 
 ---
 
 # When Requirements Are Missing
 
-Se una Specification non descrive un comportamento necessario:
+If a Specification does not describe a behaviour that is needed:
 
-- non inventare una soluzione;
-- non introdurre nuove architetture;
-- chiedere chiarimenti;
-- oppure proporre una soluzione chiaramente identificata come proposta.
+- do not invent a solution;
+- do not introduce new architectures;
+- ask for clarification;
+- or propose a solution clearly identified as a proposal.
 
 ---
 
 # Suggestions
 
-L'AI può proporre miglioramenti.
+The AI may propose improvements.
 
-Ogni proposta deve essere separata dall'implementazione richiesta.
+Every proposal must be kept separate from the implementation asked for.
 
-Le proposte non devono modificare automaticamente il progetto.
+Proposals must not modify the project automatically.
 
 ---
 
 # Final Check
 
-Prima di considerare completato un task verificare.
+Before considering a task complete, check.
 
-- conformità alle Specification;
-- rispetto dell'architettura;
-- compilazione del codice;
-- assenza di duplicazioni;
-- coerenza del naming.
+- conformity with the Specifications;
+- respect for the architecture;
+- that the code compiles;
+- the absence of duplication;
+- consistency of the naming.
 
 ---
 
 # Goal
 
-L'obiettivo dell'AI non è soltanto produrre codice funzionante.
+The objective of the AI is not merely to produce working code.
 
-L'obiettivo è contribuire allo sviluppo di un progetto coerente, modulare, documentato e facilmente manutenibile nel tempo.
+The objective is to contribute to a project that is consistent, modular,
+documented and easy to maintain over time.
 
-Ogni implementazione deve poter essere ricondotta alle Specification ufficiali del progetto.
+Every implementation must be traceable back to the official Specifications of
+the project.

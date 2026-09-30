@@ -12,38 +12,59 @@
 
 ---
 
+> **Note added on translation, 2026-09-30.** This is a dated research record
+> and is not updated as the project moves on. Its findings stand; some of the
+> questions it leaves open have since been settled. The project licence is
+> GPL-3.0 (Specification 14). The conflict between lists claiming the same
+> domain is resolved in Specification 08, by declared severity. The update
+> interval has a default of twenty-four hours. The adblock format is still not
+> supported.
+
+---
+
 # Purpose
 
-Questo documento raccoglie la ricerca sulle fonti di classificazione dei domini.
+This document gathers the research on sources for classifying domains.
 
-La Specification 08 definisce il **meccanismo** e impone che ogni lista dichiari la propria licenza. Non nomina alcuna fonte, perché la scelta richiede una verifica che non può essere svolta scrivendo una specifica.
+Specification 08 defines the **mechanism** and requires every list to declare
+its licence. It names no source, because the choice requires a verification
+that cannot be carried out by writing a specification.
 
-Il documento riporta ciò che è stato verificato il **4 agosto 2026** e propone una decisione. Non la assume.
+The document reports what was verified on **4 August 2026** and proposes a
+decision. It does not take it.
 
 ---
 
 # Method
 
-Le licenze sono state lette **dai file di licenza delle fonti**, non da riassunti di terzi.
+The licences were read **from the licence files of the sources**, not from
+third-party summaries.
 
-La distinzione non è formale. Una ricerca preliminare riportava il Block List Project come licenziato MIT; il file `LICENSE` del progetto dichiara **Unlicense**. Sono entrambe licenze permissive, ma una fonte che riferisce male un fatto verificabile non è una fonte su cui fondare una decisione legale.
+The distinction is not formal. A preliminary search reported the Block List
+Project as MIT licensed; the `LICENSE` file of the project declares
+**Unlicense**. Both are permissive, but a source that misreports a verifiable
+fact is not a source on which to found a legal decision.
 
-Ogni riga della tabella seguente proviene da un documento pubblicato dal manutentore della lista.
+Every row of the table below comes from a document published by the
+maintainer of the list.
 
 ---
 
 # What We Distribute And What We Do Not
 
-La distinzione governa l'intera analisi.
+The distinction governs the whole analysis.
 
-| Cosa | Chi lo fa | Cosa implica |
+| What | Who does it | What it implies |
 | --- | --- | --- |
-| Contenuto della lista | L'utente lo scarica sulla propria macchina | Non lo distribuiamo |
-| Nome, indirizzo, licenza dichiarata | Distribuito con il progetto | È configurazione, non contenuto |
+| The content of the list | The person downloads it onto their own machine | We do not distribute it |
+| Name, address, declared licence | Distributed with the project | It is configuration, not content |
 
-PIE **non redistribuisce alcuna lista**. Il progetto contiene un indirizzo e una dichiarazione di licenza; il file arriva sulla macchina dell'utente, su sua istruzione, e non lascia mai quella macchina.
+PIE **redistributes no list**. The project holds an address and a declaration
+of licence; the file arrives on the person's machine, at their instruction,
+and never leaves that machine.
 
-Questo riduce l'esposizione ma non la annulla. Indicare una fonte come predefinita è un'indicazione che diamo noi, e resta una responsabilità nostra.
+This reduces the exposure without removing it. Naming a source as a default is
+a pointer we give, and remains our responsibility.
 
 ---
 
@@ -51,221 +72,302 @@ Questo riduce l'esposizione ma non la annulla. Indicare una fonte come predefini
 
 ## Verified Sources
 
-| Fonte | Licenza | Verificata su | Struttura | Formato |
+| Source | Licence | Verified in | Structure | Format |
 | --- | --- | --- | --- | --- |
-| **Block List Project** | Unlicense (pubblico dominio) | `LICENSE` nel repository | 18 liste **per categoria** | hosts, solo dominio, dnsmasq, adblock |
-| **HaGeZi DNS Blocklists** | GPL-3.0 | `LICENSE` nel repository | Liste **combinate** | adblock, dnsmasq, altri |
-| **oisd** | GPL-3.0 | FAQ ufficiale, sezione licenza | Liste **combinate** | adblock, dnsmasq, wildcard |
-| **StevenBlack hosts** | MIT | `license.txt` nel repository | Lista **unificata** con varianti | hosts |
-| **Disconnect** | **CC BY-NC-SA 4.0** | `LICENSE` nel repository | Categorie esplicite in JSON | JSON |
-| **Peter Lowe (pgl.yoyo.org)** | **Non dichiarata** | Pagina policy: nessuna licenza | Lista unica | hosts, molti altri |
-| **ShadowWhisperer** | Unlicense (pubblico dominio) | `LICENSE` nel repository | 23 liste **per categoria** | solo dominio |
-| **lightswitch05 hosts** | Apache-2.0 | `LICENSE` nel repository | Liste **combinate** (`ads-and-tracking`) | hosts, altri |
-| **Phishing Army** | **CC BY-NC 4.0** | Sito ufficiale | Lista unica di phishing | solo dominio |
-| **DuckDuckGo Tracker Blocklists** | **CC BY-NC-SA 4.0** | Repository ufficiale | Categorie esplicite | JSON |
+| **Block List Project** | Unlicense (public domain) | `LICENSE` in the repository | 18 lists **by category** | hosts, domain only, dnsmasq, adblock |
+| **HaGeZi DNS Blocklists** | GPL-3.0 | `LICENSE` in the repository | **Combined** lists | adblock, dnsmasq, others |
+| **oisd** | GPL-3.0 | Official FAQ, licence section | **Combined** lists | adblock, dnsmasq, wildcard |
+| **StevenBlack hosts** | MIT | `license.txt` in the repository | **Unified** list with variants | hosts |
+| **Disconnect** | **CC BY-NC-SA 4.0** | `LICENSE` in the repository | Explicit categories in JSON | JSON |
+| **Peter Lowe (pgl.yoyo.org)** | **Not declared** | Policy page: no licence | Single list | hosts, many others |
+| **ShadowWhisperer** | Unlicense (public domain) | `LICENSE` in the repository | 23 lists **by category** | domain only |
+| **lightswitch05 hosts** | Apache-2.0 | `LICENSE` in the repository | **Combined** lists (`ads-and-tracking`) | hosts, others |
+| **Phishing Army** | **CC BY-NC 4.0** | Official site | Single phishing list | domain only |
+| **DuckDuckGo Tracker Blocklists** | **CC BY-NC-SA 4.0** | Official repository | Explicit categories | JSON |
 
 ---
 
 ## Two Exclusions Follow From Our Own Rules
 
-**Peter Lowe.** La pagina di policy descrive con precisione i criteri di inclusione e la procedura di validazione, e **non dichiara alcuna licenza**. La Specification 08 rende la licenza obbligatoria. La lista è esclusa dalla nostra regola, non da un giudizio sulla sua qualità, che è alta.
+**Peter Lowe.** The policy page describes the inclusion criteria and the
+validation procedure precisely, and **declares no licence**. Specification 08
+makes the licence mandatory. The list is excluded by our own rule, not by any
+judgement on its quality, which is high.
 
-**Disconnect.** La clausola **NonCommercial** vincola l'uso. PIE non è un prodotto commerciale, ma è software che altri possono installare in qualsiasi contesto, compreso quello di un'azienda. Indicare come predefinita una fonte che vieta l'uso commerciale significherebbe imporre all'utente una condizione che l'utente non ha scelto e probabilmente non leggerà.
+**Disconnect.** The **NonCommercial** clause constrains use. PIE is not a
+commercial product, but it is software others may install in any context,
+including a company. Naming as a default a source that forbids commercial use
+would impose on the person a condition they did not choose and will probably
+not read.
 
-Resta una lista che l'utente **può aggiungere consapevolmente**. Non una che aggiungiamo noi al posto suo.
+It remains a list the person **may add knowingly**. Not one we add on their
+behalf.
 
 ---
 
 ## A Pattern In The Ecosystem
 
-Le fonti con la metodologia più solida sul tracciamento sono **tutte NonCommercial**.
+The sources with the most solid methodology on tracking are **all
+NonCommercial**.
 
-| Fonte | Metodologia | Licenza |
+| Source | Methodology | Licence |
 | --- | --- | --- |
-| Disconnect | Verifica umana, categorie esplicite, usata da Firefox | CC BY-NC-SA 4.0 |
-| DuckDuckGo Tracker Blocklists | Misurazione automatica: crawl dei siti più visitati, osservazione di cookie e API di fingerprinting | CC BY-NC-SA 4.0 |
-| Phishing Army | Aggregazione di segnalazioni di phishing | CC BY-NC 4.0 |
+| Disconnect | Human verification, explicit categories, used by Firefox | CC BY-NC-SA 4.0 |
+| DuckDuckGo Tracker Blocklists | Automated measurement: crawling the most visited sites, observing cookies and fingerprinting APIs | CC BY-NC-SA 4.0 |
+| Phishing Army | Aggregation of phishing reports | CC BY-NC 4.0 |
 
-Non è una coincidenza. Costruire una fonte con una metodologia misurabile costa, e chi sostiene quel costo si riserva l'uso commerciale.
+This is not a coincidence. Building a source with a measurable methodology
+costs money, and whoever bears that cost reserves commercial use.
 
-La conseguenza per noi è che **la qualità metodologica e la libertà di licenza non stanno dalla stessa parte**. Le fonti liberamente utilizzabili sono curate da volontari, per segnalazione e revisione manuale; quelle costruite per misurazione sistematica sono vincolate.
+The consequence for us is that **methodological quality and freedom of licence
+are not on the same side**. The freely usable sources are curated by
+volunteers, through reports and manual review; the ones built on systematic
+measurement are constrained.
 
-Registriamo il fatto anziché scegliere la fonte migliore e sperare che la licenza non conti.
+We record the fact rather than pick the best source and hope the licence does
+not matter.
 
 ---
 
 ## A Structural Constraint We Discovered
 
-Il nostro modello associa **una categoria a una lista**. `ClassificationList` possiede una sola proprietà `Category`, e ogni dominio trovato in quella lista riceve quella categoria.
+Our model associates **one category with one list**. `ClassificationList` has a
+single `Category` property, and every domain found in that list receives that
+category.
 
-Questo esclude le liste combinate.
+This excludes combined lists.
 
-HaGeZi, oisd e StevenBlack raccolgono in un unico file domini pubblicitari, di tracciamento, di malware e di phishing. Dichiararne una come `Advertising` significherebbe attribuire quella categoria anche ai domini di malware che contiene: un'affermazione falsa prodotta dalla struttura, non da un errore.
+HaGeZi, oisd and StevenBlack gather advertising, tracking, malware and
+phishing domains into a single file. Declaring one of them as `Advertising`
+would attribute that category to the malware domains it contains too: a false
+statement produced by the structure, not by a mistake.
 
-Sono liste eccellenti per **bloccare**, che è il loro scopo. Sono inadatte a **classificare**, che è il nostro.
+They are excellent lists for **blocking**, which is their purpose. They are
+unsuited to **classifying**, which is ours.
 
-La conseguenza è netta: fra le fonti verificate, **soltanto il Block List Project e ShadowWhisperer sono compatibili con il modello**.
+The consequence is plain: among the verified sources, **only the Block List
+Project and ShadowWhisperer are compatible with the model**.
 
 ---
 
 ## The Second Source Is Upstream Of The First
 
-Il Block List Project dichiara di sincronizzarsi quotidianamente con quattordici fonti a monte, e **ShadowWhisperer è fra queste**.
+The Block List Project declares that it synchronises daily with fourteen
+upstream sources, and **ShadowWhisperer is one of them**.
 
-ShadowWhisperer dichiara l'opposto: *"I will not merge other lists"*. Le sue liste nascono da uno script personale e da aggiunte manuali.
+ShadowWhisperer declares the opposite: *"I will not merge other lists"*. Its
+lists come from a personal script and manual additions.
 
-L'ordine è quindi rovesciato rispetto all'apparenza: ShadowWhisperer è una fonte **primaria**, il Block List Project è in parte **derivato**.
+The order is therefore the reverse of the appearance: ShadowWhisperer is a
+**primary** source, the Block List Project is in part **derived**.
 
-Adottarle entrambe come predefinite darebbe l'aspetto di una pluralità di opinioni senza esserlo. Su un dominio contestato le due fonti tenderanno a concordare, perché una legge l'altra, e l'accordo verrebbe letto come conferma indipendente.
+Adopting both as defaults would give the appearance of a plurality of opinions
+without being one. On a contested domain the two would tend to agree, because
+one reads the other, and the agreement would be read as independent
+confirmation.
 
-Questo non le rende inutili insieme, e rende necessario dichiarare la relazione anziché presentarle come due pareri.
+This does not make them useless together, and it does make it necessary to
+declare the relation rather than present them as two opinions.
 
 ---
 
 ## Where The Second Source Does Not Fit
 
-Le categorie di ShadowWhisperer non coincidono con le nostre.
+The categories of ShadowWhisperer do not coincide with ours.
 
-| Lista | Contenuto dichiarato | Compatibilità |
+| List | Declared content | Compatibility |
 | --- | --- | --- |
-| `Ads` | Pubblicità, banner, notifiche push | Corrisponde a `Advertising` |
-| `Tracking` | Analytics, diagnostica, posizione, metriche | Corrisponde a `Tracking`, e copre anche l'analisi |
-| `Scam` | Truffe su prodotti, spedizioni, assistenza | Corrisponde a `Suspicious` |
-| `Malware` | Malware, **phishing**, PUP, redirector, truffatori remoti | **Incompatibile** |
-| `Cryptocurrency` | Bitcoin, Ethereum, mining, esplicitamente *non* malware | **Incompatibile** |
+| `Ads` | Advertising, banners, push notifications | Matches `Advertising` |
+| `Tracking` | Analytics, diagnostics, location, metrics | Matches `Tracking`, and covers analytics too |
+| `Scam` | Fraud around products, shipping, support | Matches `Suspicious` |
+| `Malware` | Malware, **phishing**, PUPs, redirectors, remote scammers | **Incompatible** |
+| `Cryptocurrency` | Bitcoin, Ethereum, mining, explicitly *not* malware | **Incompatible** |
 
-`Malware` unisce malware e phishing, che nel nostro modello sono due categorie distinte. Dichiarare quella lista come `Malware` attribuirebbe la categoria sbagliata a ogni dominio di phishing che contiene.
+`Malware` merges malware and phishing, which in our model are two distinct
+categories. Declaring that list as `Malware` would attribute the wrong
+category to every phishing domain it contains.
 
-`Cryptocurrency` comprende scambi e servizi legittimi, non solo cryptojacking. La nostra categoria `Cryptomining` significa un'altra cosa.
+`Cryptocurrency` includes exchanges and legitimate services, not only
+cryptojacking. Our `Cryptomining` category means something else.
 
-Restano utilizzabili tre liste su ventitré, proprio nelle categorie dove il Block List Project è già presente e dove il rischio di sbagliare è minore.
+Three lists out of twenty-three remain usable, precisely in the categories
+where the Block List Project is already present and where the risk of being
+wrong is lower.
 
-Nelle due categorie in cui un errore conta di più — malware e phishing — la seconda fonte **non aggiunge nulla di dichiarabile con verità**.
+In the two categories where a mistake costs most — malware and phishing — the
+second source **adds nothing that can be declared truthfully**.
 
 ---
 
 ## A Constraint That Does Not Apply To Us
 
-La FAQ di oisd spiega perché il progetto ha abbandonato i formati hosts e solo-dominio: quei formati non possono esprimere un carattere jolly, e quindi richiedono di elencare ogni sottodominio noto, senza poter coprire quelli ignoti o generati casualmente.
+The oisd FAQ explains why the project abandoned the hosts and domain-only
+formats: those formats cannot express a wildcard, and therefore require every
+known subdomain to be listed, with no way to cover the unknown or randomly
+generated ones.
 
-L'obiezione è corretta per chi consuma la lista riga per riga.
+The objection is correct for anyone consuming the list line by line.
 
-**Non si applica al nostro motore.** La regola di corrispondenza risale dal nome completo verso il dominio superiore: una riga `example.com` copre già `bad239ue9f59gw.example.com`, dichiarando l'esito come inferenza a confidenza `Medium`.
+**It does not apply to our engine.** The matching rule walks from the full
+name up towards the parent domain: a line `example.com` already covers
+`bad239ue9f59gw.example.com`, declaring the outcome as an inference with
+`Medium` confidence.
 
-Il formato compatto è quindi sufficiente per noi, e la scelta di risalire — presa per ragioni di onestà, per distinguere un'affermazione da una deduzione — si rivela anche la scelta tecnicamente più efficiente.
+The compact format is therefore sufficient for us, and the choice to walk
+upwards — taken for reasons of honesty, to distinguish a statement from an
+inference — turns out to be the technically more efficient one as well.
 
 ---
 
 # An Unresolved Rule In Specification 08
 
-La ricerca ha portato alla luce una lacuna nella specifica già approvata.
+The research brought to light a gap in a specification already approved.
 
-Un dominio può comparire in **più liste con categorie diverse**. Un dominio pubblicitario che traccia anche l'utente appartiene legittimamente sia a `ads` sia a `tracking`, e ShadowWhisperer lo dichiara apertamente: *"Categories like Ads and Tracking may contain domains that do both"*.
+A domain may appear in **several lists under different categories**. An
+advertising domain that also tracks belongs legitimately to both `ads` and
+`tracking`, and ShadowWhisperer says so openly: *"Categories like Ads and
+Tracking may contain domains that do both"*.
 
-La Specification 08 stabilisce che la ricerca si arresta alla prima corrispondenza. **Non stabilisce in quale ordine le liste vengano consultate.**
+Specification 08 states that the search stops at the first match. **It does not
+state in what order the lists are consulted.**
 
-Oggi l'ordine è quello in cui il motore le riceve. Un dettaglio implementativo decide quindi quale categoria l'utente vede, e la stessa installazione potrebbe mostrare categorie diverse dopo una semplice riorganizzazione del codice.
+Today the order is the one in which the engine receives them. An
+implementation detail therefore decides which category the person sees, and
+the same installation could show different categories after a simple
+reorganisation of the code.
 
-La lacuna esiste già con le sole sette liste proposte. Aggiungere fonti la rende più frequente, non la introduce.
+The gap exists already with only the seven lists proposed. Adding sources
+makes it more frequent, it does not introduce it.
 
-Va risolta prima di collegare il motore, perché riguarda ciò che viene affermato all'utente e non il modo in cui viene calcolato.
+It must be resolved before the engine is connected, because it concerns what
+is asserted to the person and not how it is computed.
 
-Tre soluzioni possibili, in ordine di costo crescente.
+Three possible solutions, in increasing order of cost.
 
-| Soluzione | Cosa comporta |
+| Solution | What it entails |
 | --- | --- |
-| Ordine dichiarato | Ogni lista possiede una priorità esplicita e configurabile. La scelta resta arbitraria ma diventa visibile e modificabile. |
-| Categoria più specifica | Si definisce una gerarchia fra categorie. Richiede di stabilire che `Malware` prevale su `Advertising`, cioè un giudizio editoriale da dichiarare. |
-| Classificazioni multiple | Un dominio porta tutte le categorie trovate. È la soluzione più veritiera e comporta una modifica al Data Model e all'interfaccia. |
+| Declared order | Every list carries an explicit, configurable priority. The choice stays arbitrary but becomes visible and changeable. |
+| Most specific category | A hierarchy between categories is defined. It requires establishing that `Malware` prevails over `Advertising`, that is, an editorial judgement to be declared. |
+| Multiple classifications | A domain carries every category found. It is the most truthful solution and entails a change to the Data Model and to the interface. |
 
-Non propongo quale adottare in questo documento. È una decisione sulla verità di ciò che mostriamo, non sull'implementazione.
+This document does not propose which to adopt. It is a decision about the
+truth of what we show, not about the implementation.
 
 ---
 
 # Methodology Of The Proposed Source
 
-Il Block List Project dichiara pubblicamente il proprio procedimento.
+The Block List Project declares its procedure publicly.
 
-| Aspetto | Quanto dichiarato |
+| Aspect | What is declared |
 | --- | --- |
-| Validazione | 151 test automatici a ogni modifica, verifica sintattica e del TLD |
-| Domini morti | Scansione settimanale e rimozione |
-| Falsi positivi | Segnalazione pubblica su GitHub, revisione umana |
-| Protezione | Elenco di domini essenziali che non possono essere bloccati |
-| Fonti a monte | 14 liste monitorate quotidianamente, fra cui HaGeZi e ShadowWhisperer |
-| Aggiornamento | Quotidiano |
+| Validation | 151 automated tests on every change, syntax and TLD checking |
+| Dead domains | Weekly scan and removal |
+| False positives | Public reporting on GitHub, human review |
+| Protection | A list of essential domains that cannot be blocked |
+| Upstream sources | 14 lists monitored daily, among them HaGeZi and ShadowWhisperer |
+| Update | Daily |
 
-Il procedimento è ispezionabile: il codice di costruzione, i test e la cronologia delle decisioni sono pubblici.
+The procedure is inspectable: the build code, the tests and the history of the
+decisions are public.
 
-È il criterio che conta più della licenza. Una lista con licenza perfetta e curatela opaca ci farebbe fare affermazioni di cui non conosciamo il fondamento.
+That criterion counts for more than the licence. A list with a perfect licence
+and opaque curation would have us make statements whose grounds we do not
+know.
 
 ---
 
 # Risks To Declare
 
-**Monocoltura.** Una sola fonte predefinita significa che i suoi errori diventano i nostri, e i suoi silenzi diventano `Unknown`. Il modello prevede più liste e l'aggiunta da parte dell'utente; la configurazione predefinita resta comunque una scelta nostra e va dichiarata come tale.
+**Monoculture.** A single default source means its mistakes become ours, and
+its silences become `Unknown`. The model provides for several lists and for
+the person adding their own; the default configuration is still our choice and
+is to be declared as such.
 
-La ricerca di una seconda fonte non ha risolto il rischio. La sola fonte compatibile e liberamente licenziata è a monte della prima, e nelle due categorie dove sbagliare costa di più non è utilizzabile. Una pluralità apparente sarebbe stata peggiore di una monocoltura dichiarata.
+The search for a second source did not resolve the risk. The only compatible
+and freely licensed source is upstream of the first, and in the two categories
+where being wrong costs most it is unusable. An apparent plurality would have
+been worse than a declared monoculture.
 
-**Licenza a monte.** Il Block List Project si dichiara di pubblico dominio e aggrega fonti fra cui HaGeZi, che è GPL-3.0. Se un elenco di domini sia opera protetta è questione controversa: negli Stati Uniti i fatti non sono coperti da copyright in assenza di selezione creativa, mentre nell'Unione Europea esiste un diritto sui generis sulle banche dati. Non siamo in grado di risolverla, e non è una consulenza legale. La registriamo perché esiste.
+**Upstream licence.** The Block List Project declares itself public domain and
+aggregates sources including HaGeZi, which is GPL-3.0. Whether a list of
+domains is a protected work is contested: in the United States facts are not
+covered by copyright absent creative selection, while in the European Union a
+sui generis database right exists. We are not in a position to resolve it, and
+this is not legal advice. We record it because it exists.
 
-**Categorie senza fonte.** Le categorie `Analytics`, `Streaming`, `Cloud` e `AI Services` non hanno alcuna lista corrispondente. La lista `tracking` del progetto dichiara di coprire "tracking/analytics", quindi i domini di analisi ricevono `Tracking`.
+**Categories without a source.** The categories `Analytics`, `Streaming`,
+`Cloud` and `AI Services` have no corresponding list. The project's `tracking`
+list declares that it covers "tracking/analytics", so analytics domains
+receive `Tracking`.
 
-Nessuna categoria viene inventata per riempire un vuoto: un dominio senza lista resta `Unknown`, che significa non classificato.
+No category is invented to fill a gap: a domain with no list stays `Unknown`,
+which means not classified.
 
 ---
 
 # Proposal
 
-Adottare come predefinite **sette liste del Block List Project**, nel formato solo-dominio.
+Adopt as defaults **seven lists of the Block List Project**, in the
+domain-only format.
 
-| Lista | Categoria PIE | Contenuto dichiarato |
+| List | PIE category | Declared content |
 | --- | --- | --- |
-| `ads-nl.txt` | `Advertising` | Server pubblicitari |
-| `tracking-nl.txt` | `Tracking` | Tracciamento e analisi |
-| `malware-nl.txt` | `Malware` | Host di malware |
-| `phishing-nl.txt` | `Phishing` | Siti di phishing |
-| `crypto-nl.txt` | `Cryptomining` | Cryptojacking e truffe su criptovalute |
-| `scam-nl.txt` | `Suspicious` | Siti truffaldini |
-| `abuse-nl.txt` | `Suspicious` | Siti ingannevoli o abusivi |
+| `ads-nl.txt` | `Advertising` | Advertising servers |
+| `tracking-nl.txt` | `Tracking` | Tracking and analytics |
+| `malware-nl.txt` | `Malware` | Malware hosts |
+| `phishing-nl.txt` | `Phishing` | Phishing sites |
+| `crypto-nl.txt` | `Cryptomining` | Cryptojacking and cryptocurrency scams |
+| `scam-nl.txt` | `Suspicious` | Scam sites |
+| `abuse-nl.txt` | `Suspicious` | Deceptive or abusive sites |
 
-Motivazioni.
+Reasons.
 
-* È l'unica fonte verificata **segmentata per categoria**, e quindi l'unica compatibile con il modello.
-* La licenza Unlicense non impone alcuna condizione all'utente.
-* Il formato solo-dominio è già compreso dal lettore, verificato da diciotto prove.
-* Il procedimento di curatela è pubblico e verificabile.
+* It is the only verified source **segmented by category**, and therefore the
+  only one compatible with the model.
+* The Unlicense imposes no condition on the person.
+* The domain-only format is already understood by the reader, verified by
+  eighteen tests.
+* The curation procedure is public and verifiable.
 
-Le liste `facebook`, `twitter`, `tiktok` e `whatsapp` corrisponderebbero alla categoria `Social`, e **non sono proposte**: elencano i domini di servizi che l'utente potrebbe usare deliberatamente, e classificarli come minaccia sarebbe un giudizio editoriale che non spetta a noi. Restano disponibili come liste aggiungibili.
+The lists `facebook`, `twitter`, `tiktok` and `whatsapp` would correspond to
+the `Social` category and are **not proposed**: they list the domains of
+services the person may use deliberately, and classifying them as a threat
+would be an editorial judgement that is not ours to make. They remain
+available as lists the person can add.
 
-Le liste `porn`, `gambling`, `drugs`, `piracy` e `torrent` riguardano il **contenuto**, non la privacy né la sicurezza. Sono fuori dallo scopo del progetto.
+The lists `porn`, `gambling`, `drugs`, `piracy` and `torrent` concern
+**content**, not privacy or security. They are outside the scope of the
+project.
 
 ---
 
 # What This Document Does Not Decide
 
-* Se adottare la proposta. È una decisione da assumere esplicitamente.
-* La licenza del progetto stesso, che resta da scegliere.
-* L'intervallo di aggiornamento predefinito.
-* Il lettore debba imparare il formato adblock, oggi non supportato.
-* **Come risolvere il conflitto fra liste che rivendicano lo stesso dominio.** È la decisione più urgente: riguarda ciò che viene affermato all'utente, e la lacuna esiste già oggi.
+* Whether to adopt the proposal. It is a decision to be taken explicitly.
+* The licence of the project itself, which remains to be chosen.
+* The default update interval.
+* Whether the reader should learn the adblock format, today unsupported.
+* **How to resolve the conflict between lists claiming the same domain.** It
+  is the most urgent decision: it concerns what is asserted to the person, and
+  the gap exists already today.
 
 ---
 
 # Sources
 
-Tutte consultate il 2026-08-04.
+All consulted on 2026-08-04.
 
-* Block List Project — [repository](https://github.com/blocklistproject/Lists), [elenco delle liste](https://blocklistproject.github.io/Lists/), [licenza](https://raw.githubusercontent.com/blocklistproject/Lists/master/LICENSE)
-* ShadowWhisperer — [repository](https://github.com/ShadowWhisperer/BlockLists), [categorie](https://raw.githubusercontent.com/ShadowWhisperer/BlockLists/master/README.md), [licenza](https://raw.githubusercontent.com/ShadowWhisperer/BlockLists/master/LICENSE)
-* lightswitch05 hosts — [licenza](https://raw.githubusercontent.com/lightswitch05/hosts/master/LICENSE)
-* Phishing Army — [sito ufficiale](https://phishing.army/)
+* Block List Project — [repository](https://github.com/blocklistproject/Lists), [list index](https://blocklistproject.github.io/Lists/), [licence](https://raw.githubusercontent.com/blocklistproject/Lists/master/LICENSE)
+* ShadowWhisperer — [repository](https://github.com/ShadowWhisperer/BlockLists), [categories](https://raw.githubusercontent.com/ShadowWhisperer/BlockLists/master/README.md), [licence](https://raw.githubusercontent.com/ShadowWhisperer/BlockLists/master/LICENSE)
+* lightswitch05 hosts — [licence](https://raw.githubusercontent.com/lightswitch05/hosts/master/LICENSE)
+* Phishing Army — [official site](https://phishing.army/)
 * DuckDuckGo Tracker Blocklists — [repository](https://github.com/duckduckgo/tracker-blocklists)
-* HaGeZi DNS Blocklists — [repository](https://github.com/hagezi/dns-blocklists), [licenza](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/LICENSE)
-* oisd — [FAQ, sezione licenza](https://oisd.nl/faq)
-* StevenBlack hosts — [licenza](https://raw.githubusercontent.com/StevenBlack/hosts/master/license.txt)
-* Disconnect — [licenza](https://raw.githubusercontent.com/disconnectme/disconnect-tracking-protection/master/LICENSE)
-* Peter Lowe — [policy di inclusione](https://pgl.yoyo.org/adservers/policy.php)
+* HaGeZi DNS Blocklists — [repository](https://github.com/hagezi/dns-blocklists), [licence](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/LICENSE)
+* oisd — [FAQ, licence section](https://oisd.nl/faq)
+* StevenBlack hosts — [licence](https://raw.githubusercontent.com/StevenBlack/hosts/master/license.txt)
+* Disconnect — [licence](https://raw.githubusercontent.com/disconnectme/disconnect-tracking-protection/master/LICENSE)
+* Peter Lowe — [inclusion policy](https://pgl.yoyo.org/adservers/policy.php)
 
 ---
 

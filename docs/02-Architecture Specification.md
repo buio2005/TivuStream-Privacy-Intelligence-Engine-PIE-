@@ -8,21 +8,24 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-26
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce l'architettura generale del Privacy Intelligence Engine (PIE) e le relazioni tra i principali componenti del sistema.
+This specification defines the general architecture of the Privacy
+Intelligence Engine (PIE) and the relations between the principal components
+of the system.
 
 ---
 
 # Architectural Overview
 
-L'architettura del progetto è suddivisa in livelli indipendenti.
+The architecture is divided into independent layers.
 
-Ogni livello possiede responsabilità specifiche e comunica esclusivamente attraverso interfacce ben definite.
+Each layer has specific responsibilities and communicates only through well
+defined interfaces.
 
 ```text
                     Data Sources
@@ -57,57 +60,61 @@ Threat Engine     Device Engine      NPSS Engine
 
 ## Data Sources
 
-Livello responsabile della produzione dei dati.
+The layer responsible for producing data.
 
-Il Privacy Intelligence Engine non dipende da una specifica sorgente dati.
+The Privacy Intelligence Engine does not depend on any specific data source.
 
 ---
 
 ## Adapter Layer
 
-Ogni Data Source utilizza un Adapter dedicato.
+Every Data Source has its own Adapter.
 
-L'Adapter converte i dati nel formato interno definito dal Unified Data Model.
+The Adapter converts the data into the internal format defined by the Unified
+Data Model.
 
 ---
 
 ## Unified Data Model
 
-Il Data Model rappresenta il linguaggio comune utilizzato dal Core.
+The Data Model is the common language used by the Core.
 
-Ogni componente interno comunica esclusivamente attraverso questo modello.
+Every internal component communicates only through this model.
 
 ---
 
 ## Privacy Intelligence Engine
 
-Il Core del sistema.
+The Core of the system.
 
-Coordina tutte le attività di analisi e produce gli oggetti utilizzati dalle applicazioni.
+It coordinates all analysis and produces the objects the applications use.
 
 ---
 
 ## REST API Layer
 
-Espone le informazioni elaborate dal Core.
+Exposes the information processed by the Core.
 
-Rappresenta l'unico punto di accesso ufficiale ai dati.
+It is the only official point of access to the data.
 
 ---
 
 ## Frontend
 
-Visualizza le informazioni prodotte dal Core.
+Displays the information produced by the Core.
 
-Il Frontend non esegue elaborazioni.
+The Frontend performs no processing.
 
-In un'installazione i suoi file compilati sono **serviti dal motore**, sullo stesso indirizzo dell'API: un solo indirizzo, un solo certificato, nessuna regola fra origini diverse (Transport Security Specification). Il Frontend continua a comunicare con il Core esclusivamente attraverso le REST API.
+In an installation its compiled files are **served by the engine**, on the same
+address as the API: one address, one certificate, no rules between different
+origins (Transport Security Specification). The Frontend still communicates
+with the Core only through the REST API.
 
 ---
 
 # Core Components
 
-Il Privacy Intelligence Engine è composto dai seguenti moduli.
+The Privacy Intelligence Engine is made up of the following modules.
 
 * Threat Engine
 * Device Engine
@@ -115,23 +122,23 @@ Il Privacy Intelligence Engine è composto dai seguenti moduli.
 * Recommendation Engine
 * Alert Engine
 
-Ogni modulo possiede una responsabilità specifica.
+Each module has one specific responsibility.
 
 ---
 
 # Data Flow
 
-Il sistema utilizza due flussi distinti.
+The system uses two distinct flows.
 
-I due flussi non si sovrappongono e possiedono responsabilità differenti.
+The two do not overlap and carry different responsibilities.
 
 ---
 
 ## Acquisition Flow
 
-Rappresenta l'acquisizione periodica dei dati.
+The periodic acquisition of data.
 
-Viene innescato dallo Scheduler e orchestrato dall'Adapter Manager.
+It is triggered by the Scheduler and orchestrated by the Adapter Manager.
 
 ```text
 Scheduler
@@ -158,18 +165,18 @@ Privacy Intelligence Engine
 
 ↓
 
-Risultati
+Results
 ```
 
-Il Core riceve esclusivamente dati già espressi nel Unified Data Model.
+The Core receives only data already expressed in the Unified Data Model.
 
-Il Core non partecipa all'orchestrazione dell'acquisizione.
+The Core takes no part in orchestrating the acquisition.
 
 ---
 
 ## Query Flow
 
-Rappresenta una richiesta proveniente dal Frontend.
+A request coming from the Frontend.
 
 ```text
 Frontend
@@ -180,12 +187,14 @@ REST API
 
 ↓
 
-Risultati prodotti dal Core
+Results already produced by the Core
 ```
 
-Il Query Flow non attiva alcuna comunicazione verso gli Adapter o le Data Sources.
+The Query Flow triggers no communication towards the Adapters or the Data
+Sources.
 
-Le richieste del Frontend restituiscono esclusivamente risultati già elaborati.
+Requests from the Frontend return only results that have already been
+processed.
 
 ---
 
@@ -193,96 +202,97 @@ Le richieste del Frontend restituiscono esclusivamente risultati già elaborati.
 
 ## Data Sources
 
-Producono informazioni.
+Produce information.
 
 ---
 
 ## Adapters
 
-Convertono i dati nel formato interno.
+Convert the data into the internal format.
 
 ---
 
 ## Core
 
-Analizza.
+Analyses.
 
-Correla.
+Correlates.
 
-Classifica.
+Classifies.
 
-Valuta.
+Judges.
 
 ---
 
 ## REST API
 
-Espone i dati.
+Exposes the data.
 
 ---
 
 ## Frontend
 
-Visualizza le informazioni.
+Displays the information.
 
 ---
 
 # Communication
 
-I moduli del Core comunicano attraverso il modello dati condiviso.
+The modules of the Core communicate through the shared data model.
 
-Nessun modulo comunica direttamente con il Frontend o con i backend esterni.
+No module communicates directly with the Frontend or with external backends.
 
 ---
 
 # Scalability
 
-L'architettura consente l'aggiunta di:
+The architecture allows the addition of:
 
-* nuove Data Sources;
-* nuovi Adapter;
-* nuovi Engine;
-* nuove applicazioni.
+* new Data Sources;
+* new Adapters;
+* new Engines;
+* new applications.
 
-L'estensione del sistema non modifica l'architettura principale.
+Extending the system does not change the principal architecture.
 
 ---
 
 # Backend Independence
 
-Il Core non contiene dipendenze verso Technitium o altri provider.
+The Core holds no dependency on Technitium or on any other provider.
 
-Ogni integrazione viene implementata esclusivamente attraverso il relativo Adapter.
+Every integration is implemented solely through its own Adapter.
 
 ---
 
 # Design Principles
 
-L'architettura segue i seguenti principi.
+The architecture follows these principles.
 
-* Modularità
-* Indipendenza
-* Scalabilità
-* Semplicità
-* Estendibilità
-* Riutilizzabilità
+* Modularity
+* Independence
+* Scalability
+* Simplicity
+* Extensibility
+* Reusability
 
 ---
 
 # Architectural Constraints
 
-Le seguenti regole costituiscono vincoli architetturali.
+The following rules are architectural constraints.
 
-* Il Frontend comunica esclusivamente con le REST API.
-* Il Core non comunica direttamente con le Data Sources.
-* Il Core non orchestra l'acquisizione dei dati.
-* L'acquisizione è orchestrata dall'Adapter Manager e innescata dallo Scheduler.
-* Il Query Flow non raggiunge mai le Data Sources.
-* Ogni Data Source implementa un Adapter dedicato.
-* Tutte le elaborazioni vengono eseguite dal Core.
-* Il Unified Data Model rappresenta l'unico formato dati interno.
-* Nessuna logica di business è presente nel Frontend.
-* Nessuna logica di presentazione è presente nel Core.
+* The Frontend communicates only with the REST API.
+* The Core does not communicate directly with the Data Sources.
+* The Core does not orchestrate the acquisition of data.
+* Acquisition is orchestrated by the Adapter Manager and triggered by the
+  Scheduler.
+* The Query Flow never reaches the Data Sources.
+* Every Data Source implements its own Adapter.
+* All processing is performed by the Core.
+* The Unified Data Model is the only internal data format.
+* No business logic is present in the Frontend.
+* No presentation logic is present in the Core.
 
 ---
 

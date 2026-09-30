@@ -8,182 +8,199 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questa specifica definisce la visione, gli obiettivi e i principi fondamentali del progetto **TivuStream Privacy Intelligence Engine (PIE)**.
+This specification defines the vision, the objectives and the founding
+principles of the **TivuStream Privacy Intelligence Engine (PIE)**.
 
-Costituisce il riferimento strategico dell'intero ecosistema e guida tutte le decisioni progettuali e di sviluppo.
+It is the strategic reference for the whole ecosystem and guides every design
+and development decision.
 
 ---
 
 # Vision
 
-La privacy digitale è diventata un argomento sempre più complesso.
+Digital privacy has become an increasingly complex subject.
 
-Molti strumenti mettono a disposizione enormi quantità di dati tecnici, ma pochi riescono a trasformarli in informazioni realmente comprensibili.
+Many tools make vast quantities of technical data available, and few manage to
+turn it into information anyone can actually understand.
 
-Il Privacy Intelligence Engine nasce per colmare questa distanza.
+The Privacy Intelligence Engine exists to close that distance.
 
-L'obiettivo non è mostrare più dati.
+The objective is not to show more data.
 
-L'obiettivo è trasformare dati complessi in informazioni utili, chiare e utilizzabili per prendere decisioni consapevoli.
+The objective is to turn complex data into information that is useful, clear
+and usable for making informed decisions.
 
 ---
 
 # Mission
 
-Costruire una piattaforma modulare capace di raccogliere informazioni provenienti da differenti sorgenti, analizzarle attraverso un modello unificato e restituire all'utente una visione semplice, affidabile e coerente del proprio livello di privacy e sicurezza.
+To build a modular platform able to gather information from different
+sources, analyse it through a unified model, and return to the person a
+simple, dependable and coherent view of their own level of privacy and
+security.
 
 ---
 
 # Long-Term Vision
 
-PIE rappresenta il motore comune di tutti gli strumenti TivuStream dedicati alla privacy.
+PIE is the common engine of every TivuStream tool dedicated to privacy.
 
-Ogni nuova applicazione condividerà:
+Each new application will share:
 
-* lo stesso modello dati;
-* gli stessi criteri di analisi;
-* gli stessi algoritmi di classificazione;
-* la stessa filosofia progettuale.
+* the same data model;
+* the same criteria of analysis;
+* the same classification algorithms;
+* the same design philosophy.
 
-Questo permetterà di costruire un ecosistema coerente anziché una raccolta di strumenti indipendenti.
+This makes it possible to build a coherent ecosystem rather than a collection
+of independent tools.
 
 ---
 
 # Design Principles
 
-Ogni componente del progetto segue i seguenti principi.
+Every component of the project follows these principles.
 
 ## Privacy First
 
-La protezione dei dati dell'utente rappresenta il requisito principale.
+Protecting the data of the person using the tool is the primary requirement.
 
-Le elaborazioni devono essere eseguite localmente ogni volta che ciò risulta tecnicamente possibile.
+Processing is to be performed locally whenever that is technically possible.
 
 ---
 
 ## Local First
 
-Il progetto privilegia l'elaborazione locale.
+The project favours local processing.
 
-L'utilizzo di servizi esterni deve rappresentare un'eccezione e non la regola.
+Using external services must be the exception and not the rule.
 
 ---
 
 ## Self Hosted
 
-Il software è progettato per essere installato e gestito direttamente dall'utente.
+The software is designed to be installed and managed by the person using it.
 
-L'infrastruttura rimane sotto il controllo del proprietario.
+The infrastructure stays under the control of its owner.
 
 ---
 
 ## Simplicity
 
-L'interfaccia deve privilegiare la comprensione.
+The interface must favour understanding.
 
-Le informazioni tecniche vengono presentate solo quando aggiungono reale valore.
+Technical information is presented only where it adds real value.
 
 ---
 
 ## Transparency
 
-Ogni valutazione prodotta dal sistema deve poter essere spiegata.
+Every judgement the system produces must be explainable.
 
-L'utente deve comprendere come il sistema è arrivato ad una determinata conclusione.
+The person must be able to understand how the system reached a given
+conclusion.
 
 ---
 
 ## Independence
 
-Il Core non deve dipendere da una singola tecnologia.
+The Core must not depend on any single technology.
 
-Ogni backend rappresenta esclusivamente una sorgente dati.
+Every backend is a data source and nothing more.
 
 ---
 
 ## Modularity
 
-Ogni componente possiede responsabilità ben definite.
+Every component has well defined responsibilities.
 
-Nuovi moduli possono essere aggiunti senza modificare il funzionamento del Core.
+New modules can be added without changing how the Core works.
 
 ---
 
 # Project Scope
 
-Il Privacy Intelligence Engine non è un DNS Server.
+The Privacy Intelligence Engine is not a DNS Server.
 
-Non è un firewall.
+It is not a firewall.
 
-Non è un antivirus.
+It is not an antivirus.
 
-Non è un sistema di intrusion detection.
+It is not an intrusion detection system.
 
-Il suo ruolo è analizzare, correlare e interpretare informazioni provenienti da sistemi specializzati.
+Its role is to analyse, correlate and interpret information coming from
+specialised systems.
 
 ---
 
 # First Official Module
 
-Il primo modulo sviluppato sopra il Privacy Intelligence Engine è **Network Privacy**.
+The first module built on top of the Privacy Intelligence Engine is **Network
+Privacy**.
 
-Network Privacy utilizza Technitium DNS Server come primo backend supportato.
+Network Privacy uses Technitium DNS Server as its first supported backend.
 
-Technitium raccoglie ed espone i dati DNS.
+Technitium gathers and exposes the DNS data.
 
-PIE li interpreta.
+PIE interprets it.
 
-Network Privacy li presenta all'utente.
+Network Privacy presents it to the person.
 
-Questa separazione costituisce uno dei principi fondamentali dell'architettura.
+This separation is one of the founding principles of the architecture.
 
 ---
 
 # Target Users
 
-Il progetto è rivolto a:
+The project addresses:
 
-* utenti attenti alla privacy;
-* professionisti;
-* amministratori di piccole reti;
-* sviluppatori;
-* appassionati di tecnologia.
+* people who care about their privacy;
+* professionals;
+* administrators of small networks;
+* developers;
+* technology enthusiasts.
 
-L'interfaccia deve comunque rimanere comprensibile anche agli utenti meno esperti.
+The interface must nonetheless remain understandable to less experienced
+users.
 
 ---
 
 # Success Criteria
 
-Il progetto può considerarsi efficace quando riesce a:
+The project can be considered effective when it manages to:
 
-* semplificare informazioni complesse;
-* aiutare l'utente a comprendere la propria rete;
-* suggerire azioni concrete;
-* mantenere un'elevata qualità tecnica senza sacrificare la semplicità d'uso.
+* simplify complex information;
+* help the person understand their own network;
+* suggest concrete actions;
+* maintain high technical quality without sacrificing ease of use.
 
 ---
 
 # Future Evolution
 
-L'architettura è progettata per supportare nel tempo nuovi moduli e nuove sorgenti dati.
+The architecture is designed to support new modules and new data sources over
+time.
 
-L'espansione dell'ecosistema non deve richiedere modifiche sostanziali al Core.
+Expanding the ecosystem must not require substantial changes to the Core.
 
-Ogni nuovo componente dovrà integrarsi attraverso il Data Model e le API definite nelle specifiche del progetto.
+Every new component is to integrate through the Data Model and the APIs
+defined in the specifications of the project.
 
 ---
 
 # Vision Statement
 
-**TivuStream Privacy Intelligence Engine** non nasce per sostituire strumenti esistenti.
+**TivuStream Privacy Intelligence Engine** does not exist to replace existing
+tools.
 
-Nasce per renderli più comprensibili, più accessibili e più utili.
+It exists to make them more understandable, more accessible and more useful.
 
-L'obiettivo finale è costruire un ecosistema nel quale privacy e sicurezza possano essere monitorate e comprese attraverso un linguaggio semplice, mantenendo al tempo stesso un'architettura tecnica solida, modulare e indipendente.
+The final objective is an ecosystem in which privacy and security can be
+monitored and understood through simple language, while resting on a technical
+architecture that is solid, modular and independent.

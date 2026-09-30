@@ -8,25 +8,26 @@
 
 **Status:** Approved
 
-**Last Updated:** 2026-09-19
+**Last Updated:** 2026-09-30
 
 ---
 
 # Purpose
 
-Questo documento definisce il glossario ufficiale del progetto.
+This document defines the official glossary of the project.
 
-Ogni termine riportato in questa specifica rappresenta la nomenclatura ufficiale da utilizzare nella documentazione, nel codice sorgente, nelle API e nell'interfaccia utente.
+Every term recorded here is the official nomenclature to be used in the
+documentation, in the source code, in the APIs and in the user interface.
 
-L'obiettivo è garantire coerenza terminologica durante l'intero ciclo di sviluppo.
+The objective is terminological consistency throughout the development cycle.
 
 ---
 
 # Naming Convention
 
-Il progetto utilizza esclusivamente i termini definiti in questo documento.
+The project uses only the terms defined in this document.
 
-Termini differenti che descrivono lo stesso concetto devono essere evitati.
+Different terms describing the same concept are to be avoided.
 
 ---
 
@@ -34,13 +35,13 @@ Termini differenti che descrivono lo stesso concetto devono essere evitati.
 
 **TivuStream Privacy Intelligence Engine**
 
-Acronimo ufficiale:
+Official acronym:
 
 **PIE**
 
-Questo rappresenta il nome del progetto.
+This is the name of the project.
 
-Non deve essere abbreviato in altre forme.
+It is not to be abbreviated in any other form.
 
 ---
 
@@ -48,9 +49,10 @@ Non deve essere abbreviato in altre forme.
 
 **Network Privacy**
 
-Network Privacy rappresenta il primo prodotto sviluppato sopra il Privacy Intelligence Engine.
+Network Privacy is the first product built on top of the Privacy Intelligence
+Engine.
 
-Non rappresenta il nome del progetto.
+It is not the name of the project.
 
 ---
 
@@ -58,29 +60,31 @@ Non rappresenta il nome del progetto.
 
 **Network Privacy & Security Score**
 
-Acronimo ufficiale:
+Official acronym:
 
 **NPSS**
 
-NPSS rappresenta il principale indicatore prodotto dal Privacy Intelligence Engine.
+The NPSS is the principal indicator produced by the Privacy Intelligence
+Engine.
 
-Sostituisce il precedente termine "Privacy Score".
+It replaces the earlier term "Privacy Score".
 
 ---
 
 # Core
 
-Il termine **Core** identifica il motore principale del Privacy Intelligence Engine.
+The term **Core** identifies the main engine of the Privacy Intelligence
+Engine.
 
-Comprende esclusivamente i moduli responsabili dell'elaborazione dei dati.
+It comprises only the modules responsible for processing data.
 
 ---
 
 # Data Source
 
-Qualsiasi sistema esterno che produce dati.
+Any external system that produces data.
 
-Esempi:
+Examples:
 
 * Technitium DNS Server
 * Privacy Assistant
@@ -91,113 +95,128 @@ Esempi:
 
 # Adapter
 
-Componente incaricato di convertire i dati provenienti da una Data Source nel formato interno del progetto.
+The component that converts data coming from a Data Source into the internal
+format of the project.
 
-Ogni Data Source possiede un Adapter dedicato.
+Each Data Source has its own Adapter.
 
 ---
 
 # Unified Data Model
 
-Modello dati interno utilizzato dal Core.
+The internal data model used by the Core.
 
-Tutti i moduli comunicano esclusivamente attraverso questo modello.
+All modules communicate exclusively through this model.
 
 ---
 
 # Capability
 
-Dichiarazione di ciò che una Data Source è **in grado di fornire**.
+A declaration of what a Data Source **is able to provide**.
 
-Il vocabolario delle capability coincide con i nomi delle entità del Unified Data Model.
+The vocabulary of capabilities coincides with the names of the entities of the
+Unified Data Model.
 
-Una capability non descrive le funzionalità del prodotto esterno: le funzionalità di un backend costituiscono dati da analizzare, non capacità strutturali.
+A capability does not describe the features of the external product: the
+features a backend offers are data to be analysed, not structural abilities.
 
-L'assenza di una capability significa che il dato non è misurabile, non che sia pari a zero.
+The absence of a capability means the data is **not measurable**, not that it
+is zero.
 
 ---
 
 # Storage
 
-Componente del Backend responsabile della conservazione nel tempo delle acquisizioni e dei risultati prodotti dal Core.
+The Backend component responsible for keeping acquisitions and the results
+produced by the Core over time.
 
-Non esegue analisi e non è conosciuto dal Core.
+It performs no analysis and is not known to the Core.
 
 ---
 
 # Observation Period
 
-Intervallo temporale fisso al quale sono allineate le acquisizioni.
+The fixed interval acquisitions are aligned to.
 
-Un'acquisizione non è un insieme di eventi ma l'osservazione di un intervallo: due osservazioni di intervalli sovrapposti non sono sommabili.
+An acquisition is not a set of events but the observation of an interval: two
+observations of overlapping intervals cannot be added together.
 
-Una nuova osservazione dello stesso periodo sostituisce la precedente. Un periodo concluso è immutabile.
+A further observation of the same period replaces the previous one. An elapsed
+period is immutable.
 
 ---
 
 # Measurement Quality
 
-Dichiarazione di **come** un valore è conosciuto.
+A declaration of **how** a value is known.
 
-Un valore può essere esatto, un limite inferiore, vincolato a un periodo oppure dedotto.
+A value may be exact, a lower bound, bounded to a period, or inferred.
 
-Un valore conosciuto con minore precisione viene qualificato, non cancellato e non arrotondato al plausibile.
+A value known with less precision is qualified — not discarded, and not
+rounded to the plausible.
 
 ---
 
 # Identity Basis
 
-Fondamento sul quale è stata stabilita l'identità di un dispositivo.
+The ground on which the identity of a device was established.
 
-L'identità basata sull'indirizzo hardware è stabile; quella basata sull'indirizzo di rete cambia quando cambia l'indirizzo.
+An identity based on the hardware address is stable; one based on the network
+address changes when the address changes.
 
 ---
 
 # Coverage
 
-Porzione del sistema di valutazione effettivamente osservata nel calcolo del Network Privacy & Security Score.
+The portion of the evaluation system actually observed while computing the
+Network Privacy & Security Score.
 
-Si esprime come somma dei punteggi ottenibili di tutte le aree, su un massimo di 100.
+It is expressed as the sum of the obtainable points of every area, out of a
+maximum of 100.
 
-Un'area può essere misurata per intero, in parte, o non essere misurabile. La porzione non osservata è esclusa dal calcolo e non può migliorare il punteggio.
+An area may be measured in full, measured in part, or not measurable at all.
+The unobserved portion is excluded from the calculation and cannot improve the
+score.
 
-Punteggi con copertura differente non sono confrontabili.
+Scores with different coverage are not comparable.
 
 ---
 
 # Classification List
 
-Elenco di domini associati a una categoria, conservato localmente.
+A list of domains associated with a category, held locally.
 
-Ogni lista dichiara la propria provenienza, la propria licenza e il momento dell'ultimo aggiornamento riuscito.
+Every list declares where it comes from, its licence, and the moment of its
+last successful update.
 
 ---
 
 # Classification Freshness
 
-Età della lista dalla quale proviene una classificazione.
+The age of the list a classification comes from.
 
-Una classificazione locale invecchia. Il sistema ne dichiara l'età anziché presentarla come attuale.
+A local classification grows old. The system declares its age rather than
+presenting it as current.
 
 ---
 
 # Network Snapshot
 
-Rappresentazione completa dello stato della rete in un determinato momento.
+A complete representation of the state of the network at a given moment.
 
-Costituisce la base per:
+It is the basis for:
 
-* report;
-* confronti temporali;
-* analisi storiche.
+* reports;
+* comparisons over time;
+* historical analysis.
 
 ---
 
 # Device
 
-Qualsiasi dispositivo identificato dal sistema.
+Any device identified by the system.
 
-Esempi:
+Examples:
 
 * Desktop
 * Notebook
@@ -211,97 +230,98 @@ Esempi:
 
 # Domain
 
-Dominio osservato dal sistema durante l'analisi.
+A domain observed by the system during the analysis.
 
-Un dominio è indipendente dal dispositivo che lo ha contattato.
+A domain is independent of the device that contacted it.
 
 ---
 
 # Domain Activity
 
-Relazione tra un Device e un Domain.
+The relation between a Device and a Domain.
 
-Descrive il comportamento osservato.
+It describes the behaviour observed.
 
 ---
 
 # Threat
 
-Evento o comportamento classificato come potenzialmente pericoloso.
+An event or a behaviour classified as potentially dangerous.
 
-Le categorie sono definite nella Threat Intelligence Specification.
+The categories are defined in the Threat Intelligence Specification.
 
 ---
 
 # Alert
 
-Notifica generata automaticamente dal Privacy Intelligence Engine.
+A notification generated automatically by the Privacy Intelligence Engine.
 
-Gli Alert possono avere differenti livelli di severità.
+Alerts may carry different levels of severity.
 
 ---
 
 # Recommendation
 
-Suggerimento prodotto dal sistema in seguito all'analisi.
+A suggestion produced by the system following an analysis.
 
-Ogni Recommendation deve essere giustificata da uno o più eventi.
+Every Recommendation must be justified by one or more events.
 
 ---
 
 # Event
 
-Messaggio interno utilizzato dai moduli del Core per comunicare tra loro.
+An internal message used by the modules of the Core to communicate with one
+another.
 
-Gli Event non vengono esposti direttamente al frontend.
+Events are not exposed directly to the frontend.
 
 ---
 
 # Backend
 
-Software esterno che fornisce dati al Privacy Intelligence Engine.
+External software that provides data to the Privacy Intelligence Engine.
 
-Technitium rappresenta il primo backend supportato.
+Technitium is the first backend supported.
 
 ---
 
 # Frontend
 
-Interfaccia utente del progetto.
+The user interface of the project.
 
-Il Frontend non contiene logica di analisi.
+The Frontend contains no analysis logic.
 
 ---
 
 # REST API
 
-Interfaccia pubblica del Privacy Intelligence Engine.
+The public interface of the Privacy Intelligence Engine.
 
-Rappresenta l'unico punto di accesso ufficiale ai dati elaborati dal Core.
+It is the only official point of access to the data processed by the Core.
 
 ---
 
 # Dashboard
 
-Interfaccia principale dell'applicazione.
+The main interface of the application.
 
-Visualizza esclusivamente informazioni prodotte dal Core.
+It displays only information produced by the Core.
 
 ---
 
 # Core Modules
 
-I moduli che compongono il Core utilizzano tutti il suffisso **Engine**.
+The modules that make up the Core all carry the suffix **Engine**.
 
-Questa forma rappresenta la nomenclatura ufficiale del progetto.
+This form is the official nomenclature of the project.
 
 ---
 
 # Threat Engine
 
-Modulo responsabile della classificazione delle minacce.
+The module responsible for classifying threats.
 
-Acronimo suggerito:
+Suggested acronym:
 
 **TE**
 
@@ -309,9 +329,9 @@ Acronimo suggerito:
 
 # Device Engine
 
-Modulo responsabile dell'analisi dei dispositivi.
+The module responsible for analysing devices.
 
-Acronimo suggerito:
+Suggested acronym:
 
 **DE**
 
@@ -319,9 +339,9 @@ Acronimo suggerito:
 
 # NPSS Engine
 
-Modulo responsabile del calcolo del Network Privacy & Security Score.
+The module responsible for computing the Network Privacy & Security Score.
 
-Acronimo suggerito:
+Suggested acronym:
 
 **NE**
 
@@ -329,9 +349,9 @@ Acronimo suggerito:
 
 # Alert Engine
 
-Modulo responsabile della generazione degli Alert.
+The module responsible for generating Alerts.
 
-Acronimo suggerito:
+Suggested acronym:
 
 **AE**
 
@@ -339,9 +359,9 @@ Acronimo suggerito:
 
 # Recommendation Engine
 
-Modulo responsabile della produzione delle raccomandazioni.
+The module responsible for producing recommendations.
 
-Acronimo suggerito:
+Suggested acronym:
 
 **RE**
 
@@ -349,17 +369,17 @@ Acronimo suggerito:
 
 # Threat Intelligence
 
-Materia trattata dal Threat Engine.
+The subject matter the Threat Engine deals with.
 
-Il termine identifica la disciplina, non il componente software.
+The term identifies the discipline, not the software component.
 
-Come nome di modulo deve essere utilizzato **Threat Engine**.
+As the name of a module, **Threat Engine** is to be used.
 
 ---
 
 # Acquisition Flow
 
-Percorso seguito dai dati durante l'acquisizione periodica.
+The path data follows during periodic acquisition.
 
 ```text
 Scheduler
@@ -385,15 +405,15 @@ Unified Data Model
 Core
 ```
 
-L'acquisizione è orchestrata dall'Adapter Manager.
+Acquisition is orchestrated by the Adapter Manager.
 
-Il Core non partecipa all'orchestrazione.
+The Core takes no part in the orchestration.
 
 ---
 
 # Query Flow
 
-Percorso seguito da una richiesta proveniente dal Frontend.
+The path a request coming from the Frontend follows.
 
 ```text
 Frontend
@@ -404,86 +424,96 @@ REST API
 
 ↓
 
-Risultati prodotti dal Core
+Results already produced by the Core
 ```
 
-Il Query Flow non attiva alcuna comunicazione verso le Data Sources.
+The Query Flow triggers no communication towards the Data Sources.
 
 ---
 
 # Account
 
-Persona che usa il Privacy Intelligence Engine.
+A person who uses the Privacy Intelligence Engine.
 
-Appartiene al Backend e non al Unified Data Model, che descrive la rete osservata e non chi la osserva. Ha un nome utente, un ruolo e una password conservata soltanto come hash.
+It belongs to the Backend and not to the Unified Data Model, which describes
+the network being observed and not whoever observes it. It has a user name, a
+role, and a password kept only as a hash.
 
 ---
 
 # Role
 
-Ciò che un Account può leggere e fare.
+What an Account may read and do.
 
-I ruoli sono **Administrator** e **Viewer**. Il Viewer legge i dati aggregati e non quelli che identificano un singolo dispositivo.
+The roles are **Administrator** and **Viewer**. A Viewer reads aggregated data
+and not the data that identifies an individual device.
 
 ---
 
 # Session
 
-Periodo durante il quale un Account, dopo l'accesso, è riconosciuto senza presentare di nuovo la password.
+The period during which an Account, having signed in, is recognised without
+presenting the password again.
 
-È identificata da un valore casuale di cui il Backend conserva soltanto l'hash.
+It is identified by a random value of which the Backend keeps only the hash.
 
 ---
 
 # Setup Code
 
-Codice casuale mostrato sull'output standard quando l'installazione non ha alcun Account.
+A random code printed on standard output when the installation holds no
+Account.
 
-Prova che chi crea il primo Administrator ha accesso alla macchina. Non viene conservato.
+It proves that whoever creates the first Administrator has access to the
+machine. It is not kept.
 
 ---
 
 # Withheld
 
-Dato che la sorgente offre ma che il Role di chi chiede non comprende.
+Data the source offers but which the Role of the requester does not include.
 
-È diverso da **Unavailable**, che la sorgente non offre, e da un elenco vuoto perché nulla è accaduto. Le tre situazioni non vengono mai presentate allo stesso modo.
+It differs from **Unavailable**, which the source does not offer, and from an
+empty list because nothing happened. The three situations are never presented
+alike.
 
 ---
 
 # Terminology Rules
 
-All'interno del progetto:
+Within the project:
 
-* utilizzare sempre **PIE** per indicare il Privacy Intelligence Engine;
-* utilizzare sempre **NPSS** per indicare il Network Privacy & Security Score;
-* utilizzare sempre **Data Source** per indicare l'origine dei dati;
-* utilizzare sempre **Adapter** per il livello di integrazione;
-* utilizzare sempre **Core** per indicare il motore principale;
-* utilizzare sempre il suffisso **Engine** per i moduli del Core;
-* utilizzare sempre **Frontend** e **Backend** senza traduzioni.
+* always use **PIE** for the Privacy Intelligence Engine;
+* always use **NPSS** for the Network Privacy & Security Score;
+* always use **Data Source** for the origin of the data;
+* always use **Adapter** for the integration layer;
+* always use **Core** for the main engine;
+* always use the suffix **Engine** for the modules of the Core;
+* always use **Frontend** and **Backend** untranslated.
 
 ---
 
 # Terms to Avoid
 
-Per garantire uniformità, evitare l'utilizzo dei seguenti termini quando esiste già un termine ufficiale.
+For the sake of uniformity, avoid the following terms where an official one
+already exists.
 
-| Evitare                                   | Utilizzare                              |
-| ----------------------------------------- | --------------------------------------- |
-| Privacy Score                             | Network Privacy & Security Score (NPSS) |
-| Connector                                 | Adapter                                 |
-| Source Provider                           | Data Source                             |
-| DNS Engine                                | Backend                                 |
-| Main Engine                               | Core                                    |
-| Plugin (per integrazioni dati)            | Adapter                                 |
-| Threat Intelligence (come nome di modulo) | Threat Engine                           |
-| Device Intelligence (come nome di modulo) | Device Engine                           |
+| Avoid                                   | Use instead                             |
+| --------------------------------------- | --------------------------------------- |
+| Privacy Score                           | Network Privacy & Security Score (NPSS) |
+| Connector                               | Adapter                                 |
+| Source Provider                         | Data Source                             |
+| DNS Engine                              | Backend                                 |
+| Main Engine                             | Core                                    |
+| Plugin (for data integrations)          | Adapter                                 |
+| Threat Intelligence (as a module name)  | Threat Engine                           |
+| Device Intelligence (as a module name)  | Device Engine                           |
 
 ---
 
 # Document References
 
-Questo documento costituisce il riferimento terminologico per tutte le Specification presenti nella cartella `docs`.
+This document is the terminological reference for every Specification in the
+`docs` folder.
 
-Ogni nuovo documento dovrà utilizzare esclusivamente la terminologia definita nel presente Glossary.
+Every new document is to use only the terminology defined in this Glossary.

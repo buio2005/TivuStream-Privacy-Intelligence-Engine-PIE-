@@ -1,300 +1,260 @@
 # TivuStream Privacy Intelligence Engine (PIE)
 
-> **The intelligence layer for privacy-first network analysis.**
+**A self-hosted tool that reads your DNS server, works out what your network
+is contacting, and tells you honestly — including what it does not know.**
+
+> **Status: in development. Not ready for use.**
+>
+> PIE runs, it is tested, and it installs as a service on Windows and Linux.
+> It is published at this stage because the one thing it needs most cannot be
+> obtained privately: someone other than its author installing it. See
+> [What it does not do yet](#what-it-does-not-do-yet) before you decide to try
+> it.
+>
+> The technical documentation is currently in Italian and is being translated.
 
 ---
 
-# TivuStream Privacy Intelligence Engine
+## Why another one
 
-TivuStream Privacy Intelligence Engine (PIE) è il progetto alla base di una nuova generazione di strumenti TivuStream dedicati alla privacy, alla sicurezza e all'analisi della rete.
+Most privacy tools show you a number. A score, a percentage, a green tick.
 
-L'obiettivo non è sviluppare un nuovo DNS Server o sostituire software già esistenti, ma costruire un motore capace di raccogliere informazioni provenienti da diverse sorgenti, analizzarle e trasformarle in dati comprensibili, utili e immediatamente fruibili dall'utente.
+The number is usually built on measurements that were incomplete, on lists
+that were three weeks old, or on the absence of evidence. None of that is
+visible, so the reassuring version and the meaningless version look identical.
 
-Il primo modulo ufficiale sviluppato sopra il Privacy Intelligence Engine sarà **Network Privacy**.
+PIE shows the number **and what it rests on** — and refuses to show it when it
+cannot support it.
 
----
+Three examples of what that means in practice, all of them implemented rather
+than aspirational.
 
-# Obiettivo del progetto
+**The score can decline to exist.** Each of the six areas of the Network
+Privacy & Security Score declares whether it was measured, measured in part,
+or not measurable at all. What was not observed is excluded from the
+calculation, never counted as zero. If less than sixty points out of a hundred
+could be measured, no overall score is produced — and nothing takes its place.
+No provisional figure, no empty bar, no placeholder suggesting a value is on
+its way. The breakdown is still shown, with the reason each area was or was
+not measured.
 
-Realizzare una piattaforma self-hosted che permetta di monitorare e comprendere il comportamento della rete locale attraverso un'interfaccia semplice, moderna e orientata alla privacy.
+**A value declares how it is known.** A count that can only be a floor is
+labelled a lower bound, not rounded up to something plausible. An instant that
+is only known to the hour is presented as an hour, not as a moment. The
+interface is forbidden, by specification, from presenting a qualified value as
+an exact one.
 
-Il progetto è pensato per utenti che desiderano conoscere lo stato della propria rete senza dover interpretare dati tecnici complessi.
+**Unclassified never means safe.** Domain classification happens entirely on
+your machine, against lists held locally. Lists assert that a domain tracks
+you; they never assert that one does not. So a domain in no list is reported
+as *not recognised*, with those words, and never as clean. Every
+classification also declares which list produced it and how old that list was.
 
----
-
-# Filosofia
-
-Il progetto segue alcuni principi fondamentali:
-
-* Privacy First
-* Local First
-* Self Hosted
-* Architettura modulare
-* Nessuna telemetria
-* Massima semplicità per l'utente finale
-
-Ogni funzionalità dovrà contribuire a rendere la privacy più comprensibile e accessibile.
-
----
-
-# Architettura
-
-Il Privacy Intelligence Engine rappresenta il livello di analisi del sistema.
-
-Le Data Sources raccolgono i dati.
-
-Gli Adapter li convertono nel Unified Data Model.
-
-Il Core li interpreta.
-
-Le applicazioni TivuStream li presentano all'utente.
-
-```text
-                Data Sources
-                     │
-                     ▼
-                  Adapters
-                     │
-                     ▼
-            Unified Data Model
-                     │
-                     ▼
-     TivuStream Privacy Intelligence Engine
-                     │
-      ┌──────────────┼──────────────┐
-      ▼              ▼              ▼
- Threat Engine  Device Engine   NPSS Engine
-      │              │              │
-      └──────────────┼──────────────┘
-                     ▼
-             Recommendation Engine
-                     │
-                     ▼
-                  REST API
-                     │
-                     ▼
-          TivuStream Applications
-```
-
-Il sistema utilizza due flussi distinti.
-
-L'**Acquisition Flow** acquisisce periodicamente i dati dalle Data Sources.
-
-Il **Query Flow** serve le richieste del Frontend restituendo esclusivamente risultati già elaborati.
-
-La descrizione completa è contenuta nella Architecture Specification.
+The cost of that last decision is real and stated: threats that appeared this
+week are recognised late. The alternative was to ask a reputation service
+about the domains your network contacted, which would mean telling that
+service your browsing history in order to protect it.
 
 ---
 
-# Primo modulo
+## What it does today
 
-## Network Privacy
+* Reads a **Technitium DNS Server** through its public API, on a fixed hourly
+  cycle. Per-query detail is aggregated inside the adapter and never reaches
+  the rest of the system.
+* Classifies the domains observed against local lists, roughly 3.6 million
+  entries across seven categories, downloaded daily and inspectable as plain
+  text files.
+* Computes the **Network Privacy & Security Score** over six areas, with every
+  factor that contributed to it.
+* Keeps observations as non-overlapping hourly periods, consolidated into days
+  after a month and into months after a year, then deleted.
+* Serves an interface in **Italian and English** with a dashboard and a domain
+  list with per-domain detail.
+* Requires a signed-in account on every endpoint, over HTTPS when reached from
+  another machine, with a certificate it generates and whose fingerprint it
+  prints at startup.
 
-Network Privacy rappresenta la prima applicazione sviluppata utilizzando il Privacy Intelligence Engine.
-
-Il suo compito è analizzare il traffico DNS della rete locale e fornire informazioni semplici riguardo a:
-
-* sicurezza DNS
-* privacy della rete
-* tracker
-* malware
-* dispositivi
-* attività DNS
-* configurazione
-* suggerimenti
-
-Per la gestione DNS il progetto utilizza **Technitium DNS Server** come backend.
-
-Technitium rimane il motore DNS.
-
-TivuStream fornisce l'intelligenza, l'analisi e l'interfaccia utente.
-
----
-
-# Componenti previsti
-
-Il progetto sarà composto da moduli indipendenti.
-
-## Core
-
-I moduli del Core utilizzano tutti il suffisso **Engine**.
-
-* Threat Engine
-* Device Engine
-* NPSS Engine
-* Alert Engine
-* Recommendation Engine
-
-## Integration
-
-* Adapter Manager
-* Technitium Adapter
-* Unified Data Model
-
-## Interface
-
-* REST API
-* Network Privacy
+Around 616 automated tests, 495 on the backend and 121 on the interface. Each
+of them refers to a commitment stated in a specification, not to an
+implementation detail.
 
 ---
 
-# Obiettivi principali
+## What it does not do yet
 
-* Rendere comprensibili dati complessi.
-* Aiutare gli utenti a migliorare la privacy della rete.
-* Fornire analisi chiare e immediate.
-* Costruire una piattaforma estensibile nel tempo.
-* Integrare più sorgenti di dati mantenendo un'unica esperienza utente.
+This list is the point of publishing at this stage.
 
----
+* **Nobody outside the project has installed it.** The installation procedure
+  exists, is documented and has been used once, by its author, on Windows.
+  This is the gap that most needs closing.
+* **Devices and statistics are measured but not shown.** The engine collects
+  them and the API returns them; the interface has no screen for either.
+* **History is written and never read.** Consolidated days and months
+  accumulate correctly, and no view displays them. Copies taken before a
+  database upgrade are never deleted automatically.
+* **Three of the five Core engines do not exist.** Device, Alert and
+  Recommendation. Device Health is therefore not measurable, and fifteen of
+  the hundred points stay permanently outside the score.
+* **No alerts, no recommendations, no reports.**
+* **Documentation is in Italian.** Twenty specifications, being translated.
+* **No licence header in the source files**, and the interface does not yet
+  display the licence notice the GPL asks for.
 
-# Tecnologie
-
-## Backend
-
-* ASP.NET Core
-* C#
-* REST API
-* SQLite
-
-## Frontend
-
-* Vue 3
-* TypeScript
-* Pinia
-* Vite
-
-## Data Source
-
-* Technitium DNS Server (prima integrazione supportata)
-
-## Piattaforme
-
-* Linux
-* Windows
-* Docker
-
-Ogni dipendenza introdotta nel progetto viene documentata con nome, versione, licenza e scopo.
+Known gaps are recorded as they are found. A gap that is not written down is
+not a debt, it is a defect.
 
 ---
 
-# Roadmap
+## Requirements
 
-| Milestone | Descrizione           | Stato     |
-| --------- | --------------------- | --------- |
-| M1        | Documentation Release | Completed |
-| M2        | Backend Core          | In Progress |
-| M3        | Technitium Adapter    | In Progress |
-| M4        | Core Modules          | In Progress |
-| M5        | Frontend              | In Progress |
-| M6        | Reports               | Planned   |
-| M7        | Testing               | In Progress |
-| M8        | Beta Release          | Planned   |
-| M9        | Stable Release        | Planned   |
+* A **Technitium DNS Server** your network actually uses, reachable over HTTP,
+  with an API token that can read the Dashboard and Settings sections.
+* Windows 10 or later, or a recent Linux distribution.
+* To build from source: .NET 10 SDK and Node.js 22 or later.
 
-Il dettaglio delle fasi è contenuto nella Roadmap Specification.
+PIE does not replace your DNS server, does not filter anything and does not
+route traffic. It reads.
 
 ---
 
-# Stato del progetto
+## Install
 
-**Documentation Release:** 1.16.1
+PIE installs as a service from a package that contains everything it needs.
+The guide, written for someone who has never seen this project, is
+[`installer/INSTALL.md`](installer/INSTALL.md) and is included in every
+package.
 
-**Project Status:** In Development
-
-**Development Status:** In Progress. Il progetto non è pronto all'uso: vedi la Roadmap Specification per ciò che manca.
-
----
-
-# Installare
-
-PIE si installa come servizio su Windows o su Linux, con un pacchetto che contiene già tutto ciò che serve. La guida, scritta per chi non conosce il progetto, è in [`installer/INSTALL.md`](installer/INSTALL.md) ed è inclusa in ogni pacchetto.
-
-I pacchetti si preparano dal repository con:
+Build the packages from the repository:
 
 ```text
 powershell -ExecutionPolicy Bypass -File installer\build-package.ps1
 ```
 
-Vengono scritti in `dist/`. Il resto di questa sezione e della seguente descrive l'uso durante lo sviluppo, con `dotnet run`.
+They are written to `dist/`.
+
+The first start prints a one-time setup code, which you use to create the
+first account. If you lose access, `dotnet run -- reset-password <name>`
+restores it from the machine PIE runs on.
 
 ---
 
-# Aprire PIE da un altro dispositivo
+## Reaching it from another device
 
-PIE si apre dal telefono o da un altro computer di casa, con una connessione cifrata. Non serve configurare nulla.
+PIE opens from a phone or another computer on the same network, over an
+encrypted connection, with nothing to configure.
 
-1. Sul computer dove gira PIE, prepara l'interfaccia una volta: nella cartella `frontend`, `npm run build`.
-2. Avvia PIE: nella cartella `backend/src/TivuStream.Pie.Api`, `dotnet run`.
-3. All'avvio PIE scrive gli indirizzi a cui risponde e un'**impronta**, una lunga sequenza di lettere e numeri:
+At startup it prints the addresses it answers on and a **fingerprint**:
 
-   ```text
-   PIE is reachable at:
-     https://NOME-DEL-PC:5443
-     https://192.168.1.5:5443
-   SHA-256 fingerprint: D7:00:13:3B:...
-   ```
+```text
+PIE is reachable at:
+  https://YOUR-PC:5443
+  https://192.168.1.5:5443
+SHA-256 fingerprint: D7:00:13:3B:...
+```
 
-4. La prima volta Windows chiede se consentire a PIE l'accesso alla rete. Rispondi sì, almeno per le reti private: senza permesso, dagli altri dispositivi la pagina non si apre.
-5. Sull'altro dispositivo apri uno degli indirizzi. Quello che comincia come quello del tuo router (spesso `192.168.`) è di solito quello giusto.
-6. Il browser avvisa che la connessione «non è privata». È normale: il certificato lo ha creato PIE e nessun browser lo conosce ancora. Apri i dettagli del certificato e controlla che l'impronta SHA-256 sia la stessa scritta da PIE. Se coincide, prosegui. Se non coincide, non inserire la password.
+Your browser will warn that the connection "is not private". That is expected:
+PIE created the certificate itself and no browser has heard of it. Open the
+certificate details and check that the SHA-256 fingerprint matches the one PIE
+printed. If it matches, continue. **If it does not match, do not type your
+password.**
 
-L'avviso ricompare, una volta per dispositivo, quando PIE rinnova il certificato (circa una volta l'anno) o quando il router cambia l'indirizzo del computer.
+The warning returns once per device when PIE renews the certificate, about
+once a year, or when your router gives the machine a different address.
 
-**Chi ha un certificato proprio** lo indica in `appsettings.Local.json` (`Transport:Certificate:Path`) e l'avviso scompare. **Chi non vuole PIE raggiungibile dalla rete** imposta `Transport:HttpsPort` a `0`. I dettagli sono nella Transport Security Specification.
-
-PIE legge il server DNS direttamente, senza passare da VPN o proxy del sistema. Su un computer usato da più persone conviene un profilo del browser dedicato a PIE: la cronologia conserva gli indirizzi delle pagine aperte.
+If you have your own certificate, point `Transport:Certificate:Path` at it in
+`appsettings.Local.json` and the warning disappears. If you would rather PIE
+were not reachable from the network at all, set `Transport:HttpsPort` to `0`.
 
 ---
 
-# Quanto a lungo PIE conserva i dati
+## What PIE keeps, and for how long
 
-PIE tiene sul tuo computer un riassunto di ciò che la rete ha fatto, mai l'elenco delle singole richieste. Con il tempo lo riassume ancora di più, e alla fine lo cancella.
+PIE keeps a summary of what the network did. It never keeps the list of
+individual queries: aggregation happens in the adapter, before the data
+reaches anything else.
 
-| Per quanto tempo | Che cosa resta |
+| For how long | What remains |
 | --- | --- |
-| Ultimi 30 giorni | Ora per ora: quali domini, quante richieste, da quale dispositivo |
-| Fino a 12 mesi | Giorno per giorno, con le stesse informazioni |
-| Fino a 5 anni | Mese per mese: quali domini e quali dispositivi, ma non più quale dispositivo ha contattato quale dominio |
-| Oltre | Niente |
+| Last 30 days | Hour by hour: which domains, how many queries, from which device |
+| Up to 12 months | Day by day, with the same information |
+| Up to 5 years | Month by month: which domains and which devices, but no longer which device contacted which domain |
+| Beyond | Nothing |
 
-Ogni giorno e ogni mese ricorda quante ore sono state davvero osservate. Un giorno in cui PIE è rimasto spento non sembra un giorno tranquillo.
+Every day and every month records how many hours were actually observed. A day
+when PIE was switched off does not look like a quiet day.
 
-Ciò che viene cancellato è cancellato davvero: PIE lo sovrascrive nel file, non lo segna soltanto come eliminato.
+What is deleted is deleted: PIE overwrites it in the file rather than merely
+marking it as removed.
 
-**Riassumere non si può annullare.** Se riduci questi tempi, alla prossima ora PIE riassume o cancella ciò che è più vecchio, e il dettaglio non torna indietro. Se vuoi comunque farlo, i valori stanno in `appsettings.Local.json`, sotto `Storage:Retention`: `HourlyDays`, `DailyMonths`, `MonthlyYears`. Un valore troppo basso non viene corretto in silenzio: PIE non si avvia e dice quale valore cambiare.
-
-Prima di aggiornare la struttura del database, PIE ne fa una copia accanto al file (`pie.db.schema-…bak`). Le copie non vengono cancellate da sole: contengono gli stessi dati, e puoi eliminarle tu quando l'aggiornamento ti sembra riuscito.
-
----
-
-# Documentazione
-
-La documentazione tecnica completa è disponibile nella cartella `docs/`.
-
-Ogni documento descrive uno specifico componente dell'architettura e costituisce il riferimento ufficiale per lo sviluppo del progetto.
-
-Il progetto segue un modello **Documentation First**: la documentazione rappresenta la fonte autorevole, il codice la implementa.
-
-Prima di contribuire consultare nell'ordine:
-
-1. `README.md`
-2. `PROJECT_CONTEXT.md`
-3. `AI_DEVELOPMENT_GUIDE.md`
-4. le Specification in `docs/`
-
-Le modifiche alla documentazione sono registrate in `CHANGELOG.md`.
+**Consolidation cannot be undone.** Shortening these periods makes PIE
+summarise or delete the older detail at the next hourly cycle, and the detail
+does not come back. The values are in `appsettings.Local.json`, under
+`Storage:Retention`. A value that is too low is not silently corrected: PIE
+refuses to start and says which one to change.
 
 ---
 
-# Licenza
+## How it is built
 
-Il progetto è distribuito sotto **GNU General Public License, versione 3**. Il testo integrale risiede in `LICENSE.md`.
+```text
+Frontend  →  REST API  →  Privacy Intelligence Engine  →  Adapters  →  Data Sources
+```
 
-La scelta del copyleft discende dalla promessa del progetto: l'utente deve poter verificare che cosa il programma fa. Una licenza permissiva consentirebbe di distribuire una versione chiusa, con le stesse schermate che dichiarano che i domini non lasciano il dispositivo, senza che nessuno possa verificarlo.
+The engine analyses; the adapters translate a specific backend into a
+**Unified Data Model**; the interface only ever displays results already
+produced. Two flows are kept apart: acquisition runs on its own schedule and
+is never triggered by a request from the interface.
 
-Le componenti open source integrate mantengono le rispettive licenze originali.
+A second data source would mean a second adapter, and no change to the engine.
 
-Technitium DNS Server rappresenta un software indipendente: PIE ne utilizza esclusivamente le API pubbliche e non ne costituisce un fork.
+**Backend:** ASP.NET Core, C#, SQLite with explicit SQL and hand-written
+migrations.
+**Frontend:** Vue 3, TypeScript, Pinia, Vite, vue-i18n.
 
-La politica completa è descritta nella License Specification.
+The backend never sends text meant to be displayed. Every factor explaining a
+score travels as a code with numeric values, and the interface renders it in
+the language being read. That is why a share arrives as `0.071` and not as
+`7.1%`: how a percentage is written belongs to the language, not to the
+measurement.
+
+---
+
+## Documentation
+
+The authoritative source is `docs/`, twenty specifications. The code
+implements them; it never defines the architecture.
+
+`CHANGELOG.md` records every decision together with the reasoning behind it,
+including the ones that were later reversed and why. It is, for now, in
+Italian.
+
+Start with `docs/00-Glossary.md`.
+
+---
+
+## Contributing
+
+The most useful contribution at this stage is **installing PIE and telling us
+where the procedure fails**.
+
+`CONTRIBUTING.md` describes the working method. In short: the documentation
+comes before the code for anything costly to correct later — architecture,
+data model, API contracts, scoring rules, and anything asserted to the person
+using the tool. Everything else is implemented and then recorded.
+
+Answers may be slow. This is a project built in the gaps of other work.
+
+---
+
+## Licence
+
+**GNU General Public License, version 3.** Full text in `LICENSE.md`.
+
+The copyleft follows from the promise this project makes: you must be able to
+verify what the program does. A permissive licence would allow someone to ship
+a closed version, with the same screens claiming that your domains never leave
+your device, and no way for anyone to check.
+
+Third-party components keep their own licences. Technitium DNS Server is
+independent software: PIE uses only its public API and is not a fork of it.

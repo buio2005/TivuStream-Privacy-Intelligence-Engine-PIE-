@@ -1,10 +1,59 @@
 # Changelog
 
-Tutte le modifiche rilevanti al progetto **TivuStream Privacy Intelligence Engine (PIE)** vengono registrate in questo documento.
+Every relevant change to **TivuStream Privacy Intelligence Engine (PIE)** is recorded in this document.
 
-La documentazione segue un versionamento indipendente da quello del codice.
+The documentation is versioned independently of the code.
 
-Il progetto utilizza il versionamento semantico nel formato `MAJOR.MINOR.PATCH`.
+The project uses semantic versioning in the form `MAJOR.MINOR.PATCH`.
+
+**Language boundary.** Entries from Documentation Release 1.17.0 onwards are written in English. Everything below it is in Italian and is not translated: it is the project's own operational memory, and the reasoning it holds has been rewritten as `docs/DESIGN-RATIONALE.md`. Older entries are never edited.
+
+---
+
+## Documentation Release 1.17.0 — The documentation in English — 2026-09-30
+
+Every document is in English, before the repository is published. Only the language changed: no version of a Specification was incremented, because a version signals that the rules changed, and here they did not. Only `Last Updated` moved.
+
+### Changed
+
+**Twenty-seven documents translated.** The twenty Specifications, `README.md` (rewritten rather than translated), `PROJECT_CONTEXT.md`, `AI_DEVELOPMENT_GUIDE.md`, `CONTRIBUTING.md` and `installer/INSTALL.md`. Progress was tracked in `docs/TRANSLATION-PROGRESS.md`, which is deleted once this entry is written.
+
+**Canonical wording preserved.** The phrases that carry a commitment already existed in `frontend/src/locales/en.json`, agreed months ago: *lower bound*, *no known tracking*, *the filter was not put to the test*, *not measurable*. The Specifications align with the catalogue rather than inventing new phrasing, so that a sentence in the interface and the rule that governs it cannot drift apart.
+
+**The installation guide exists in two languages**, `installer/INSTALL.md` and `installer/INSTALL.it.md`, each referring to the other. The interface is bilingual and the people who arrive may come from an Italian page: whoever installs in their own language reaches the one step that cannot be got wrong, comparing the fingerprint of the certificate, without having to translate it. Specification 12 records this, and declares in Not Yet Provided that the texts the scripts write at the terminal are English only.
+
+### Fixed
+
+**Four documents described a past that read as the present.** A Specification opens by saying why it exists, in the present tense, and then outlives the change it introduced; nobody rereads an opening paragraph. Verified against the code, then corrected:
+
+| Document | What it claimed | What is true |
+| --- | --- | --- |
+| 06 - API | Four sentences beginning "Oggi…" | Corrected during the earlier translation round |
+| 18 - Authentication | "the API answers anyone who reaches it" | Closed by milestones A1–A7, 2026-09-26 |
+| 19 - Transport Security | "no encrypted connection exists"; "the interface exists only through Vite" | Closed by milestones S1–S4, 2026-09-26 |
+| 11 - Backend | Two test projects in the Solution Structure | Four: Core, Storage, Adapters.Technitium, Api |
+
+The milestone tables of 18 and 19 now say when the work was completed, and the decisions recorded as "to be approved" are recorded as approved.
+
+**`CONTRIBUTING.md` stated that the licence had not been chosen.** It is GPL-3.0, decided and written in Specification 14. Its Backend tree also listed five projects out of six: `TivuStream.Pie.Storage` was missing, and the test projects were a single line.
+
+**`PROJECT_CONTEXT.md` listed two decisions as not yet implemented** that had been carried out: the bilingual interface, and this translation. The section now declares the state of each decision, because a document that records a finished thing as pending misdescribes the project exactly as much as the reverse.
+
+**`AI_DEVELOPMENT_GUIDE.md` described a working method that `MASTER_PROMPT.md` 2.0.0 superseded.** Not rewritten: three lines at the top say that the MASTER_PROMPT governs and wins in case of divergence. Whoever arrives from outside reads this guide first and would have followed a superseded procedure.
+
+### Added
+
+**`MASTER_PROMPT.md`, section Tense.** The motivation of a Specification is written in the past tense, because the document outlives the change that caused it. The same applies to a milestone table and to a decision recorded as "to be approved". The present tense belongs to the rules themselves. The rule cites the four occurrences above as its reason: a rule with a precedent is respected more than an abstract one.
+
+**`docs/DESIGN-RATIONALE.md`, "Why PIE Is The Way It Is".** Fifteen decisions with, for each, the alternative not taken and what it would have cost — the number is not the product; unmeasured is excluded rather than scored as zero; below 60% coverage nothing is shown in place of the score; fixed observation periods; codes and not sentences out of the Core; a declared monoculture of lists; the network's domains never leaving the device; the hole in device visibility; debt that is not written down being a defect. It exists so that the reasoning survives the decision not to translate forty changelog entries.
+
+### Known Impact
+
+**The history below the language boundary stays in Italian.** A reader who wants to know when a defect appeared, and which test caught it, needs Italian. The decision was taken deliberately: half-translating would leave it uncertain which text is authoritative, and translating everything is weeks of work whose operational detail interests nobody outside the project.
+
+**`installer/build-package.ps1` copies only `INSTALL.md` into the package.** Until it copies `INSTALL.it.md` as well, the Italian guide stays in the repository and does not reach whoever installs.
+
+**No code was changed and no test was run in this work.** It touches documentation only. The last verified state is 495 tests on the backend and 121 on the frontend.
 
 ---
 

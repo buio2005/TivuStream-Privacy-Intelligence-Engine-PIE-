@@ -114,16 +114,39 @@ they set `X-Test-Remote-Address`.
 
 ---
 
+## Documentation
+
+The documentation is in English, translated before publication (Documentation
+Release 1.17.0). **Every new text is written in English**, including changelog
+entries, comments and commit messages.
+
+`CHANGELOG.md` history below the language boundary stays in Italian and is not
+translated; new entries are appended at the top, in English, and older ones
+are never edited. The reasoning that history holds is in
+`docs/DESIGN-RATIONALE.md`.
+
+A Specification says what the system does, and `MASTER_PROMPT.md` decides when
+one has to be written before code. Its section **Tense** matters here: the
+motivation of a Specification is written in the past tense, because the
+document outlives the change that caused it.
+
+---
+
 ## Known debts
 
 * The installation procedure (`installer/`, Specification 12) has not been
   field tested yet, and no stranger has installed with it (Beta criterion).
-  Terminal texts are English only; `installer/INSTALL.md` translates them.
+  Terminal texts are English only; `installer/INSTALL.md` and `INSTALL.it.md`
+  translate them. `installer/build-package.ps1` copies only the English one
+  into the package.
 * Consolidated days and months are written but nothing reads them yet: there
   is no history view. Copies taken before a migration are never deleted.
 * Device, Alert and Recommendation Engines do not exist. Device Health is
   therefore not measurable, and fifteen points of the score stay out.
-* Documentation is in Italian and is to be translated before publication.
+* `/devices` and `/statistics` are measured but not shown in the interface,
+  and neither declares its observation period.
+* There are no alerts, no recommendations and no reports.
+* `/health` declares `Core: NotImplemented`, which has been false since M4.1.
 * No licence header in source files, no licence notice in the interface.
 
 ---
